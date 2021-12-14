@@ -207,3 +207,79 @@ func parseProjectTable(input []byte) (map[string]string, errors.E) {
 	}
 	return extractTable.Result, nil
 }
+
+func parseShareTable(input []byte) (map[string]string, errors.E) {
+	p := parser.NewParser(
+		parser.WithBlockParsers(parser.DefaultBlockParsers()...),
+		parser.WithInlineParsers(parser.DefaultInlineParsers()...),
+		parser.WithParagraphTransformers(parser.DefaultParagraphTransformers()...),
+		parser.WithParagraphTransformers(
+			util.Prioritized(extension.NewTableParagraphTransformer(), 200),
+		),
+		parser.WithASTTransformers(
+			util.Prioritized(extension.NewTableASTTransformer(), 0),
+		),
+	)
+	parsed := p.Parse(text.NewReader(input))
+	extractTable := extractTableVisitor{
+		Source: input,
+		CheckHeader: func(row []string) errors.E {
+			expectedHeader := []string{"Attribute", "Type", "Required", "Description"}
+			if len(row) != len(expectedHeader) {
+				return errors.Errorf("invalid header: %+v", row)
+			}
+			for i, h := range expectedHeader {
+				if row[i] != h {
+					return errors.Errorf("invalid header: %+v", row)
+				}
+			}
+			return nil
+		},
+		Key: func(row []string) (string, errors.E) {
+			if len(row) != 4 {
+				return "", errors.Errorf("invalid row: %+v", row)
+			}
+			if strings.Contains(row[3], "(Deprecated") {
+				return "", nil
+			}
+			key := row[0]
+			key = strings.TrimSuffix(key, " (PREMIUM)")
+			if key == "id" {
+				// This is a documented parameter to know which project to share.
+				key = ""
+			}
+			return key, nil
+		},
+		Value: func(row []string) (string, errors.E) {
+			if len(row) != 4 {
+				return "", errors.Errorf("invalid row: %+v", row)
+			}
+			description := row[3]
+			if len(description) > 0 {
+				if !strings.HasSuffix(description, ".") && !strings.HasSuffix(description, ")") {
+					description += "."
+				}
+				description += " "
+			}
+			return description + "Type: " + row[1], nil
+		},
+		Result: map[string]string{},
+	}
+	visitor := &chainVisitor{
+		Moves: []walker{
+			&findHeadingVisitor{
+				Source:  input,
+				Heading: "Share project with group",
+			},
+			&findFirstVisitor{
+				Kind: extensionAst.KindTable,
+			},
+			&extractTable,
+		},
+	}
+	err := ast.Walk(parsed, visitor.Walker)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return extractTable.Result, nil
+}

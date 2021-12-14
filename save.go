@@ -81,6 +81,45 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descr
 		configuration.Avatar = avatarPath
 	}
 
+	// We use a separate top-level configuration for shared with groups instead.
+	sharedWithGroups, ok := project["shared_with_groups"]
+	if ok && sharedWithGroups != nil {
+		sharedWithGroups := sharedWithGroups.([]interface{})
+		if len(sharedWithGroups) > 0 {
+			configuration.SharedWithGroups = []map[string]interface{}{}
+			shareDescriptions, err := getShareProjectDescriptions()
+			if err != nil {
+				return err
+			}
+			for _, sharedWithGroup := range sharedWithGroups {
+				sharedWithGroup := sharedWithGroup.(map[string]interface{})
+				groupFullPath := sharedWithGroup["group_full_path"]
+				// Rename because share API has a different key than get project API.
+				sharedWithGroup["group_access"] = sharedWithGroup["group_access_level"]
+				// Making sure it is an integer.
+				sharedWithGroup["group_id"] = int(sharedWithGroup["group_id"].(float64))
+
+				// Only retain those keys which can be edited through the share API
+				// (which are those available in descriptions).
+				for key := range sharedWithGroup {
+					_, ok := shareDescriptions[key]
+					if !ok {
+						delete(sharedWithGroup, key)
+					}
+				}
+
+				// Add comments for keys. We process these keys before writing YAML out.
+				for key := range sharedWithGroup {
+					sharedWithGroup["comment:"+key] = shareDescriptions[key]
+				}
+				// Add comment for the sequence item itself.
+				sharedWithGroup["comment:"] = groupFullPath
+
+				configuration.SharedWithGroups = append(configuration.SharedWithGroups, sharedWithGroup)
+			}
+		}
+	}
+
 	// Only retain those keys which can be edited through the edit API
 	// (which are those available in descriptions).
 	for key := range project {
@@ -145,6 +184,14 @@ func getProjectConfigDescriptions() (map[string]string, errors.E) {
 	return parseProjectTable(data)
 }
 
+func getShareProjectDescriptions() (map[string]string, errors.E) {
+	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/projects.md")
+	if err != nil {
+		return nil, errors.Wrap(err, `failed to get GitLab share project descriptions`)
+	}
+	return parseShareTable(data)
+}
+
 func saveConfiguration(configuration *Configuration, descriptions map[string]string, output string) errors.E {
 	node := &yaml.Node{}
 	err := node.Encode(configuration)
@@ -191,6 +238,13 @@ func setYAMLComments(node *yaml.Node) {
 
 		// And recurse at the same time.
 		setYAMLComments(node.Content[i+1])
+	}
+
+	// Set comment for the node itself.
+	comment, ok := comments[""]
+	// Only if there is a comment and another comment is not already set.
+	if ok && comment != "" && node.HeadComment == "" {
+		node.HeadComment = wordwrap.WrapString(comment, 80)
 	}
 }
 
