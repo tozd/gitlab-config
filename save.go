@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/hashicorp/go-retryablehttp"
@@ -14,14 +16,34 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// A reasonable subset of supported file extensions for avatar image.
+// See: https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/uploaders/avatar_uploader.rb
+var avatarFileExtensions = []string{
+	".png",
+	".jpg",
+	".jpeg",
+	".gif",
+	".ico",
+}
+
 // We do not use type=path for Output because we want a relative path.
 type SaveCommand struct {
 	GitLab
 
 	Output string `short:"o" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."`
+	Avatar string `short:"a" placeholder:"PATH" default:".gitlab-avatar.img" help:"Where to save the avatar to. File extension is set automatically. Default is \"${default}\"."`
 }
 
-func getProjectConfig(client *gitlab.Client, projectID string, descriptions map[string]string, configuration *Configuration) errors.E {
+func checkAvatarExtension(ext string) error {
+	for _, valid := range avatarFileExtensions {
+		if valid == ext {
+			return nil
+		}
+	}
+	return errors.Errorf(`invalid avatar extension "%s"`, ext)
+}
+
+func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descriptions map[string]string, configuration *Configuration) errors.E {
 	u := fmt.Sprintf("projects/%s", pathEscape(projectID))
 
 	req, err := client.NewRequest(http.MethodGet, u, nil, nil)
@@ -34,6 +56,28 @@ func getProjectConfig(client *gitlab.Client, projectID string, descriptions map[
 	_, err = client.Do(req, &project)
 	if err != nil {
 		return errors.Wrap(err, `failed to get GitLab project`)
+	}
+
+	avatarUrl, ok := project["avatar_url"]
+	if ok && avatarUrl != nil {
+		avatarUrl := avatarUrl.(string)
+		avatarExt := path.Ext(avatarUrl)
+		err := checkAvatarExtension(avatarExt)
+		if err != nil {
+			return errors.Wrapf(err, `invalid avatar URL "%s"`, avatarUrl)
+		}
+		// TODO: Make this work for private avatars, too.
+		//       See: https://gitlab.com/gitlab-org/gitlab/-/issues/25498
+		avatar, err := downloadFile(avatarUrl)
+		if err != nil {
+			return errors.Wrapf(err, `failed to get GitLab project avatar from "%s"`, avatarUrl)
+		}
+		avatarPath = strings.TrimSuffix(avatarPath, path.Ext(avatarPath)) + avatarExt
+		err = os.WriteFile(avatarPath, avatar, 0644)
+		if err != nil {
+			return errors.Wrapf(err, `failed to save avatar to "%s"`, avatarPath)
+		}
+		configuration.Avatar = avatarPath
 	}
 
 	for key := range project {
@@ -164,7 +208,7 @@ func (c *SaveCommand) Run(globals *Globals) errors.E {
 
 	configuration := Configuration{}
 
-	errE = getProjectConfig(client, c.Project, descriptions, &configuration)
+	errE = getProjectConfig(client, c.Project, c.Avatar, descriptions, &configuration)
 	if errE != nil {
 		return errE
 	}
