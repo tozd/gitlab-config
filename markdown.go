@@ -115,7 +115,7 @@ func (v *extractTableVisitor) tableWalker(n ast.Node, entering bool) (ast.WalkSt
 	return ast.WalkContinue, nil
 }
 
-func parseProjectTable(input []byte) (map[string]string, errors.E) {
+func parseTable(input []byte, heading string, keyMapper func(string) string) (map[string]string, errors.E) {
 	p := parser.NewParser(
 		parser.WithBlockParsers(parser.DefaultBlockParsers()...),
 		parser.WithInlineParsers(parser.DefaultInlineParsers()...),
@@ -154,23 +154,9 @@ func parseProjectTable(input []byte) (map[string]string, errors.E) {
 			if key == "id" {
 				// This is a documented parameter for project ID.
 				key = ""
-			} else if key == "public_builds" {
-				// "public_jobs" is used in get,
-				// while "public_builds" is used in edit.
-				// See: https://gitlab.com/gitlab-org/gitlab/-/issues/329725
-				key = "public_jobs"
-			} else if key == "container_expiration_policy_attributes" {
-				// "container_expiration_policy" is used in get,
-				// while "container_expiration_policy_attributes" is used in edit.
-				key = "container_expiration_policy"
-			} else if key == "requirements_access_level" {
-				// Currently it does not work.
-				// See: https://gitlab.com/gitlab-org/gitlab/-/issues/323886
-				key = ""
-			} else if key == "show_default_award_emojis" {
-				// Currently it does not work.
-				// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348365
-				key = ""
+			}
+			if keyMapper != nil {
+				key = keyMapper(key)
 			}
 			return key, nil
 		},
@@ -193,7 +179,7 @@ func parseProjectTable(input []byte) (map[string]string, errors.E) {
 		Moves: []walker{
 			&findHeadingVisitor{
 				Source:  input,
-				Heading: "Edit project",
+				Heading: heading,
 			},
 			&findFirstVisitor{
 				Kind: extensionAst.KindTable,
@@ -206,156 +192,38 @@ func parseProjectTable(input []byte) (map[string]string, errors.E) {
 		return nil, errors.WithStack(err)
 	}
 	return extractTable.Result, nil
+}
+
+func parseProjectTable(input []byte) (map[string]string, errors.E) {
+	return parseTable(input, "Edit project", func(key string) string {
+		switch key {
+		case "public_builds":
+			// "public_jobs" is used in get,
+			// while "public_builds" is used in edit.
+			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/329725
+			return "public_jobs"
+		case "container_expiration_policy_attributes":
+			// "container_expiration_policy" is used in get,
+			// while "container_expiration_policy_attributes" is used in edit.
+			return "container_expiration_policy"
+		case "requirements_access_level":
+			// Currently it does not work.
+			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/323886
+			return ""
+		case "show_default_award_emojis":
+			// Currently it does not work.
+			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348365
+			return ""
+		default:
+			return key
+		}
+	})
 }
 
 func parseShareTable(input []byte) (map[string]string, errors.E) {
-	p := parser.NewParser(
-		parser.WithBlockParsers(parser.DefaultBlockParsers()...),
-		parser.WithInlineParsers(parser.DefaultInlineParsers()...),
-		parser.WithParagraphTransformers(parser.DefaultParagraphTransformers()...),
-		parser.WithParagraphTransformers(
-			util.Prioritized(extension.NewTableParagraphTransformer(), 200),
-		),
-		parser.WithASTTransformers(
-			util.Prioritized(extension.NewTableASTTransformer(), 0),
-		),
-	)
-	parsed := p.Parse(text.NewReader(input))
-	extractTable := extractTableVisitor{
-		Source: input,
-		CheckHeader: func(row []string) errors.E {
-			expectedHeader := []string{"Attribute", "Type", "Required", "Description"}
-			if len(row) != len(expectedHeader) {
-				return errors.Errorf("invalid header: %+v", row)
-			}
-			for i, h := range expectedHeader {
-				if row[i] != h {
-					return errors.Errorf("invalid header: %+v", row)
-				}
-			}
-			return nil
-		},
-		Key: func(row []string) (string, errors.E) {
-			if len(row) != 4 {
-				return "", errors.Errorf("invalid row: %+v", row)
-			}
-			if strings.Contains(row[3], "(Deprecated") {
-				return "", nil
-			}
-			key := row[0]
-			key = strings.TrimSuffix(key, " (PREMIUM)")
-			if key == "id" {
-				// This is a documented parameter for project ID.
-				key = ""
-			}
-			return key, nil
-		},
-		Value: func(row []string) (string, errors.E) {
-			if len(row) != 4 {
-				return "", errors.Errorf("invalid row: %+v", row)
-			}
-			description := row[3]
-			if len(description) > 0 {
-				if !strings.HasSuffix(description, ".") && !strings.HasSuffix(description, ")") {
-					description += "."
-				}
-				description += " "
-			}
-			return description + "Type: " + row[1], nil
-		},
-		Result: map[string]string{},
-	}
-	visitor := &chainVisitor{
-		Moves: []walker{
-			&findHeadingVisitor{
-				Source:  input,
-				Heading: "Share project with group",
-			},
-			&findFirstVisitor{
-				Kind: extensionAst.KindTable,
-			},
-			&extractTable,
-		},
-	}
-	err := ast.Walk(parsed, visitor.Walker)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return extractTable.Result, nil
+	return parseTable(input, "Share project with group", nil)
 }
 
 func parseLabelsTable(input []byte) (map[string]string, errors.E) {
-	p := parser.NewParser(
-		parser.WithBlockParsers(parser.DefaultBlockParsers()...),
-		parser.WithInlineParsers(parser.DefaultInlineParsers()...),
-		parser.WithParagraphTransformers(parser.DefaultParagraphTransformers()...),
-		parser.WithParagraphTransformers(
-			util.Prioritized(extension.NewTableParagraphTransformer(), 200),
-		),
-		parser.WithASTTransformers(
-			util.Prioritized(extension.NewTableASTTransformer(), 0),
-		),
-	)
-	parsed := p.Parse(text.NewReader(input))
-	extractTable := extractTableVisitor{
-		Source: input,
-		CheckHeader: func(row []string) errors.E {
-			expectedHeader := []string{"Attribute", "Type", "Required", "Description"}
-			if len(row) != len(expectedHeader) {
-				return errors.Errorf("invalid header: %+v", row)
-			}
-			for i, h := range expectedHeader {
-				if row[i] != h {
-					return errors.Errorf("invalid header: %+v", row)
-				}
-			}
-			return nil
-		},
-		Key: func(row []string) (string, errors.E) {
-			if len(row) != 4 {
-				return "", errors.Errorf("invalid row: %+v", row)
-			}
-			if strings.Contains(row[3], "(Deprecated") {
-				return "", nil
-			}
-			key := row[0]
-			key = strings.TrimSuffix(key, " (PREMIUM)")
-			if key == "id" {
-				// This is a documented parameter for project ID.
-				key = ""
-			}
-			return key, nil
-		},
-		Value: func(row []string) (string, errors.E) {
-			if len(row) != 4 {
-				return "", errors.Errorf("invalid row: %+v", row)
-			}
-			description := row[3]
-			if len(description) > 0 {
-				if !strings.HasSuffix(description, ".") && !strings.HasSuffix(description, ")") {
-					description += "."
-				}
-				description += " "
-			}
-			return description + "Type: " + row[1], nil
-		},
-		Result: map[string]string{},
-	}
-	visitor := &chainVisitor{
-		Moves: []walker{
-			&findHeadingVisitor{
-				Source:  input,
-				Heading: "Create a new label",
-			},
-			&findFirstVisitor{
-				Kind: extensionAst.KindTable,
-			},
-			&extractTable,
-		},
-	}
-	err := ast.Walk(parsed, visitor.Walker)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return extractTable.Result, nil
+	return parseTable(input, "Create a new label", nil)
 }
