@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -15,6 +16,9 @@ import (
 	"gitlab.com/tozd/go/errors"
 	"gopkg.in/yaml.v3"
 )
+
+// See: https://docs.gitlab.com/ee/api/#offset-based-pagination
+const maxGitLabPageSize = 100
 
 // A reasonable subset of supported file extensions for avatar image.
 // See: https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/uploaders/avatar_uploader.rb
@@ -41,6 +45,20 @@ func checkAvatarExtension(ext string) error {
 		}
 	}
 	return errors.Errorf(`invalid avatar extension "%s"`, ext)
+}
+
+func formatDescriptions(descriptions map[string]string) string {
+	keys := []string{}
+	for key := range descriptions {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	output := ""
+	for _, key := range keys {
+		description := key + ": " + descriptions[key] + "\n"
+		output += wordwrap.WrapString(description, 80)
+	}
+	return output
 }
 
 func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, configuration *Configuration) errors.E {
@@ -105,19 +123,12 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 				sharedWithGroup["group_id"] = int(sharedWithGroup["group_id"].(float64))
 
 				// Only retain those keys which can be edited through the share API
-				// (which are those available in descriptions). We cannot add comments
-				// at the same time because we might delete them, too, because they are
-				// not found in descriptions.
+				// (which are those available in descriptions).
 				for key := range sharedWithGroup {
 					_, ok := shareDescriptions[key]
 					if !ok {
 						delete(sharedWithGroup, key)
 					}
-				}
-
-				// Add comments for keys. We process these keys before writing YAML out.
-				for key := range sharedWithGroup {
-					sharedWithGroup["comment:"+key] = shareDescriptions[key]
 				}
 
 				// Add comment for the sequence item itself.
@@ -127,6 +138,7 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 
 				configuration.SharedWithGroups = append(configuration.SharedWithGroups, sharedWithGroup)
 			}
+			configuration.SharedWithGroupsComment = formatDescriptions(shareDescriptions)
 		}
 	}
 
@@ -181,6 +193,67 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 	return nil
 }
 
+func getProjectLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	descriptions, errE := getProjectLabelsDescriptions()
+	if errE != nil {
+		return errE
+	}
+
+	u := fmt.Sprintf("projects/%s/labels", pathEscape(projectID))
+	options := &gitlab.ListLabelsOptions{
+		ListOptions: gitlab.ListOptions{
+			PerPage: maxGitLabPageSize,
+			Page:    1,
+		},
+		IncludeAncestorGroups: gitlab.Bool(false),
+	}
+
+	for {
+		req, err := client.NewRequest(http.MethodGet, u, options, nil)
+		if err != nil {
+			return errors.Wrapf(err, `failed to get GitLab project labels, page %d`, options.Page)
+		}
+
+		labels := []map[string]interface{}{}
+
+		response, err := client.Do(req, &labels)
+		if err != nil {
+			return errors.Wrapf(err, `failed to get GitLab project labels, page %d`, options.Page)
+		}
+
+		if len(labels) == 0 {
+			break
+		}
+
+		if configuration.Labels == nil {
+			configuration.Labels = []map[string]interface{}{}
+		}
+
+		for _, label := range labels {
+			// Only retain those keys which can be edited through the share API
+			// (which are those available in descriptions).
+			for key := range label {
+				_, ok := descriptions[key]
+				if !ok {
+					delete(label, key)
+				}
+			}
+
+			configuration.Labels = append(configuration.Labels, label)
+		}
+
+		if response.NextPage == 0 {
+			break
+		}
+
+		options.Page = response.NextPage
+	}
+
+	configuration.LabelsComment = formatDescriptions(descriptions)
+
+	return nil
+}
+
 func downloadFile(url string) ([]byte, errors.E) {
 	client, _ := gitlab.NewClient("")
 
@@ -217,6 +290,14 @@ func getShareProjectDescriptions() (map[string]string, errors.E) {
 		return nil, errors.Wrap(err, `failed to get GitLab share project descriptions`)
 	}
 	return parseShareTable(data)
+}
+
+func getProjectLabelsDescriptions() (map[string]string, errors.E) {
+	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/labels.md")
+	if err != nil {
+		return nil, errors.Wrap(err, `failed to get GitLab project labels descriptions`)
+	}
+	return parseLabelsTable(data)
 }
 
 func saveConfiguration(configuration *Configuration, output string) errors.E {
@@ -327,6 +408,11 @@ func (c *SaveCommand) Run(globals *Globals) errors.E {
 	configuration := Configuration{}
 
 	errE := getProjectConfig(client, c.Project, c.Avatar, &configuration)
+	if errE != nil {
+		return errE
+	}
+
+	errE = getProjectLabels(client, c.Project, &configuration)
 	if errE != nil {
 		return errE
 	}
