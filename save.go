@@ -74,7 +74,7 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descr
 			return errors.Wrapf(err, `failed to get GitLab project avatar from "%s"`, avatarUrl)
 		}
 		avatarPath = strings.TrimSuffix(avatarPath, path.Ext(avatarPath)) + avatarExt
-		err = os.WriteFile(avatarPath, avatar, 0644)
+		err = os.WriteFile(avatarPath, avatar, 0o644)
 		if err != nil {
 			return errors.Wrapf(err, `failed to save avatar to "%s"`, avatarPath)
 		}
@@ -117,6 +117,21 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descr
 				}
 
 				configuration.SharedWithGroups = append(configuration.SharedWithGroups, sharedWithGroup)
+			}
+		}
+	}
+
+	// We use a separate top-level configuration for fork relationship.
+	forkedFromProject, ok := project["forked_from_project"]
+	if ok && forkedFromProject != nil {
+		forkedFromProject := forkedFromProject.(map[string]interface{})
+		forkID, ok := forkedFromProject["id"]
+		if ok {
+			// Making sure it is an integer.
+			configuration.ForkedFromProjectID = int(forkID.(float64))
+			forkPathWithNamespace := forkedFromProject["path_with_namespace"]
+			if forkPathWithNamespace != nil {
+				configuration.ForkedFromProjectPath = forkPathWithNamespace.(string)
 			}
 		}
 	}
