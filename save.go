@@ -43,7 +43,12 @@ func checkAvatarExtension(ext string) error {
 	return errors.Errorf(`invalid avatar extension "%s"`, ext)
 }
 
-func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descriptions map[string]string, configuration *Configuration) errors.E {
+func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, configuration *Configuration) errors.E {
+	descriptions, errE := getProjectConfigDescriptions()
+	if errE != nil {
+		return errE
+	}
+
 	u := fmt.Sprintf("projects/%s", pathEscape(projectID))
 
 	req, err := client.NewRequest(http.MethodGet, u, nil, nil)
@@ -206,7 +211,7 @@ func getShareProjectDescriptions() (map[string]string, errors.E) {
 	return parseShareTable(data)
 }
 
-func saveConfiguration(configuration *Configuration, descriptions map[string]string, output string) errors.E {
+func saveConfiguration(configuration *Configuration, output string) errors.E {
 	node := &yaml.Node{}
 	err := node.Encode(configuration)
 	if err != nil {
@@ -306,11 +311,6 @@ func (c *SaveCommand) Run(globals *Globals) errors.E {
 		c.Project = projectID
 	}
 
-	descriptions, errE := getProjectConfigDescriptions()
-	if errE != nil {
-		return errE
-	}
-
 	client, err := gitlab.NewClient(c.Token, gitlab.WithBaseURL(c.BaseURL))
 	if err != nil {
 		return errors.Wrap(err, `failed to create GitLab API client instance`)
@@ -318,10 +318,10 @@ func (c *SaveCommand) Run(globals *Globals) errors.E {
 
 	configuration := Configuration{}
 
-	errE = getProjectConfig(client, c.Project, c.Avatar, descriptions, &configuration)
+	errE := getProjectConfig(client, c.Project, c.Avatar, &configuration)
 	if errE != nil {
 		return errE
 	}
 
-	return saveConfiguration(&configuration, descriptions, c.Output)
+	return saveConfiguration(&configuration, c.Output)
 }
