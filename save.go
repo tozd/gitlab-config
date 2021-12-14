@@ -104,16 +104,20 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 				// Making sure it is an integer.
 				sharedWithGroup["group_id"] = int(sharedWithGroup["group_id"].(float64))
 
-				// Add comments for keys. We process these keys before writing YAML out.
 				// Only retain those keys which can be edited through the share API
-				// (which are those available in descriptions).
+				// (which are those available in descriptions). We cannot add comments
+				// at the same time because we might delete them, too, because they are
+				// not found in descriptions.
 				for key := range sharedWithGroup {
-					description, ok := shareDescriptions[key]
+					_, ok := shareDescriptions[key]
 					if !ok {
 						delete(sharedWithGroup, key)
-					} else {
-						sharedWithGroup["comment:"+key] = description
 					}
+				}
+
+				// Add comments for keys. We process these keys before writing YAML out.
+				for key := range sharedWithGroup {
+					sharedWithGroup["comment:"+key] = shareDescriptions[key]
 				}
 
 				// Add comment for the sequence item itself.
@@ -141,15 +145,14 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 		}
 	}
 
-	// Add comments for keys. We process these keys before writing YAML out.
 	// Only retain those keys which can be edited through the edit API
-	// (which are those available in descriptions).
+	// (which are those available in descriptions). We cannot add comments
+	// at the same time because we might delete them, too, because they are
+	// not found in descriptions.
 	for key := range project {
-		description, ok := descriptions[key]
+		_, ok := descriptions[key]
 		if !ok {
 			delete(project, key)
-		} else {
-			project["comment:"+key] = description
 		}
 	}
 
@@ -166,6 +169,11 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 		} else if container_expiration_policy["name_regex"] != nil && container_expiration_policy["name_regex_delete"] != nil {
 			delete(container_expiration_policy, "name_regex")
 		}
+	}
+
+	// Add comments for keys. We process these keys before writing YAML out.
+	for key := range project {
+		project["comment:"+key] = descriptions[key]
 	}
 
 	configuration.Project = project
