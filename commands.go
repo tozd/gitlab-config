@@ -19,6 +19,5 @@ type Globals struct {
 type Commands struct {
 	Globals
 
-	Format FormatCommand `cmd:"" help:"Format local project's configuration."`
-	Save   SaveCommand   `cmd:"" help:"Save GitLab project's configuration to a local file."`
+	Save SaveCommand `cmd:"" help:"Save GitLab project's configuration to a local file."`
 }
