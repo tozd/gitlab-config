@@ -11,8 +11,8 @@ import (
 
 // We do not use type=existingfile for Input or type=path for Output because we want relative paths.
 type FormatCommand struct {
-	Input  string `short:"i" placeholder:"PATH" type:"string" required:"" help:"Where to load the configuration from. Can be \"-\" for stdin."`
-	Output string `short:"o" placeholder:"PATH" type:"string" default:"-" help:"Where to save the configuration to. Can be the same as input to overwrite it. Default is \"${default}\"."`
+	Input  string `short:"i" placeholder:"PATH" required:"" help:"Where to load the configuration from. Can be \"-\" for stdin."`
+	Output string `short:"o" placeholder:"PATH" default:"-" help:"Where to save the configuration to. Can be the same as input to overwrite it. Default is \"${default}\"."`
 }
 
 func (c *FormatCommand) Run(globals *Globals) errors.E {

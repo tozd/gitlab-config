@@ -18,7 +18,7 @@ import (
 type SaveCommand struct {
 	GitLab
 
-	Output string `short:"o" placeholder:"PATH" type:"string" default:".gitlab-conf.yml" help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."`
+	Output string `short:"o" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."`
 }
 
 func getProjectConfig(client *gitlab.Client, projectID string, descriptions map[string]string, configuration *Configuration) errors.E {
