@@ -45,5 +45,23 @@ func (c *FormatCommand) Run(globals *Globals) errors.E {
 		return errE
 	}
 
-	return writeYAML(&node, descriptions, c.Output)
+	// We inject descriptions as comments.
+	if node.Kind != yaml.DocumentNode {
+		return errors.Errorf(`invalid node kind: %d`, node.Kind)
+	}
+	if node.Content[0].Kind != yaml.MappingNode {
+		return errors.Errorf(`invalid node kind: %d`, node.Kind)
+	}
+	if node.Content[0].Content[0].Value != "project" {
+		return errors.New(`invalid node structure, missing "project"`)
+	}
+	for key, description := range descriptions {
+		node.Content[0].Content[1].Content = append(node.Content[0].Content[1].Content, &yaml.Node{
+			Value: "comment:" + key,
+		}, &yaml.Node{
+			Value: description,
+		})
+	}
+
+	return writeYAML(&node, c.Output)
 }

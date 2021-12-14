@@ -58,6 +58,7 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descr
 		return errors.Wrap(err, `failed to get GitLab project`)
 	}
 
+	// We use a separate top-level configuration for avatar instead.
 	avatarUrl, ok := project["avatar_url"]
 	if ok && avatarUrl != nil {
 		avatarUrl := avatarUrl.(string)
@@ -80,6 +81,8 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descr
 		configuration.Avatar = avatarPath
 	}
 
+	// Only retain those keys which can be edited through the edit API
+	// (which are those available in descriptions).
 	for key := range project {
 		_, ok := descriptions[key]
 		if !ok {
@@ -87,7 +90,11 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descr
 		}
 	}
 
+	// This cannot be configured simply through the edit API, this just enabled/disables it.
+	// We use a separate top-level configuration for mirroring instead.
 	delete(project, "mirror")
+
+	// Remove deprecated name_regex key in favor of new name_regex_delete.
 	if project["container_expiration_policy"] != nil {
 		container_expiration_policy := project["container_expiration_policy"].(map[string]interface{})
 		if container_expiration_policy["name_regex"] != nil && container_expiration_policy["name_regex_delete"] == nil {
@@ -96,6 +103,11 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descr
 		} else if container_expiration_policy["name_regex"] != nil && container_expiration_policy["name_regex_delete"] != nil {
 			delete(container_expiration_policy, "name_regex")
 		}
+	}
+
+	// Add comments for keys. We process these keys before writing YAML out.
+	for key := range project {
+		project["comment:"+key] = descriptions[key]
 	}
 
 	configuration.Project = project
@@ -116,6 +128,7 @@ func downloadFile(url string) ([]byte, errors.E) {
 
 	buffer := bytes.Buffer{}
 
+	// TODO: On error this tries to parse the error response as API error, which fails for arbitrary HTTP requests. Do something else?
 	_, err = client.Do(req, &buffer)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -138,22 +151,51 @@ func saveConfiguration(configuration *Configuration, descriptions map[string]str
 	if err != nil {
 		return errors.Wrap(err, `cannot encode configuration`)
 	}
-	return writeYAML(node, descriptions, output)
+	return writeYAML(node, output)
 }
 
-func writeYAML(node *yaml.Node, descriptions map[string]string, output string) errors.E {
+func setYAMLComments(node *yaml.Node) {
 	if node.Kind != yaml.MappingNode {
-		return errors.Errorf(`invalid node kind: %d`, node.Kind)
+		for _, content := range node.Content {
+			setYAMLComments(content)
+		}
+		return
 	}
-	if node.Content[0].Value != "project" {
-		return errors.Errorf(`invalid node structure, missing "project"`)
-	}
-	for i := 0; i < len(node.Content[1].Content); i += 2 {
-		description, ok := descriptions[node.Content[1].Content[i].Value]
-		if ok && node.Content[1].Content[i].HeadComment == "" {
-			node.Content[1].Content[i].HeadComment = wordwrap.WrapString(description, 80)
+
+	// We first extract all comments.
+	comments := map[string]string{}
+	contentsToDelete := []int{}
+	for i := 0; i < len(node.Content); i += 2 {
+		key := node.Content[i].Value
+		if strings.HasPrefix(key, "comment:") {
+			comments[strings.TrimPrefix(key, "comment:")] = node.Content[i+1].Value
+			contentsToDelete = append(contentsToDelete, i, i+1)
 		}
 	}
+
+	// We iterate in the reverse order.
+	for i := len(contentsToDelete) - 1; i >= 0; i-- {
+		k := contentsToDelete[i]
+		// Remove one content node after the other.
+		node.Content = append(node.Content[:k], node.Content[k+1:]...)
+	}
+
+	// Finally set comments.
+	for i := 0; i < len(node.Content); i += 2 {
+		key := node.Content[i].Value
+		comment, ok := comments[key]
+		// Only if there is a comment and another comment is not already set.
+		if ok && comment != "" && node.Content[i].HeadComment == "" {
+			node.Content[i].HeadComment = wordwrap.WrapString(comment, 80)
+		}
+
+		// And recurse at the same time.
+		setYAMLComments(node.Content[i+1])
+	}
+}
+
+func writeYAML(node *yaml.Node, output string) errors.E {
+	setYAMLComments(node)
 
 	buffer := bytes.Buffer{}
 
