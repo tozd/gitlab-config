@@ -99,33 +99,37 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descr
 				// Making sure it is an integer.
 				sharedWithGroup["group_id"] = int(sharedWithGroup["group_id"].(float64))
 
+				// Add comments for keys. We process these keys before writing YAML out.
 				// Only retain those keys which can be edited through the share API
 				// (which are those available in descriptions).
 				for key := range sharedWithGroup {
-					_, ok := shareDescriptions[key]
+					description, ok := shareDescriptions[key]
 					if !ok {
 						delete(sharedWithGroup, key)
+					} else {
+						sharedWithGroup["comment:"+key] = description
 					}
 				}
 
-				// Add comments for keys. We process these keys before writing YAML out.
-				for key := range sharedWithGroup {
-					sharedWithGroup["comment:"+key] = shareDescriptions[key]
-				}
 				// Add comment for the sequence item itself.
-				sharedWithGroup["comment:"] = groupFullPath
+				if groupFullPath != nil {
+					sharedWithGroup["comment:"] = groupFullPath
+				}
 
 				configuration.SharedWithGroups = append(configuration.SharedWithGroups, sharedWithGroup)
 			}
 		}
 	}
 
+	// Add comments for keys. We process these keys before writing YAML out.
 	// Only retain those keys which can be edited through the edit API
 	// (which are those available in descriptions).
 	for key := range project {
-		_, ok := descriptions[key]
+		description, ok := descriptions[key]
 		if !ok {
 			delete(project, key)
+		} else {
+			project["comment:"+key] = description
 		}
 	}
 
@@ -142,11 +146,6 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, descr
 		} else if container_expiration_policy["name_regex"] != nil && container_expiration_policy["name_regex_delete"] != nil {
 			delete(container_expiration_policy, "name_regex")
 		}
-	}
-
-	// Add comments for keys. We process these keys before writing YAML out.
-	for key := range project {
-		project["comment:"+key] = descriptions[key]
 	}
 
 	configuration.Project = project
