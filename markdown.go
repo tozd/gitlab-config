@@ -197,7 +197,7 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 	return extractTable.Result, nil
 }
 
-func parseProjectTable(input []byte) (map[string]string, errors.E) {
+func parseProjectDocumentation(input []byte) (map[string]string, errors.E) {
 	return parseTable(input, "Edit project", func(key string) string {
 		switch key {
 		case "public_builds":
@@ -223,11 +223,11 @@ func parseProjectTable(input []byte) (map[string]string, errors.E) {
 	})
 }
 
-func parseShareTable(input []byte) (map[string]string, errors.E) {
+func parseShareDocumentation(input []byte) (map[string]string, errors.E) {
 	return parseTable(input, "Share project with group", nil)
 }
 
-func parseLabelsTable(input []byte) (map[string]string, errors.E) {
+func parseLabelsDocumentation(input []byte) (map[string]string, errors.E) {
 	newDescriptions, err := parseTable(input, "Create a new label", nil)
 	if err != nil {
 		return nil, err

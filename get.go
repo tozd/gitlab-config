@@ -316,7 +316,7 @@ func getProjectConfigDescriptions() (map[string]string, errors.E) {
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get project configuration descriptions`)
 	}
-	return parseProjectTable(data)
+	return parseProjectDocumentation(data)
 }
 
 func getShareProjectDescriptions() (map[string]string, errors.E) {
@@ -324,7 +324,7 @@ func getShareProjectDescriptions() (map[string]string, errors.E) {
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get share project descriptions`)
 	}
-	return parseShareTable(data)
+	return parseShareDocumentation(data)
 }
 
 func getProjectLabelsDescriptions() (map[string]string, errors.E) {
@@ -332,7 +332,7 @@ func getProjectLabelsDescriptions() (map[string]string, errors.E) {
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get project labels descriptions`)
 	}
-	return parseLabelsTable(data)
+	return parseLabelsDocumentation(data)
 }
 
 func saveConfiguration(configuration *Configuration, output string) errors.E {
