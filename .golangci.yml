@@ -98,3 +98,6 @@ issues:
     - path: markdown_test\.go
       linters:
         - lll
+    - path: git_test\.go
+      linters:
+        - exhaustivestruct
