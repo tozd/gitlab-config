@@ -157,6 +157,121 @@ func updateForkedFromProject(client *gitlab.Client, projectID string, configurat
 	return nil
 }
 
+// Labels without the ID field are matched to existing labels based on the name.
+// Unmatched labels are created as new. Save configuration with label IDs to be able
+// to rename existing labels.
+func updateLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	options := &gitlab.ListLabelsOptions{
+		ListOptions: gitlab.ListOptions{
+			PerPage: maxGitLabPageSize,
+			Page:    1,
+		},
+		IncludeAncestorGroups: gitlab.Bool(false),
+	}
+
+	labels := []*gitlab.Label{}
+
+	for {
+		ls, response, err := client.Labels.ListLabels(projectID, options)
+		if err != nil {
+			return errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
+		}
+
+		labels = append(labels, ls...)
+
+		if response.NextPage == 0 {
+			break
+		}
+
+		options.Page = response.NextPage
+	}
+
+	existingLabels := mapset.NewThreadUnsafeSet()
+	namesToIDs := map[string]int{}
+	for _, label := range labels {
+		namesToIDs[label.Name] = label.ID
+		existingLabels.Add(label.ID)
+	}
+
+	// Set label IDs if a matching existing label can be found.
+	for i, label := range configuration.Labels {
+		// Is label ID already set?
+		id, ok := label["id"]
+		if ok {
+			// If ID is provided, the label should exist.
+			id := id.(int)
+			if !existingLabels.Contains(id) {
+				return errors.Errorf(`label in configuration with ID %d does not exist`, id)
+			}
+			continue
+		}
+
+		name, ok := label["name"]
+		if !ok {
+			return errors.Errorf(`label in configuration at index %d does not have a name`, i)
+		}
+		id, ok = namesToIDs[name.(string)]
+		if ok {
+			label["id"] = id
+		}
+	}
+
+	wantedLabels := mapset.NewThreadUnsafeSet()
+	for _, label := range configuration.Labels {
+		id, ok := label["id"]
+		if ok {
+			wantedLabels.Add(id.(int))
+		}
+	}
+
+	extraLabels := existingLabels.Difference(wantedLabels)
+	for _, extraLabel := range extraLabels.ToSlice() {
+		labelID := extraLabel.(int)
+		// TODO: Use go-gitlab's function once it is updated to new API.
+		//       See: https://github.com/xanzy/go-gitlab/issues/1321
+		u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(projectID), labelID)
+		req, err := client.NewRequest(http.MethodDelete, u, nil, nil)
+		if err != nil {
+			return errors.Wrapf(err, `failed to delete label %d`, labelID)
+		}
+		_, err = client.Do(req, nil)
+		if err != nil {
+			return errors.Wrapf(err, `failed to delete label %d`, labelID)
+		}
+	}
+
+	for _, label := range configuration.Labels {
+		id, ok := label["id"]
+		if !ok {
+			u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(projectID))
+			req, err := client.NewRequest(http.MethodPost, u, label, nil)
+			if err != nil {
+				// We made sure above that all labels in configuration without label ID have name.
+				return errors.Wrapf(err, `failed to create label "%s"`, label["name"].(string))
+			}
+			_, err = client.Do(req, nil)
+			if err != nil {
+				// We made sure above that all labels in configuration without label ID have name.
+				return errors.Wrapf(err, `failed to create label "%s"`, label["name"].(string))
+			}
+		} else {
+			// We made sure above that all labels in configuration with label ID exist.
+			id := id.(int)
+			u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(projectID), id)
+			req, err := client.NewRequest(http.MethodPut, u, label, nil)
+			if err != nil {
+				return errors.Wrapf(err, `failed to update label %d`, id)
+			}
+			_, err = client.Do(req, nil)
+			if err != nil {
+				return errors.Wrapf(err, `failed to update label "%d`, id)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (c *SetCommand) Run(globals *Globals) errors.E {
 	if globals.ChangeTo != "" {
 		err := os.Chdir(globals.ChangeTo)
@@ -212,6 +327,11 @@ func (c *SetCommand) Run(globals *Globals) errors.E {
 	}
 
 	errE = updateForkedFromProject(client, c.Project, &configuration)
+	if errE != nil {
+		return errE
+	}
+
+	errE = updateLabels(client, c.Project, &configuration)
 	if errE != nil {
 		return errE
 	}
