@@ -142,6 +142,21 @@ func updateSharedWithGroups(client *gitlab.Client, projectID string, configurati
 	return nil
 }
 
+func updateForkedFromProject(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	if configuration.ForkedFromProject == 0 {
+		_, err := client.Projects.DeleteProjectForkRelation(projectID)
+		if err != nil {
+			return errors.Wrap(err, `failed to delete fork relation`)
+		}
+	} else {
+		_, _, err := client.Projects.CreateProjectForkRelation(projectID, configuration.ForkedFromProject)
+		if err != nil {
+			return errors.Wrapf(err, `failed to create fork relation to project %d`, configuration.ForkedFromProject)
+		}
+	}
+	return nil
+}
+
 func (c *SetCommand) Run(globals *Globals) errors.E {
 	if globals.ChangeTo != "" {
 		err := os.Chdir(globals.ChangeTo)
@@ -192,6 +207,11 @@ func (c *SetCommand) Run(globals *Globals) errors.E {
 	}
 
 	errE = updateSharedWithGroups(client, c.Project, &configuration)
+	if errE != nil {
+		return errE
+	}
+
+	errE = updateForkedFromProject(client, c.Project, &configuration)
 	if errE != nil {
 		return errE
 	}

@@ -2,10 +2,11 @@ module gitlab.com/tozd/gitlab/config
 
 go 1.17
 
-replace github.com/xanzy/go-gitlab v0.52.2 => github.com/mitar/go-gitlab v0.52.3-0.20211215102310-6905edee15f9
+replace github.com/xanzy/go-gitlab v0.52.2 => github.com/mitar/go-gitlab v0.52.3-0.20211215113439-f4c5f9b00ed6
 
 require (
 	github.com/alecthomas/kong v0.2.21-0.20211213010013-ece1f6d8cb8a
+	github.com/deckarep/golang-set v1.7.1
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/mitchellh/go-wordwrap v1.0.1
@@ -22,7 +23,6 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
