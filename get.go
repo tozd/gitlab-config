@@ -27,6 +27,7 @@ const (
 
 // A reasonable subset of supported file extensions for avatar image.
 // See: https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/uploaders/avatar_uploader.rb
+// See: https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/file_type_detection.rb#L22
 var avatarFileExtensions = []string{
 	".png",
 	".jpg",
@@ -36,6 +37,8 @@ var avatarFileExtensions = []string{
 }
 
 // We do not use type=path for Output because we want a relative path.
+
+// GetCommand describes parameters for the get command.
 type GetCommand struct {
 	GitLab
 
@@ -43,6 +46,8 @@ type GetCommand struct {
 	Avatar string `short:"a" placeholder:"PATH" default:".gitlab-avatar.img" help:"Where to save the avatar to. File extension is set automatically. Default is \"${default}\"."` //nolint:lll
 }
 
+// checkAvatarExtension returns an error if the provided file extension ext
+// is not among allowed file extensions avatarFileExtensions.
 func checkAvatarExtension(ext string) error {
 	for _, valid := range avatarFileExtensions {
 		if valid == ext {
@@ -52,6 +57,9 @@ func checkAvatarExtension(ext string) error {
 	return errors.Errorf(`invalid avatar extension "%s"`, ext)
 }
 
+// formatDescriptions formats descriptions to be used a comment block before a
+// sequence of objects in YAML. The comment block describes fields of those
+// objects.
 func formatDescriptions(descriptions map[string]string) string {
 	keys := []string{}
 	for key := range descriptions {
@@ -66,6 +74,8 @@ func formatDescriptions(descriptions map[string]string) string {
 	return output
 }
 
+// getProjectConfig populates configuration struct with configuration available
+// from GitLab projects API endpoint.
 func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, configuration *Configuration) errors.E {
 	descriptions, errE := getProjectConfigDescriptions()
 	if errE != nil {
@@ -219,6 +229,8 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 	return nil
 }
 
+// getProjectLabels populates configuration struct with configuration available
+// from GitLab labels API endpoint.
 func getProjectLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
 	descriptions, errE := getProjectLabelsDescriptions()
 	if errE != nil {
@@ -288,6 +300,7 @@ func getProjectLabels(client *gitlab.Client, projectID string, configuration *Co
 	return nil
 }
 
+// downloadFile downloads a file from url URL.
 func downloadFile(url string) ([]byte, errors.E) {
 	client, _ := gitlab.NewClient("")
 
@@ -311,6 +324,8 @@ func downloadFile(url string) ([]byte, errors.E) {
 	return buffer.Bytes(), nil
 }
 
+// getProjectConfigDescriptions obtains description of fields used to describe
+// an individual project from GitLab's documentation for projects API endpoint.
 func getProjectConfigDescriptions() (map[string]string, errors.E) {
 	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/projects.md")
 	if err != nil {
@@ -319,6 +334,8 @@ func getProjectConfigDescriptions() (map[string]string, errors.E) {
 	return parseProjectDocumentation(data)
 }
 
+// getShareProjectDescriptions obtains description of fields used to describe payload for
+// sharing a project with a group from GitLab's documentation for projects API endpoint.
 func getShareProjectDescriptions() (map[string]string, errors.E) {
 	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/projects.md")
 	if err != nil {
@@ -327,6 +344,8 @@ func getShareProjectDescriptions() (map[string]string, errors.E) {
 	return parseShareDocumentation(data)
 }
 
+// getProjectLabelsDescriptions obtains description of fields used to describe
+// an individual label from GitLab's documentation for labels API endpoint.
 func getProjectLabelsDescriptions() (map[string]string, errors.E) {
 	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/labels.md")
 	if err != nil {
@@ -335,6 +354,10 @@ func getProjectLabelsDescriptions() (map[string]string, errors.E) {
 	return parseLabelsDocumentation(data)
 }
 
+// saveConfiguration saves configuration to output file path in YAML.
+// output can be "-" to save it to stdout.
+//
+// Saved YAML contains configuration comments.
 func saveConfiguration(configuration *Configuration, output string) errors.E {
 	var node yaml.Node
 	err := (&node).Encode(configuration)
@@ -344,6 +367,8 @@ func saveConfiguration(configuration *Configuration, output string) errors.E {
 	return writeYAML(&node, output)
 }
 
+// setYAMLComments modifies YAML node by moving comments in children nodes which have
+// "comment:" prefix in object field names to corresponding data fields (and their nodes).
 func setYAMLComments(node *yaml.Node) {
 	if node.Kind != yaml.MappingNode {
 		for _, content := range node.Content {
@@ -391,6 +416,10 @@ func setYAMLComments(node *yaml.Node) {
 	}
 }
 
+// writeYAML writes YAML node to output file path.
+// output can be "-" to save it to stdout.
+//
+// Comments in the YAML node are written out as well.
 func writeYAML(node *yaml.Node, output string) errors.E {
 	setYAMLComments(node)
 
@@ -419,6 +448,7 @@ func writeYAML(node *yaml.Node, output string) errors.E {
 	return nil
 }
 
+// Run runs the get command.
 func (c *GetCommand) Run(globals *Globals) errors.E {
 	if globals.ChangeTo != "" {
 		err := os.Chdir(globals.ChangeTo)

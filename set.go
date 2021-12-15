@@ -15,12 +15,16 @@ import (
 )
 
 // We do not use type=path for Input because we want a relative path.
+
+// SetCommand describes parameters for the set command.
 type SetCommand struct {
 	GitLab
 
 	Input string `short:"i" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to load the configuration from. Can be \"-\" for stdin. Default is \"${default}\"."` //nolint:lll
 }
 
+// updateProjectConfig updates GitLab project's configuration using GitLab projects API endpoint
+// based on the configuration struct.
 func updateProjectConfig(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
 	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
 
@@ -61,6 +65,8 @@ func updateProjectConfig(client *gitlab.Client, projectID string, configuration 
 	return nil
 }
 
+// updateAvatar updates GitLab project's avatar using GitLab projects API endpoint
+// based on the configuration struct.
 func updateAvatar(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
 	if configuration.Avatar == "" {
 		u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
@@ -92,6 +98,13 @@ func updateAvatar(client *gitlab.Client, projectID string, configuration *Config
 	return nil
 }
 
+// updateSharedWithGroups updates GitLab project's sharing with groups using GitLab projects API endpoint
+// based on the configuration struct.
+//
+// It first removes all groups for which the project should not be shared anymore with,
+// and then updates or adds groups for which the project should be shared with.
+// When updating an existing group it briefly removes the group and readds it with
+// new configuration.
 func updateSharedWithGroups(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
 	project, _, err := client.Projects.GetProject(projectID, nil)
 	if err != nil {
@@ -148,6 +161,8 @@ func updateSharedWithGroups(client *gitlab.Client, projectID string, configurati
 	return nil
 }
 
+// updateForkedFromProject updates GitLab project's fork relation using GitLab projects API endpoint
+// based on the configuration struct.
 func updateForkedFromProject(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
 	project, _, err := client.Projects.GetProject(projectID, nil)
 	if err != nil {
@@ -179,6 +194,9 @@ func updateForkedFromProject(client *gitlab.Client, projectID string, configurat
 	return nil
 }
 
+// updateLabels updates GitLab project's labels using GitLab labels API endpoint
+// based on the configuration struct.
+//
 // Labels without the ID field are matched to existing labels based on the name.
 // Unmatched labels are created as new. Save configuration with label IDs to be able
 // to rename existing labels.
@@ -298,6 +316,7 @@ func updateLabels(client *gitlab.Client, projectID string, configuration *Config
 	return nil
 }
 
+// Run runs the set command.
 func (c *SetCommand) Run(globals *Globals) errors.E {
 	if globals.ChangeTo != "" {
 		err := os.Chdir(globals.ChangeTo)

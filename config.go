@@ -1,5 +1,14 @@
 package config
 
+// Configuration represents GitLab's project configuration supported.
+//
+// Some fields have type map[string]interface{} because they are passed almost as-is
+// to GitLab API. This allows for potential customization in behavior beyond what
+// is currently supported by this package.
+//
+// All fields with prefix "comment:" are moved into YAML comments before they are
+// written out. Similarly, fields which have "Comment" suffix are moved into
+// YAML comments and are not used for project configuration.
 type Configuration struct {
 	Project                  map[string]interface{}
 	Avatar                   string                   `json:",omitempty" yaml:",omitempty"`

@@ -12,16 +12,22 @@ import (
 	"gitlab.com/tozd/go/errors"
 )
 
+// walker is the expected number of columns to find in a table.
 const tableColumns = 4
 
+// walker interface provides a Walker to be passed to goldmark.ast.Walk function.
 type walker interface {
 	Walker(n ast.Node, entering bool) (ast.WalkStatus, error)
 }
 
+// chainVisitor is a visitor which runs a series of Moves visitors one after
+// the other, starting with the next one when the previous one stops,
+// starting on the same node the previous one stopped.
 type chainVisitor struct {
 	Moves []walker
 }
 
+// Walker implements walker interface for chainVisitor.
 func (v *chainVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if len(v.Moves) == 0 {
 		return ast.WalkStop, nil
@@ -37,11 +43,14 @@ func (v *chainVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus, error)
 	return status, nil
 }
 
+// findHeadingVisitor is a visitor which stops when it finds the first heading
+// with text contents equal to Heading.
 type findHeadingVisitor struct {
 	Source  []byte
 	Heading string
 }
 
+// Walker implements walker interface for findHeadingVisitor.
 func (v *findHeadingVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
@@ -52,10 +61,13 @@ func (v *findHeadingVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus, 
 	return ast.WalkContinue, nil
 }
 
+// findFirstVisitor is a visitor which stops when it finds the first node with
+// kind matching Kind.
 type findFirstVisitor struct {
 	Kind ast.NodeKind
 }
 
+// Walker implements walker interface for findFirstVisitor.
 func (v *findFirstVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
@@ -66,6 +78,20 @@ func (v *findFirstVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus, er
 	return ast.WalkContinue, nil
 }
 
+// extractTableVisitor is a visitor which extracts data from a table given
+// CheckHeader, Key, and Value functions. Extracted data is available in
+// Result field after walking is done. It expects that the node it starts
+// walking on is of kind KindTable.
+//
+// CheckHeader gets a slice of cell values for the header row and it should
+// return an error if header is invalid.
+//
+// Key gets a slice of cell values for the row and it should return a string
+// used as the extracted key for the row. If it returns an empty string, the
+// row is skipped.
+//
+// Value gets a slice of cell values for the row and it should return a string
+// used as the extracted value for the row.
 type extractTableVisitor struct {
 	Source      []byte
 	CheckHeader func([]string) errors.E
@@ -75,6 +101,7 @@ type extractTableVisitor struct {
 	currentRow  []string
 }
 
+// Walker implements walker interface for extractTableVisitor.
 func (v *extractTableVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering || n.Kind() != extensionAst.KindTable {
 		return ast.WalkStop, errors.New("not starting at a table")
@@ -83,6 +110,8 @@ func (v *extractTableVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus,
 	return ast.WalkStop, err
 }
 
+// tableWalker is a sub-walker which walks an individual table node only (and its children nodes).
+// It does the extraction.
 func (v *extractTableVisitor) tableWalker(n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering && (n.Kind() == extensionAst.KindTableHeader || n.Kind() == extensionAst.KindTableRow) {
 		v.currentRow = []string{}
@@ -117,6 +146,10 @@ func (v *extractTableVisitor) tableWalker(n ast.Node, entering bool) (ast.WalkSt
 	return ast.WalkContinue, nil
 }
 
+// parseTable is a halper function which parses Markdown input and find the first table after
+// the heading, which then converts into a map between fields (attributes) and their descriptions.
+//
+// keyMapper is used to optionally (when not nil) further transform found fields.
 func parseTable(input []byte, heading string, keyMapper func(string) string) (map[string]string, errors.E) {
 	p := parser.NewParser(
 		parser.WithBlockParsers(parser.DefaultBlockParsers()...),
@@ -148,10 +181,13 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 			if len(row) != tableColumns {
 				return "", errors.Errorf("invalid row: %+v", row)
 			}
+			// We skip deprecated fields.
 			if strings.Contains(row[3], "(Deprecated") {
 				return "", nil
 			}
 			key := row[0]
+			// We do not care for which plan the field is.
+			// TODO: Remove other possible plan suffixes, too.
 			key = strings.TrimSuffix(key, " (PREMIUM)")
 			if key == "id" {
 				// This is a documented parameter for project ID.
@@ -197,6 +233,9 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 	return extractTable.Result, nil
 }
 
+// parseProjectDocumentation parses GitLab's documentation in Markdown for
+// projects API endpoint and extracts description of fields used to describe
+// an individual project.
 func parseProjectDocumentation(input []byte) (map[string]string, errors.E) {
 	return parseTable(input, "Edit project", func(key string) string {
 		switch key {
@@ -223,10 +262,16 @@ func parseProjectDocumentation(input []byte) (map[string]string, errors.E) {
 	})
 }
 
+// parseShareDocumentation parses GitLab's documentation in Markdown for
+// projects API endpoint and extracts description of fields used to describe
+// payload for sharing a project with a group.
 func parseShareDocumentation(input []byte) (map[string]string, errors.E) {
 	return parseTable(input, "Share project with group", nil)
 }
 
+// parseLabelsDocumentation parses GitLab's documentation in Markdown for
+// labels API endpoint and extracts description of fields used to describe
+// an individual label.
 func parseLabelsDocumentation(input []byte) (map[string]string, errors.E) {
 	newDescriptions, err := parseTable(input, "Create a new label", nil)
 	if err != nil {
