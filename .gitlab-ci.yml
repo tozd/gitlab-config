@@ -256,7 +256,7 @@ sync_config:
     entrypoint: [""]
 
   script:
-    - /gitlab-config
+    - /gitlab-config set
 
   rules:
     # Protected tags start with "v".
