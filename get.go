@@ -31,7 +31,7 @@ var avatarFileExtensions = []string{
 }
 
 // We do not use type=path for Output because we want a relative path.
-type SaveCommand struct {
+type GetCommand struct {
 	GitLab
 
 	Output string `short:"o" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."`
@@ -71,14 +71,14 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 
 	req, err := client.NewRequest(http.MethodGet, u, nil, nil)
 	if err != nil {
-		return errors.Wrap(err, `failed to get GitLab project`)
+		return errors.Wrap(err, `failed to get project`)
 	}
 
 	project := map[string]interface{}{}
 
 	_, err = client.Do(req, &project)
 	if err != nil {
-		return errors.Wrap(err, `failed to get GitLab project`)
+		return errors.Wrap(err, `failed to get project`)
 	}
 
 	// We use a separate top-level configuration for avatar instead.
@@ -94,7 +94,7 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 		//       See: https://gitlab.com/gitlab-org/gitlab/-/issues/25498
 		avatar, err := downloadFile(avatarUrl)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get GitLab project avatar from "%s"`, avatarUrl)
+			return errors.Wrapf(err, `failed to get project avatar from "%s"`, avatarUrl)
 		}
 		avatarPath = strings.TrimSuffix(avatarPath, path.Ext(avatarPath)) + avatarExt
 		err = os.WriteFile(avatarPath, avatar, 0o644)
@@ -214,14 +214,14 @@ func getProjectLabels(client *gitlab.Client, projectID string, configuration *Co
 	for {
 		req, err := client.NewRequest(http.MethodGet, u, options, nil)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get GitLab project labels, page %d`, options.Page)
+			return errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
 		}
 
 		labels := []map[string]interface{}{}
 
 		response, err := client.Do(req, &labels)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get GitLab project labels, page %d`, options.Page)
+			return errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
 		}
 
 		if len(labels) == 0 {
@@ -282,7 +282,7 @@ func downloadFile(url string) ([]byte, errors.E) {
 func getProjectConfigDescriptions() (map[string]string, errors.E) {
 	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/projects.md")
 	if err != nil {
-		return nil, errors.Wrap(err, `failed to get GitLab project configuration descriptions`)
+		return nil, errors.Wrap(err, `failed to get project configuration descriptions`)
 	}
 	return parseProjectTable(data)
 }
@@ -290,7 +290,7 @@ func getProjectConfigDescriptions() (map[string]string, errors.E) {
 func getShareProjectDescriptions() (map[string]string, errors.E) {
 	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/projects.md")
 	if err != nil {
-		return nil, errors.Wrap(err, `failed to get GitLab share project descriptions`)
+		return nil, errors.Wrap(err, `failed to get share project descriptions`)
 	}
 	return parseShareTable(data)
 }
@@ -298,7 +298,7 @@ func getShareProjectDescriptions() (map[string]string, errors.E) {
 func getProjectLabelsDescriptions() (map[string]string, errors.E) {
 	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/labels.md")
 	if err != nil {
-		return nil, errors.Wrap(err, `failed to get GitLab project labels descriptions`)
+		return nil, errors.Wrap(err, `failed to get project labels descriptions`)
 	}
 	return parseLabelsTable(data)
 }
@@ -387,7 +387,7 @@ func writeYAML(node *yaml.Node, output string) errors.E {
 	return nil
 }
 
-func (c *SaveCommand) Run(globals *Globals) errors.E {
+func (c *GetCommand) Run(globals *Globals) errors.E {
 	if globals.ChangeTo != "" {
 		err := os.Chdir(globals.ChangeTo)
 		if err != nil {

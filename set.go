@@ -14,7 +14,7 @@ import (
 )
 
 // We do not use type=path for Input because we want a relative path.
-type UpdateCommand struct {
+type SetCommand struct {
 	GitLab
 
 	Input string `short:"i" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to load the configuration from. Can be \"-\" for stdin. Default is \"${default}\"."`
@@ -88,7 +88,7 @@ func updateAvatar(client *gitlab.Client, projectID string, configuration *Config
 	return nil
 }
 
-func (c *UpdateCommand) Run(globals *Globals) errors.E {
+func (c *SetCommand) Run(globals *Globals) errors.E {
 	if globals.ChangeTo != "" {
 		err := os.Chdir(globals.ChangeTo)
 		if err != nil {
