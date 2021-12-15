@@ -72,6 +72,7 @@ func TestParseProjectDocumentation(t *testing.T) {
 		"service_desk_enabled":                             "Enable or disable Service Desk feature. Type: boolean",
 		"shared_runners_enabled":                           "Enable shared runners for this project. Type: boolean",
 		"snippets_access_level":                            "One of disabled, private, or enabled. Type: string",
+		"squash_commit_template":                           "Template used to create squash commit message in merge requests. (Introduced in GitLab 14.6.) Type: string",
 		"squash_option":                                    "One of never, always, default_on, or default_off. Type: string",
 		"suggestion_commit_message":                        "The commit message used to apply merge request suggestions. Type: string",
 		"topics":                                           "The list of topics for the project. This replaces any existing topics that are already added to the project. (Introduced in GitLab 14.0.) Type: array",
