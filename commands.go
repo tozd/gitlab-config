@@ -19,5 +19,6 @@ type Globals struct {
 type Commands struct {
 	Globals
 
-	Save SaveCommand `cmd:"" help:"Save GitLab project's configuration to a local file."`
+	Save   SaveCommand   `cmd:"" help:"Save GitLab project's configuration to a local file."`
+	Update UpdateCommand `cmd:"" help:"Update GitLab project's configuration based on a local file."`
 }

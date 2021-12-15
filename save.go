@@ -181,6 +181,9 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 		} else if container_expiration_policy["name_regex"] != nil && container_expiration_policy["name_regex_delete"] != nil {
 			delete(container_expiration_policy, "name_regex")
 		}
+
+		// It is not an editable key.
+		delete(container_expiration_policy, "next_run_at")
 	}
 
 	// Add comments for keys. We process these keys before writing YAML out.
