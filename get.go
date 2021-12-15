@@ -17,8 +17,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// See: https://docs.gitlab.com/ee/api/#offset-based-pagination
-const maxGitLabPageSize = 100
+const (
+	// See: https://docs.gitlab.com/ee/api/#offset-based-pagination
+	maxGitLabPageSize = 100
+	maxCommentWidth   = 80
+	fileMode          = 0o600
+	yamlIndent        = 2
+)
 
 // A reasonable subset of supported file extensions for avatar image.
 // See: https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/uploaders/avatar_uploader.rb
@@ -34,8 +39,8 @@ var avatarFileExtensions = []string{
 type GetCommand struct {
 	GitLab
 
-	Output string `short:"o" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."`
-	Avatar string `short:"a" placeholder:"PATH" default:".gitlab-avatar.img" help:"Where to save the avatar to. File extension is set automatically. Default is \"${default}\"."`
+	Output string `short:"o" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."`        //nolint:lll
+	Avatar string `short:"a" placeholder:"PATH" default:".gitlab-avatar.img" help:"Where to save the avatar to. File extension is set automatically. Default is \"${default}\"."` //nolint:lll
 }
 
 func checkAvatarExtension(ext string) error {
@@ -56,7 +61,7 @@ func formatDescriptions(descriptions map[string]string) string {
 	output := ""
 	for _, key := range keys {
 		description := key + ": " + descriptions[key] + "\n"
-		output += wordwrap.WrapString(description, 80)
+		output += wordwrap.WrapString(description, maxCommentWidth)
 	}
 	return output
 }
@@ -82,22 +87,25 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 	}
 
 	// We use a separate top-level configuration for avatar instead.
-	avatarUrl, ok := project["avatar_url"]
-	if ok && avatarUrl != nil {
-		avatarUrl := avatarUrl.(string)
-		avatarExt := path.Ext(avatarUrl)
+	avatarURL, ok := project["avatar_url"]
+	if ok && avatarURL != nil {
+		avatarURL, ok := avatarURL.(string) //nolint:govet
+		if !ok {
+			return errors.New(`invalid "avatar_url"`)
+		}
+		avatarExt := path.Ext(avatarURL)
 		err := checkAvatarExtension(avatarExt)
 		if err != nil {
-			return errors.Wrapf(err, `invalid avatar URL "%s"`, avatarUrl)
+			return errors.Wrapf(err, `invalid "avatar_url": %s`, avatarURL)
 		}
 		// TODO: Make this work for private avatars, too.
 		//       See: https://gitlab.com/gitlab-org/gitlab/-/issues/25498
-		avatar, err := downloadFile(avatarUrl)
+		avatar, err := downloadFile(avatarURL)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get project avatar from "%s"`, avatarUrl)
+			return errors.Wrapf(err, `failed to get project avatar from "%s"`, avatarURL)
 		}
 		avatarPath = strings.TrimSuffix(avatarPath, path.Ext(avatarPath)) + avatarExt
-		err = os.WriteFile(avatarPath, avatar, 0o644)
+		err = os.WriteFile(avatarPath, avatar, fileMode)
 		if err != nil {
 			return errors.Wrapf(err, `failed to save avatar to "%s"`, avatarPath)
 		}
@@ -107,15 +115,21 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 	// We use a separate top-level configuration for shared with groups instead.
 	sharedWithGroups, ok := project["shared_with_groups"]
 	if ok && sharedWithGroups != nil {
-		sharedWithGroups := sharedWithGroups.([]interface{})
+		sharedWithGroups, ok := sharedWithGroups.([]interface{}) //nolint:govet
+		if !ok {
+			return errors.New(`invalid "shared_with_groups"`)
+		}
 		if len(sharedWithGroups) > 0 {
 			configuration.SharedWithGroups = []map[string]interface{}{}
 			shareDescriptions, err := getShareProjectDescriptions()
 			if err != nil {
 				return err
 			}
-			for _, sharedWithGroup := range sharedWithGroups {
-				sharedWithGroup := sharedWithGroup.(map[string]interface{})
+			for i, sharedWithGroup := range sharedWithGroups {
+				sharedWithGroup, ok := sharedWithGroup.(map[string]interface{})
+				if !ok {
+					return errors.Errorf(`invalid "shared_with_groups" at index %d`, i)
+				}
 				groupFullPath := sharedWithGroup["group_full_path"]
 				// Rename because share API has a different key than get project API.
 				sharedWithGroup["group_access"] = sharedWithGroup["group_access_level"]
@@ -125,7 +139,7 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 				// Only retain those keys which can be edited through the share API
 				// (which are those available in descriptions).
 				for key := range sharedWithGroup {
-					_, ok := shareDescriptions[key]
+					_, ok = shareDescriptions[key]
 					if !ok {
 						delete(sharedWithGroup, key)
 					}
@@ -145,14 +159,20 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 	// We use a separate top-level configuration for fork relationship.
 	forkedFromProject, ok := project["forked_from_project"]
 	if ok && forkedFromProject != nil {
-		forkedFromProject := forkedFromProject.(map[string]interface{})
+		forkedFromProject, ok := forkedFromProject.(map[string]interface{})
+		if !ok {
+			return errors.New(`invalid "forked_from_project"`)
+		}
 		forkID, ok := forkedFromProject["id"]
 		if ok {
 			// Making sure it is an integer.
 			configuration.ForkedFromProject = int(forkID.(float64))
 			forkPathWithNamespace := forkedFromProject["path_with_namespace"]
 			if forkPathWithNamespace != nil {
-				configuration.ForkedFromProjectComment = forkPathWithNamespace.(string)
+				configuration.ForkedFromProjectComment, ok = forkPathWithNamespace.(string)
+				if !ok {
+					return errors.New(`invalid "path_with_namespace" in "forked_from_project"`)
+				}
 			}
 		}
 	}
@@ -174,16 +194,19 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 
 	// Remove deprecated name_regex key in favor of new name_regex_delete.
 	if project["container_expiration_policy"] != nil {
-		container_expiration_policy := project["container_expiration_policy"].(map[string]interface{})
-		if container_expiration_policy["name_regex"] != nil && container_expiration_policy["name_regex_delete"] == nil {
-			container_expiration_policy["name_regex_delete"] = container_expiration_policy["name_regex"]
-			delete(container_expiration_policy, "name_regex")
-		} else if container_expiration_policy["name_regex"] != nil && container_expiration_policy["name_regex_delete"] != nil {
-			delete(container_expiration_policy, "name_regex")
+		policy, ok := project["container_expiration_policy"].(map[string]interface{})
+		if !ok {
+			return errors.New(`invalid "container_expiration_policy"`)
+		}
+		if policy["name_regex"] != nil && policy["name_regex_delete"] == nil {
+			policy["name_regex_delete"] = policy["name_regex"]
+			delete(policy, "name_regex")
+		} else if policy["name_regex"] != nil && policy["name_regex_delete"] != nil {
+			delete(policy, "name_regex")
 		}
 
 		// It is not an editable key.
-		delete(container_expiration_policy, "next_run_at")
+		delete(policy, "next_run_at")
 	}
 
 	// Add comments for keys. We process these keys before writing YAML out.
@@ -203,7 +226,7 @@ func getProjectLabels(client *gitlab.Client, projectID string, configuration *Co
 	}
 
 	u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(projectID))
-	options := &gitlab.ListLabelsOptions{
+	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,
 			Page:    1,
@@ -278,7 +301,8 @@ func downloadFile(url string) ([]byte, errors.E) {
 
 	buffer := bytes.Buffer{}
 
-	// TODO: On error this tries to parse the error response as API error, which fails for arbitrary HTTP requests. Do something else?
+	// TODO: Handle errors better.
+	//       On error this tries to parse the error response as API error, which fails for arbitrary HTTP requests.
 	_, err = client.Do(req, &buffer)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -312,12 +336,12 @@ func getProjectLabelsDescriptions() (map[string]string, errors.E) {
 }
 
 func saveConfiguration(configuration *Configuration, output string) errors.E {
-	node := &yaml.Node{}
-	err := node.Encode(configuration)
+	var node yaml.Node
+	err := (&node).Encode(configuration)
 	if err != nil {
 		return errors.Wrap(err, `cannot encode configuration`)
 	}
-	return writeYAML(node, output)
+	return writeYAML(&node, output)
 }
 
 func setYAMLComments(node *yaml.Node) {
@@ -352,7 +376,7 @@ func setYAMLComments(node *yaml.Node) {
 		comment, ok := comments[key]
 		// Only if there is a comment and another comment is not already set.
 		if ok && comment != "" && node.Content[i].HeadComment == "" {
-			node.Content[i].HeadComment = wordwrap.WrapString(comment, 80)
+			node.Content[i].HeadComment = wordwrap.WrapString(comment, maxCommentWidth)
 		}
 
 		// And recurse at the same time.
@@ -363,7 +387,7 @@ func setYAMLComments(node *yaml.Node) {
 	comment, ok := comments[""]
 	// Only if there is a comment and another comment is not already set.
 	if ok && comment != "" && node.HeadComment == "" {
-		node.HeadComment = wordwrap.WrapString(comment, 80)
+		node.HeadComment = wordwrap.WrapString(comment, maxCommentWidth)
 	}
 }
 
@@ -373,7 +397,7 @@ func writeYAML(node *yaml.Node, output string) errors.E {
 	buffer := bytes.Buffer{}
 
 	encoder := yaml.NewEncoder(&buffer)
-	encoder.SetIndent(2)
+	encoder.SetIndent(yamlIndent)
 	err := encoder.Encode(node)
 	if err != nil {
 		return errors.Wrap(err, `cannot marshal configuration`)
@@ -384,7 +408,7 @@ func writeYAML(node *yaml.Node, output string) errors.E {
 	}
 
 	if output != "-" {
-		err = os.WriteFile(kong.ExpandPath(output), buffer.Bytes(), 0o644)
+		err = os.WriteFile(kong.ExpandPath(output), buffer.Bytes(), fileMode)
 	} else {
 		_, err = os.Stdout.Write(buffer.Bytes())
 	}
@@ -416,7 +440,7 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 		return errors.Wrap(err, `failed to create GitLab API client instance`)
 	}
 
-	configuration := Configuration{}
+	var configuration Configuration
 
 	errE := getProjectConfig(client, c.Project, c.Avatar, &configuration)
 	if errE != nil {

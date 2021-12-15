@@ -18,7 +18,7 @@ import (
 type SetCommand struct {
 	GitLab
 
-	Input string `short:"i" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to load the configuration from. Can be \"-\" for stdin. Default is \"${default}\"."`
+	Input string `short:"i" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to load the configuration from. Can be \"-\" for stdin. Default is \"${default}\"."` //nolint:lll
 }
 
 func updateProjectConfig(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
@@ -28,7 +28,10 @@ func updateProjectConfig(client *gitlab.Client, projectID string, configuration 
 	containerExpirationPolicy, ok := configuration.Project["container_expiration_policy"]
 	if ok {
 		if containerExpirationPolicy != nil {
-			containerExpirationPolicy := containerExpirationPolicy.(map[string]interface{})
+			containerExpirationPolicy, ok := containerExpirationPolicy.(map[string]interface{}) //nolint:govet
+			if !ok {
+				return errors.New(`invalid "container_expiration_policy"`)
+			}
 			containerExpirationPolicy["name_regex"] = containerExpirationPolicy["name_regex_delete"]
 			configuration.Project["container_expiration_policy"] = containerExpirationPolicy
 		}
@@ -106,7 +109,7 @@ func updateSharedWithGroups(client *gitlab.Client, projectID string, configurati
 
 	extraGroups := existingGroups.Difference(wantedGroups)
 	for _, extraGroup := range extraGroups.ToSlice() {
-		groupID := extraGroup.(int)
+		groupID := extraGroup.(int) //nolint:errcheck
 		_, err := client.Projects.DeleteSharedProjectFromGroup(projectID, groupID)
 		if err != nil {
 			return errors.Wrapf(err, `failed to unshare group %d`, groupID)
@@ -115,8 +118,11 @@ func updateSharedWithGroups(client *gitlab.Client, projectID string, configurati
 
 	u := fmt.Sprintf("projects/%s/share", gitlab.PathEscape(projectID))
 
-	for _, group := range configuration.SharedWithGroups {
-		groupID := group["group_id"].(int)
+	for i, group := range configuration.SharedWithGroups {
+		groupID, ok := group["group_id"].(int)
+		if !ok {
+			return errors.Errorf(`invalid "id" in "shared_with_groups" at index %d`, i)
+		}
 		group["group_id"] = groupID
 
 		// If project is already shared with this group, we have to
@@ -177,7 +183,7 @@ func updateForkedFromProject(client *gitlab.Client, projectID string, configurat
 // Unmatched labels are created as new. Save configuration with label IDs to be able
 // to rename existing labels.
 func updateLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
-	options := &gitlab.ListLabelsOptions{
+	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,
 			Page:    1,
@@ -215,7 +221,10 @@ func updateLabels(client *gitlab.Client, projectID string, configuration *Config
 		id, ok := label["id"]
 		if ok {
 			// If ID is provided, the label should exist.
-			id := id.(int)
+			id, ok := id.(int) //nolint:govet
+			if !ok {
+				return errors.Errorf(`invalid "id" in "labels" at index %d`, i)
+			}
 			if !existingLabels.Contains(id) {
 				return errors.Errorf(`label in configuration with ID %d does not exist`, id)
 			}
@@ -242,7 +251,7 @@ func updateLabels(client *gitlab.Client, projectID string, configuration *Config
 
 	extraLabels := existingLabels.Difference(wantedLabels)
 	for _, extraLabel := range extraLabels.ToSlice() {
-		labelID := extraLabel.(int)
+		labelID := extraLabel.(int) //nolint:errcheck
 		// TODO: Use go-gitlab's function once it is updated to new API.
 		//       See: https://github.com/xanzy/go-gitlab/issues/1321
 		u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(projectID), labelID)
@@ -271,8 +280,9 @@ func updateLabels(client *gitlab.Client, projectID string, configuration *Config
 				return errors.Wrapf(err, `failed to create label "%s"`, label["name"].(string))
 			}
 		} else {
-			// We made sure above that all labels in configuration with label ID exist.
-			id := id.(int)
+			// We made sure above that all labels in configuration with label ID exist
+			// and that they are ints.
+			id := id.(int) //nolint:errcheck
 			u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(projectID), id)
 			req, err := client.NewRequest(http.MethodPut, u, label, nil)
 			if err != nil {
@@ -315,8 +325,7 @@ func (c *SetCommand) Run(globals *Globals) errors.E {
 		return errors.Wrapf(err, `cannot read configuration from "%s"`, c.Input)
 	}
 
-	configuration := Configuration{}
-
+	var configuration Configuration
 	err = yaml.Unmarshal(input, &configuration)
 	if err != nil {
 		return errors.Wrapf(err, `cannot unmarshal configuration from "%s"`, c.Input)

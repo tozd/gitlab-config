@@ -12,6 +12,8 @@ import (
 	"gitlab.com/tozd/go/errors"
 )
 
+const tableColumns = 4
+
 type walker interface {
 	Walker(n ast.Node, entering bool) (ast.WalkStatus, error)
 }
@@ -24,8 +26,8 @@ func (v *chainVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus, error)
 	if len(v.Moves) == 0 {
 		return ast.WalkStop, nil
 	}
-	walker := v.Moves[0]
-	status, err := walker.Walker(n, entering)
+	w := v.Moves[0]
+	status, err := w.Walker(n, entering)
 	if err != nil {
 		return status, err
 	} else if status == ast.WalkStop {
@@ -121,7 +123,7 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 		parser.WithInlineParsers(parser.DefaultInlineParsers()...),
 		parser.WithParagraphTransformers(parser.DefaultParagraphTransformers()...),
 		parser.WithParagraphTransformers(
-			util.Prioritized(extension.NewTableParagraphTransformer(), 200),
+			util.Prioritized(extension.NewTableParagraphTransformer(), 200), //nolint:gomnd
 		),
 		parser.WithASTTransformers(
 			util.Prioritized(extension.NewTableASTTransformer(), 0),
@@ -143,7 +145,7 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 			return nil
 		},
 		Key: func(row []string) (string, errors.E) {
-			if len(row) != 4 {
+			if len(row) != tableColumns {
 				return "", errors.Errorf("invalid row: %+v", row)
 			}
 			if strings.Contains(row[3], "(Deprecated") {
@@ -161,7 +163,7 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 			return key, nil
 		},
 		Value: func(row []string) (string, errors.E) {
-			if len(row) != 4 {
+			if len(row) != tableColumns {
 				return "", errors.Errorf("invalid row: %+v", row)
 			}
 			description := row[3]
@@ -173,7 +175,8 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 			}
 			return description + "Type: " + row[1], nil
 		},
-		Result: map[string]string{},
+		Result:     map[string]string{},
+		currentRow: nil,
 	}
 	visitor := &chainVisitor{
 		Moves: []walker{
