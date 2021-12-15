@@ -1,0 +1,129 @@
+project:
+  # Set whether or not merge requests can be merged with skipped jobs. Type: boolean
+  allow_merge_on_skipped_pipeline: null
+  # One of disabled, private or enabled. Type: string
+  analytics_access_level: enabled
+  # How many approvers should approve merge request by default. To configure
+  # approval rules, see Merge request approvals API. Type: integer
+  approvals_before_merge: 0
+  # Auto-cancel pending pipelines. This isn't a boolean, but enabled/disabled. Type:
+  # string
+  auto_cancel_pending_pipelines: enabled
+  # Auto Deploy strategy (continuous, manual, or timed_incremental). Type: string
+  auto_devops_deploy_strategy: continuous
+  # Enable Auto DevOps for this project. Type: boolean
+  auto_devops_enabled: false
+  # Set whether auto-closing referenced issues on default branch. Type: boolean
+  autoclose_referenced_issues: true
+  # Test coverage parsing. Type: string
+  build_coverage_regex: 'coverage: \d+\.\d+% of statements'
+  # The Git strategy. Defaults to fetch. Type: string
+  build_git_strategy: fetch
+  # The maximum amount of time, in seconds, that a job can run. Type: integer
+  build_timeout: 3600
+  # One of disabled, private, or enabled. Type: string
+  builds_access_level: enabled
+  # The path to CI configuration file. Type: string
+  ci_config_path: ""
+  # Default number of revisions for shallow cloning. Type: integer
+  ci_default_git_depth: 50
+  # When a new deployment job starts, skip older deployment jobs that are still
+  # pending. Type: boolean
+  ci_forward_deployment_enabled: true
+  # Update the image cleanup policy for this project. Accepts: cadence (string),
+  # keep_n (integer), older_than (string), name_regex (string), name_regex_delete
+  # (string), name_regex_keep (string), enabled (boolean). Type: hash
+  container_expiration_policy:
+    cadence: 1d
+    enabled: false
+    keep_n: 10
+    name_regex_delete: .*
+    name_regex_keep: null
+    older_than: 90d
+  # Set visibility of container registry, for this project, to one of disabled,
+  # private or enabled. Type: string
+  container_registry_access_level: enabled
+  # The default branch name. Type: string
+  default_branch: main
+  # Short project description. Type: string
+  description: Enable keeping GitLab project's config in a local file (e.g., in a git repository)
+  # Disable email notifications. Type: boolean
+  emails_disabled: false
+  # The classification label for the project. Type: string
+  external_authorization_classification_label: ""
+  # One of disabled, private, or enabled. Type: string
+  forking_access_level: enabled
+  # One of disabled, private, or enabled. Type: string
+  issues_access_level: enabled
+  # Default description for Issues. Description is parsed with GitLab Flavored
+  # Markdown. See Templates for issues and merge requests. Type: string
+  issues_template: null
+  # Disable or enable the ability to keep the latest artifact for this project.
+  # Type: boolean
+  keep_latest_artifact: true
+  # Enable LFS. Type: boolean
+  lfs_enabled: true
+  # Template used to create merge commit message in merge requests. (Introduced in
+  # GitLab 14.5.) Type: string
+  merge_commit_template: null
+  # Set the merge method used. Type: string
+  merge_method: merge
+  # One of disabled, private, or enabled. Type: string
+  merge_requests_access_level: enabled
+  # Default description for Merge Requests. Description is parsed with GitLab
+  # Flavored Markdown. See Templates for issues and merge requests. Type: string
+  merge_requests_template: null
+  # The name of the project. Type: string
+  name: config
+  # Set whether merge requests can only be merged when all the discussions are
+  # resolved. Type: boolean
+  only_allow_merge_if_all_discussions_are_resolved: false
+  # Set whether merge requests can only be merged with successful jobs. Type:
+  # boolean
+  only_allow_merge_if_pipeline_succeeds: false
+  # One of disabled, private, or enabled. Type: string
+  operations_access_level: disabled
+  # Enable or disable packages repository feature. Type: boolean
+  packages_enabled: true
+  # One of disabled, private, enabled, or public. Type: string
+  pages_access_level: enabled
+  # Custom repository name for the project. By default generated based on name.
+  # Type: string
+  path: config
+  # If true, jobs can be viewed by non-project members. Type: boolean
+  public_jobs: true
+  # Enable Delete source branch option by default for all new merge requests. Type:
+  # boolean
+  remove_source_branch_after_merge: true
+  # One of disabled, private, or enabled. Type: string
+  repository_access_level: enabled
+  # Allow users to request member access. Type: boolean
+  request_access_enabled: true
+  # Automatically resolve merge request diffs discussions on lines changed with a
+  # push. Type: boolean
+  resolve_outdated_diff_discussions: false
+  # Allow only users with the Maintainer role to pass user-defined variables when
+  # triggering a pipeline. For example when the pipeline is triggered in the UI,
+  # with the API, or by a trigger token. Type: boolean
+  restrict_user_defined_variables: false
+  # Enable or disable Service Desk feature. Type: boolean
+  service_desk_enabled: true
+  # Enable shared runners for this project. Type: boolean
+  shared_runners_enabled: true
+  # One of disabled, private, or enabled. Type: string
+  snippets_access_level: disabled
+  # Template used to create squash commit message in merge requests. (Introduced in
+  # GitLab 14.6.) Type: string
+  squash_commit_template: null
+  # One of never, always, default_on, or default_off. Type: string
+  squash_option: default_off
+  # The commit message used to apply merge request suggestions. Type: string
+  suggestion_commit_message: null
+  # The list of topics for the project. This replaces any existing topics that are
+  # already added to the project. (Introduced in GitLab 14.0.) Type: array
+  topics: []
+  # See project visibility level. Type: string
+  visibility: public
+  # One of disabled, private, or enabled. Type: string
+  wiki_access_level: disabled
+avatar: .gitlab-avatar.png
