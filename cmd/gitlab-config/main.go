@@ -1,4 +1,4 @@
-// Command gitlab-config enables keeping GitLab project's config in a git repository.
+// Command gitlab-config enables keeping GitLab project's config in a local file (e.g., in a git repository).
 //
 // You can provide some configuration options as environment variables.
 package main
@@ -24,7 +24,7 @@ func main() {
 	var commands config.Commands
 	ctx := kong.Parse(&commands,
 		kong.Description(
-			"Enable keeping GitLab project's config in a git repository.\n\n"+
+			"Enable keeping GitLab project's config in a local file (e.g., in a git repository).\n\n"+
 				"You can provide some configuration options as environment variables.",
 		),
 		kong.Vars{
