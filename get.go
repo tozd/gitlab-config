@@ -233,6 +233,9 @@ func getProjectLabels(client *gitlab.Client, projectID string, configuration *Co
 		}
 
 		for _, label := range labels {
+			// Making sure it is an integer.
+			label["id"] = int(label["id"].(float64))
+
 			// Only retain those keys which can be edited through the share API
 			// (which are those available in descriptions).
 			for key := range label {
@@ -251,6 +254,11 @@ func getProjectLabels(client *gitlab.Client, projectID string, configuration *Co
 
 		options.Page = response.NextPage
 	}
+
+	// We sort by label ID so that we have deterministic order.
+	sort.Slice(configuration.Labels, func(i, j int) bool {
+		return configuration.Labels[i]["id"].(int) < configuration.Labels[j]["id"].(int)
+	})
 
 	configuration.LabelsComment = formatDescriptions(descriptions)
 

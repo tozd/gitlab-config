@@ -225,5 +225,15 @@ func parseShareTable(input []byte) (map[string]string, errors.E) {
 }
 
 func parseLabelsTable(input []byte) (map[string]string, errors.E) {
-	return parseTable(input, "Create a new label", nil)
+	newDescriptions, err := parseTable(input, "Create a new label", nil)
+	if err != nil {
+		return nil, err
+	}
+	editDescriptions, err := parseTable(input, "Edit an existing label", nil)
+	if err != nil {
+		return nil, err
+	}
+	// We want to preserve label IDs so we copy edit description for it.
+	newDescriptions["id"] = editDescriptions["label_id"]
+	return newDescriptions, nil
 }
