@@ -149,10 +149,10 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 		forkID, ok := forkedFromProject["id"]
 		if ok {
 			// Making sure it is an integer.
-			configuration.ForkedFromProjectID = int(forkID.(float64))
+			configuration.ForkedFromProject = int(forkID.(float64))
 			forkPathWithNamespace := forkedFromProject["path_with_namespace"]
 			if forkPathWithNamespace != nil {
-				configuration.ForkedFromProjectPath = forkPathWithNamespace.(string)
+				configuration.ForkedFromProjectComment = forkPathWithNamespace.(string)
 			}
 		}
 	}
