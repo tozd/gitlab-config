@@ -54,14 +54,12 @@ func TestParseProjectDocumentation(t *testing.T) {
 		"mirror_overwrites_diverged_branches":              "Pull mirror overwrites diverged branches. Type: boolean",
 		"mirror_trigger_builds":                            "Pull mirroring triggers builds. Type: boolean",
 		"mirror_user_id":                                   "User responsible for all the activity surrounding a pull mirror event. (administrators only) Type: integer",
-		"name":                                             "The name of the project. Type: string",
 		"only_allow_merge_if_all_discussions_are_resolved": "Set whether merge requests can only be merged when all the discussions are resolved. Type: boolean",
 		"only_allow_merge_if_pipeline_succeeds":            "Set whether merge requests can only be merged with successful jobs. Type: boolean",
 		"only_mirror_protected_branches":                   "Only mirror protected branches. Type: boolean",
 		"operations_access_level":                          "One of disabled, private, or enabled. Type: string",
 		"packages_enabled":                                 "Enable or disable packages repository feature. Type: boolean",
 		"pages_access_level":                               "One of disabled, private, enabled, or public. Type: string",
-		"path":                                             "Custom repository name for the project. By default generated based on name. Type: string",
 		"public_jobs":                                      "If true, jobs can be viewed by non-project members. Type: boolean",
 		"remove_source_branch_after_merge":                 "Enable Delete source branch option by default for all new merge requests. Type: boolean",
 		"repository_access_level":                          "One of disabled, private, or enabled. Type: string",
@@ -76,7 +74,6 @@ func TestParseProjectDocumentation(t *testing.T) {
 		"squash_option":                                    "One of never, always, default_on, or default_off. Type: string",
 		"suggestion_commit_message":                        "The commit message used to apply merge request suggestions. Type: string",
 		"topics":                                           "The list of topics for the project. This replaces any existing topics that are already added to the project. (Introduced in GitLab 14.0.) Type: array",
-		"visibility":                                       "See project visibility level. Type: string",
 		"wiki_access_level":                                "One of disabled, private, or enabled. Type: string",
 	}, data)
 }
