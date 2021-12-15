@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/alecthomas/kong"
 	"github.com/xanzy/go-gitlab"
@@ -56,6 +57,37 @@ func updateProjectConfig(client *gitlab.Client, projectID string, configuration 
 	return nil
 }
 
+func updateAvatar(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	if configuration.Avatar == "" {
+		u := fmt.Sprintf("projects/%s", pathEscape(projectID))
+
+		// TODO: Make it really remove the avatar.
+		//       See: https://gitlab.com/gitlab-org/gitlab/-/issues/348498
+		req, err := client.NewRequest(http.MethodPut, u, map[string]interface{}{"avatar": nil}, nil)
+		if err != nil {
+			return errors.Wrap(err, `failed to delete GitLab project avatar`)
+		}
+
+		_, err = client.Do(req, nil)
+		if err != nil {
+			return errors.Wrap(err, `failed to delete GitLab project avatar`)
+		}
+	} else {
+		file, err := os.Open(configuration.Avatar)
+		if err != nil {
+			return errors.Wrapf(err, `failed to open GitLab project avatar file "%s"`, configuration.Avatar)
+		}
+		defer file.Close()
+		_, filename := filepath.Split(configuration.Avatar)
+		_, _, err = client.Projects.UploadAvatar(projectID, file, filename)
+		if err != nil {
+			return errors.Wrap(err, `failed to upload GitLab project avatar`)
+		}
+	}
+
+	return nil
+}
+
 func (c *UpdateCommand) Run(globals *Globals) errors.E {
 	if globals.ChangeTo != "" {
 		err := os.Chdir(globals.ChangeTo)
@@ -96,6 +128,11 @@ func (c *UpdateCommand) Run(globals *Globals) errors.E {
 	}
 
 	errE := updateProjectConfig(client, c.Project, &configuration)
+	if errE != nil {
+		return errE
+	}
+
+	errE = updateAvatar(client, c.Project, &configuration)
 	if errE != nil {
 		return errE
 	}

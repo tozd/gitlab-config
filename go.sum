@@ -60,6 +60,8 @@ github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
 github.com/matryer/is v1.2.0 h1:92UTHpy8CDwaJ08GqLDzhhuixiBUUD1p3AU6PHddz4A=
 github.com/matryer/is v1.2.0/go.mod h1:2fLPjFQM9rhQ15aVEtbuwhJinnOqrmgXPNdZsdwlWXA=
+github.com/mitar/go-gitlab v0.52.3-0.20211215102310-6905edee15f9 h1:AF6LBStizYXVET/l8/9ASHhLTXekjZ/JOS1fw56ayH4=
+github.com/mitar/go-gitlab v0.52.3-0.20211215102310-6905edee15f9/go.mod h1:/8gqEJ6y7573HHNYMHt9ppN+6oSmiOK9IeXjhKd03Sc=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mitchellh/go-wordwrap v1.0.1 h1:TLuKupo69TCn6TQSyGxwI1EblZZEsQ0vMlAFQflz0v0=
@@ -81,8 +83,6 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/whilp/git-urls v1.0.0 h1:95f6UMWN5FKW71ECsXRUd3FVYiXdrE7aX4NZKcPmIjU=
 github.com/whilp/git-urls v1.0.0/go.mod h1:J16SAmobsqc3Qcy98brfl5f5+e0clUvg1krgwk/qCfE=
-github.com/xanzy/go-gitlab v0.52.2 h1:gkgg1z4ON70sphibtD86Bfmt1qV3mZ0pU0CBBCFAEvQ=
-github.com/xanzy/go-gitlab v0.52.2/go.mod h1:Q+hQhV508bDPoBijv7YjK/Lvlb4PhVhJdKqXVQrUoAE=
 github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI=
 github.com/xanzy/ssh-agent v0.3.0/go.mod h1:3s9xbODqPuuhK9JV1R321M/FlMZSBvE5aY6eAcqrDh0=
 github.com/yuin/goldmark v1.4.4 h1:zNWRjYUW32G9KirMXYHQHVNFkXvMI7LpgNW2AgYAoIs=

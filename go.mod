@@ -2,6 +2,8 @@ module gitlab.com/tozd/gitlab/config
 
 go 1.17
 
+replace github.com/xanzy/go-gitlab v0.52.2 => github.com/mitar/go-gitlab v0.52.3-0.20211215102310-6905edee15f9
+
 require (
 	github.com/alecthomas/kong v0.2.21-0.20211213010013-ece1f6d8cb8a
 	github.com/go-git/go-git/v5 v5.4.2
