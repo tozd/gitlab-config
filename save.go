@@ -67,7 +67,7 @@ func getProjectConfig(client *gitlab.Client, projectID, avatarPath string, confi
 		return errE
 	}
 
-	u := fmt.Sprintf("projects/%s", pathEscape(projectID))
+	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
 
 	req, err := client.NewRequest(http.MethodGet, u, nil, nil)
 	if err != nil {
@@ -202,7 +202,7 @@ func getProjectLabels(client *gitlab.Client, projectID string, configuration *Co
 		return errE
 	}
 
-	u := fmt.Sprintf("projects/%s/labels", pathEscape(projectID))
+	u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(projectID))
 	options := &gitlab.ListLabelsOptions{
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,

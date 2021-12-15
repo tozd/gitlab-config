@@ -21,7 +21,7 @@ type UpdateCommand struct {
 }
 
 func updateProjectConfig(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
-	u := fmt.Sprintf("projects/%s", pathEscape(projectID))
+	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
 
 	// For now we provide both keys, the new and the deprecated.
 	containerExpirationPolicy, ok := configuration.Project["container_expiration_policy"]
@@ -59,7 +59,7 @@ func updateProjectConfig(client *gitlab.Client, projectID string, configuration 
 
 func updateAvatar(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
 	if configuration.Avatar == "" {
-		u := fmt.Sprintf("projects/%s", pathEscape(projectID))
+		u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
 
 		// TODO: Make it really remove the avatar.
 		//       See: https://gitlab.com/gitlab-org/gitlab/-/issues/348498
