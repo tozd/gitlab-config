@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/alecthomas/kong"
+	mapset "github.com/deckarep/golang-set"
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
 	"gopkg.in/yaml.v3"
@@ -88,6 +89,59 @@ func updateAvatar(client *gitlab.Client, projectID string, configuration *Config
 	return nil
 }
 
+func updateSharedWithGroups(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	project, _, err := client.Projects.GetProject(projectID, nil)
+	if err != nil {
+		return errors.Wrap(err, `failed to get project`)
+	}
+
+	existingGroups := mapset.NewThreadUnsafeSet()
+	for _, group := range project.SharedWithGroups {
+		existingGroups.Add(group.GroupID)
+	}
+	wantedGroups := mapset.NewThreadUnsafeSet()
+	for _, group := range configuration.SharedWithGroups {
+		wantedGroups.Add(group["group_id"].(int))
+	}
+
+	extraGroups := existingGroups.Difference(wantedGroups)
+	for _, extraGroup := range extraGroups.ToSlice() {
+		groupID := extraGroup.(int)
+		_, err := client.Projects.DeleteSharedProjectFromGroup(projectID, groupID)
+		if err != nil {
+			return errors.Wrapf(err, `failed to unshare group %d`, groupID)
+		}
+	}
+
+	u := fmt.Sprintf("projects/%s/share", gitlab.PathEscape(projectID))
+
+	for _, group := range configuration.SharedWithGroups {
+		groupID := group["group_id"].(int)
+		group["group_id"] = groupID
+
+		// If project is already shared with this group, we have to
+		// first unshare to be able to update the share.
+		if existingGroups.Contains(groupID) {
+			_, err := client.Projects.DeleteSharedProjectFromGroup(projectID, groupID)
+			if err != nil {
+				return errors.Wrapf(err, `failed to unshare group %d before resharing`, groupID)
+			}
+		}
+
+		req, err := client.NewRequest(http.MethodPost, u, group, nil)
+		if err != nil {
+			return errors.Wrapf(err, `failed to share group %d`, groupID)
+		}
+
+		_, err = client.Do(req, nil)
+		if err != nil {
+			return errors.Wrapf(err, `failed to share group %d`, groupID)
+		}
+	}
+
+	return nil
+}
+
 func (c *SetCommand) Run(globals *Globals) errors.E {
 	if globals.ChangeTo != "" {
 		err := os.Chdir(globals.ChangeTo)
@@ -133,6 +187,11 @@ func (c *SetCommand) Run(globals *Globals) errors.E {
 	}
 
 	errE = updateAvatar(client, c.Project, &configuration)
+	if errE != nil {
+		return errE
+	}
+
+	errE = updateSharedWithGroups(client, c.Project, &configuration)
 	if errE != nil {
 		return errE
 	}
