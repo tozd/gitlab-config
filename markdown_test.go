@@ -11,8 +11,12 @@ import (
 //go:embed testdata/projects.md
 var testProjects []byte
 
-func TestParseProjectTable(t *testing.T) {
-	data, err := parseProjectTable(testProjects)
+// Labels file is from: https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/labels.md
+//go:embed testdata/labels.md
+var testLabels []byte
+
+func TestParseProjectDocumentation(t *testing.T) {
+	data, err := parseProjectDocumentation(testProjects)
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"allow_merge_on_skipped_pipeline":                  "Set whether or not merge requests can be merged with skipped jobs. Type: boolean",
@@ -73,5 +77,27 @@ func TestParseProjectTable(t *testing.T) {
 		"topics":                                           "The list of topics for the project. This replaces any existing topics that are already added to the project. (Introduced in GitLab 14.0.) Type: array",
 		"visibility":                                       "See project visibility level. Type: string",
 		"wiki_access_level":                                "One of disabled, private, or enabled. Type: string",
+	}, data)
+}
+
+func TestParseShareDocumentation(t *testing.T) {
+	data, err := parseShareDocumentation(testProjects)
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{
+		"expires_at":   "Share expiration date in ISO 8601 format: 2016-09-26. Type: string",
+		"group_access": "The access level to grant the group. Type: integer",
+		"group_id":     "The ID of the group to share with. Type: integer",
+	}, data)
+}
+
+func TestParseLabelsDocumentation(t *testing.T) {
+	data, err := parseLabelsDocumentation(testLabels)
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{
+		"color":       "The color of the label given in 6-digit hex notation with leading '#' sign (for example, #FFAABB) or one of the CSS color names. Type: string",
+		"description": "The description of the label. Type: string",
+		"id":          "The ID or title of a group's label. Type: integer or string",
+		"name":        "The name of the label. Type: string",
+		"priority":    "The priority of the label. Must be greater or equal than zero or null to remove the priority. Type: integer",
 	}, data)
 }
