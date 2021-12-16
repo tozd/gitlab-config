@@ -170,3 +170,8 @@ labels:
     id: 23012006
     name: enhancement
     priority: null
+  - color: '#cc338b'
+    description: null
+    id: 23026466
+    name: blocked on gitlab
+    priority: null
