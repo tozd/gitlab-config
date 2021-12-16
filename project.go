@@ -3,9 +3,6 @@ package config
 import (
 	"fmt"
 	"net/http"
-	"os"
-	"path"
-	"strings"
 
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
@@ -34,94 +31,21 @@ func getProject(client *gitlab.Client, projectID, avatarPath string, configurati
 	}
 
 	// We use a separate top-level configuration for avatar instead.
-	avatarURL, ok := project["avatar_url"]
-	if ok && avatarURL != nil {
-		avatarURL, ok := avatarURL.(string) //nolint:govet
-		if !ok {
-			return errors.New(`invalid "avatar_url"`)
-		}
-		avatarExt := path.Ext(avatarURL)
-		err := checkAvatarExtension(avatarExt)
-		if err != nil {
-			return errors.Wrapf(err, `invalid "avatar_url": %s`, avatarURL)
-		}
-		// TODO: Make this work for private avatars, too.
-		//       See: https://gitlab.com/gitlab-org/gitlab/-/issues/25498
-		avatar, err := downloadFile(avatarURL)
-		if err != nil {
-			return errors.Wrapf(err, `failed to get project avatar from "%s"`, avatarURL)
-		}
-		avatarPath = strings.TrimSuffix(avatarPath, path.Ext(avatarPath)) + avatarExt
-		err = os.WriteFile(avatarPath, avatar, fileMode)
-		if err != nil {
-			return errors.Wrapf(err, `failed to save avatar to "%s"`, avatarPath)
-		}
-		configuration.Avatar = avatarPath
+	errE = getAvatar(client, project, avatarPath, configuration)
+	if errE != nil {
+		return errE
 	}
 
 	// We use a separate top-level configuration for shared with groups instead.
-	sharedWithGroups, ok := project["shared_with_groups"]
-	if ok && sharedWithGroups != nil {
-		sharedWithGroups, ok := sharedWithGroups.([]interface{}) //nolint:govet
-		if !ok {
-			return errors.New(`invalid "shared_with_groups"`)
-		}
-		if len(sharedWithGroups) > 0 {
-			configuration.SharedWithGroups = []map[string]interface{}{}
-			shareDescriptions, err := getSharedWithGroupsDescriptions()
-			if err != nil {
-				return err
-			}
-			for i, sharedWithGroup := range sharedWithGroups {
-				sharedWithGroup, ok := sharedWithGroup.(map[string]interface{})
-				if !ok {
-					return errors.Errorf(`invalid "shared_with_groups" at index %d`, i)
-				}
-				groupFullPath := sharedWithGroup["group_full_path"]
-				// Rename because share API has a different key than get project API.
-				sharedWithGroup["group_access"] = sharedWithGroup["group_access_level"]
-				// Making sure it is an integer.
-				sharedWithGroup["group_id"] = int(sharedWithGroup["group_id"].(float64))
-
-				// Only retain those keys which can be edited through the share API
-				// (which are those available in descriptions).
-				for key := range sharedWithGroup {
-					_, ok = shareDescriptions[key]
-					if !ok {
-						delete(sharedWithGroup, key)
-					}
-				}
-
-				// Add comment for the sequence item itself.
-				if groupFullPath != nil {
-					sharedWithGroup["comment:"] = groupFullPath
-				}
-
-				configuration.SharedWithGroups = append(configuration.SharedWithGroups, sharedWithGroup)
-			}
-			configuration.SharedWithGroupsComment = formatDescriptions(shareDescriptions)
-		}
+	errE = getSharedWithGroups(client, project, configuration)
+	if errE != nil {
+		return errE
 	}
 
 	// We use a separate top-level configuration for fork relationship.
-	forkedFromProject, ok := project["forked_from_project"]
-	if ok && forkedFromProject != nil {
-		forkedFromProject, ok := forkedFromProject.(map[string]interface{})
-		if !ok {
-			return errors.New(`invalid "forked_from_project"`)
-		}
-		forkID, ok := forkedFromProject["id"]
-		if ok {
-			// Making sure it is an integer.
-			configuration.ForkedFromProject = int(forkID.(float64))
-			forkPathWithNamespace := forkedFromProject["path_with_namespace"]
-			if forkPathWithNamespace != nil {
-				configuration.ForkedFromProjectComment, ok = forkPathWithNamespace.(string)
-				if !ok {
-					return errors.New(`invalid "path_with_namespace" in "forked_from_project"`)
-				}
-			}
-		}
+	errE = getForkedFromProject(client, project, configuration)
+	if errE != nil {
+		return errE
 	}
 
 	// Only retain those keys which can be edited through the edit API

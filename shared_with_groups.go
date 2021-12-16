@@ -9,6 +9,55 @@ import (
 	"gitlab.com/tozd/go/errors"
 )
 
+// getForkedFromProject populates configuration struct with GitLab's project's sharing
+// with groups available from GitLab projects API endpoint.
+func getSharedWithGroups(client *gitlab.Client, project map[string]interface{}, configuration *Configuration) errors.E {
+	sharedWithGroups, ok := project["shared_with_groups"]
+	if ok && sharedWithGroups != nil {
+		sharedWithGroups, ok := sharedWithGroups.([]interface{})
+		if !ok {
+			return errors.New(`invalid "shared_with_groups"`)
+		}
+		if len(sharedWithGroups) > 0 {
+			configuration.SharedWithGroups = []map[string]interface{}{}
+			shareDescriptions, err := getSharedWithGroupsDescriptions()
+			if err != nil {
+				return err
+			}
+			for i, sharedWithGroup := range sharedWithGroups {
+				sharedWithGroup, ok := sharedWithGroup.(map[string]interface{})
+				if !ok {
+					return errors.Errorf(`invalid "shared_with_groups" at index %d`, i)
+				}
+				groupFullPath := sharedWithGroup["group_full_path"]
+				// Rename because share API has a different key than get project API.
+				sharedWithGroup["group_access"] = sharedWithGroup["group_access_level"]
+				// Making sure it is an integer.
+				sharedWithGroup["group_id"] = int(sharedWithGroup["group_id"].(float64))
+
+				// Only retain those keys which can be edited through the share API
+				// (which are those available in descriptions).
+				for key := range sharedWithGroup {
+					_, ok = shareDescriptions[key]
+					if !ok {
+						delete(sharedWithGroup, key)
+					}
+				}
+
+				// Add comment for the sequence item itself.
+				if groupFullPath != nil {
+					sharedWithGroup["comment:"] = groupFullPath
+				}
+
+				configuration.SharedWithGroups = append(configuration.SharedWithGroups, sharedWithGroup)
+			}
+			configuration.SharedWithGroupsComment = formatDescriptions(shareDescriptions)
+		}
+	}
+
+	return nil
+}
+
 // getSharedWithGroupsDescriptions obtains description of fields used to describe payload for
 // sharing a project with a group from GitLab's documentation for projects API endpoint.
 func getSharedWithGroupsDescriptions() (map[string]string, errors.E) {

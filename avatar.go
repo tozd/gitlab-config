@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
@@ -30,6 +32,39 @@ func checkAvatarExtension(ext string) error {
 		}
 	}
 	return errors.Errorf(`invalid avatar extension "%s"`, ext)
+}
+
+// getAvatar populates configuration struct with GitLab's project avatar available
+// from GitLab projects API endpoint.
+func getAvatar(
+	client *gitlab.Client, project map[string]interface{}, avatarPath string, configuration *Configuration,
+) errors.E {
+	avatarURL, ok := project["avatar_url"]
+	if ok && avatarURL != nil {
+		avatarURL, ok := avatarURL.(string)
+		if !ok {
+			return errors.New(`invalid "avatar_url"`)
+		}
+		avatarExt := path.Ext(avatarURL)
+		err := checkAvatarExtension(avatarExt)
+		if err != nil {
+			return errors.Wrapf(err, `invalid "avatar_url": %s`, avatarURL)
+		}
+		// TODO: Make this work for private avatars, too.
+		//       See: https://gitlab.com/gitlab-org/gitlab/-/issues/25498
+		avatar, err := downloadFile(avatarURL)
+		if err != nil {
+			return errors.Wrapf(err, `failed to get project avatar from "%s"`, avatarURL)
+		}
+		avatarPath = strings.TrimSuffix(avatarPath, path.Ext(avatarPath)) + avatarExt
+		err = os.WriteFile(avatarPath, avatar, fileMode)
+		if err != nil {
+			return errors.Wrapf(err, `failed to save avatar to "%s"`, avatarPath)
+		}
+		configuration.Avatar = avatarPath
+	}
+
+	return nil
 }
 
 // updateAvatar updates GitLab project's avatar using GitLab projects API endpoint
