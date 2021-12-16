@@ -120,3 +120,51 @@ project:
   # One of disabled, private, or enabled. Type: string
   wiki_access_level: disabled
 avatar: .gitlab-avatar.png
+# color: The color of the label given in 6-digit hex notation with leading '#'
+# sign (for example, #FFAABB) or one of the CSS color names. Type: string
+# description: The description of the label. Type: string
+# id: The ID or title of a group's label. Type: integer or string
+# name: The name of the label. Type: string
+# priority: The priority of the label. Must be greater or equal than zero or null
+# to remove the priority. Type: integer
+labels:
+  - color: '#d9534f'
+    description: null
+    id: 23011999
+    name: bug
+    priority: null
+  - color: '#d9534f'
+    description: null
+    id: 23012000
+    name: critical
+    priority: null
+  - color: '#d9534f'
+    description: null
+    id: 23012001
+    name: confirmed
+    priority: null
+  - color: '#f0ad4e'
+    description: null
+    id: 23012002
+    name: documentation
+    priority: null
+  - color: '#f0ad4e'
+    description: null
+    id: 23012003
+    name: support
+    priority: null
+  - color: '#428bca'
+    description: null
+    id: 23012004
+    name: discussion
+    priority: null
+  - color: '#428bca'
+    description: null
+    id: 23012005
+    name: suggestion
+    priority: null
+  - color: '#5cb85c'
+    description: null
+    id: 23012006
+    name: enhancement
+    priority: null
