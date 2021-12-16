@@ -77,6 +77,9 @@ lint_docs:
 
   image: node:17-alpine3.14
 
+  before_script:
+    - apk --update add make
+
   script:
     - make lint-docs
 
