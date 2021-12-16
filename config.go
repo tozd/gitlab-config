@@ -10,7 +10,7 @@ package config
 // written out. Similarly, fields which have "Comment" suffix are moved into
 // YAML comments and are not used for project configuration.
 type Configuration struct {
-	Project                  map[string]interface{}
+	Project                  map[string]interface{}   `json:",omitempty" yaml:",omitempty"`
 	Avatar                   string                   `json:",omitempty" yaml:",omitempty"`
 	SharedWithGroups         []map[string]interface{} `json:"shared_with_groups,omitempty" yaml:"shared_with_groups,omitempty"`
 	SharedWithGroupsComment  string                   `json:"comment:shared_with_groups,omitempty" yaml:"comment:shared_with_groups,omitempty"`

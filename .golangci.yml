@@ -101,3 +101,6 @@ issues:
     - path: git_test\.go
       linters:
         - exhaustivestruct
+    - path: get_test\.go
+      linters:
+        - exhaustivestruct
