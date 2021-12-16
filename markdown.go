@@ -258,6 +258,10 @@ func parseProjectDocumentation(input []byte) (map[string]string, errors.E) {
 			// Currently it does not work.
 			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348365
 			return ""
+		case "analytics_access_level":
+			// Currently it does not work.
+			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348695
+			return ""
 		case "name", "path", "visibility":
 			// Only owners can have "name" and "visibility" fields present in edit
 			// project API request, otherwise GitLab returns 403, but we want it

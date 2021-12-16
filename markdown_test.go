@@ -20,7 +20,6 @@ func TestParseProjectDocumentation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"allow_merge_on_skipped_pipeline":                  "Set whether or not merge requests can be merged with skipped jobs. Type: boolean",
-		"analytics_access_level":                           "One of disabled, private or enabled. Type: string",
 		"approvals_before_merge":                           "How many approvers should approve merge request by default. To configure approval rules, see Merge request approvals API. Type: integer",
 		"auto_cancel_pending_pipelines":                    "Auto-cancel pending pipelines. This isn't a boolean, but enabled/disabled. Type: string",
 		"auto_devops_deploy_strategy":                      "Auto Deploy strategy (continuous, manual, or timed_incremental). Type: string",
