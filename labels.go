@@ -1,0 +1,214 @@
+package config
+
+import (
+	"fmt"
+	"net/http"
+	"sort"
+
+	mapset "github.com/deckarep/golang-set"
+	"github.com/xanzy/go-gitlab"
+	"gitlab.com/tozd/go/errors"
+)
+
+// getLabels populates configuration struct with configuration available
+// from GitLab labels API endpoint.
+func getLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	descriptions, errE := getLabelsDescriptions()
+	if errE != nil {
+		return errE
+	}
+
+	u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(projectID))
+	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct
+		ListOptions: gitlab.ListOptions{
+			PerPage: maxGitLabPageSize,
+			Page:    1,
+		},
+		IncludeAncestorGroups: gitlab.Bool(false),
+	}
+
+	for {
+		req, err := client.NewRequest(http.MethodGet, u, options, nil)
+		if err != nil {
+			return errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
+		}
+
+		labels := []map[string]interface{}{}
+
+		response, err := client.Do(req, &labels)
+		if err != nil {
+			return errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
+		}
+
+		if len(labels) == 0 {
+			break
+		}
+
+		if configuration.Labels == nil {
+			configuration.Labels = []map[string]interface{}{}
+		}
+
+		for _, label := range labels {
+			// Making sure it is an integer.
+			label["id"] = int(label["id"].(float64))
+
+			// Only retain those keys which can be edited through the share API
+			// (which are those available in descriptions).
+			for key := range label {
+				_, ok := descriptions[key]
+				if !ok {
+					delete(label, key)
+				}
+			}
+
+			configuration.Labels = append(configuration.Labels, label)
+		}
+
+		if response.NextPage == 0 {
+			break
+		}
+
+		options.Page = response.NextPage
+	}
+
+	// We sort by label ID so that we have deterministic order.
+	sort.Slice(configuration.Labels, func(i, j int) bool {
+		return configuration.Labels[i]["id"].(int) < configuration.Labels[j]["id"].(int)
+	})
+
+	configuration.LabelsComment = formatDescriptions(descriptions)
+
+	return nil
+}
+
+// getLabelsDescriptions obtains description of fields used to describe
+// an individual label from GitLab's documentation for labels API endpoint.
+func getLabelsDescriptions() (map[string]string, errors.E) {
+	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/labels.md")
+	if err != nil {
+		return nil, errors.Wrap(err, `failed to get project labels descriptions`)
+	}
+	return parseLabelsDocumentation(data)
+}
+
+// updateLabels updates GitLab project's labels using GitLab labels API endpoint
+// based on the configuration struct.
+//
+// Labels without the ID field are matched to existing labels based on the name.
+// Unmatched labels are created as new. Save configuration with label IDs to be able
+// to rename existing labels.
+func updateLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct
+		ListOptions: gitlab.ListOptions{
+			PerPage: maxGitLabPageSize,
+			Page:    1,
+		},
+		IncludeAncestorGroups: gitlab.Bool(false),
+	}
+
+	labels := []*gitlab.Label{}
+
+	for {
+		ls, response, err := client.Labels.ListLabels(projectID, options)
+		if err != nil {
+			return errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
+		}
+
+		labels = append(labels, ls...)
+
+		if response.NextPage == 0 {
+			break
+		}
+
+		options.Page = response.NextPage
+	}
+
+	existingLabels := mapset.NewThreadUnsafeSet()
+	namesToIDs := map[string]int{}
+	for _, label := range labels {
+		namesToIDs[label.Name] = label.ID
+		existingLabels.Add(label.ID)
+	}
+
+	// Set label IDs if a matching existing label can be found.
+	for i, label := range configuration.Labels {
+		// Is label ID already set?
+		id, ok := label["id"]
+		if ok {
+			// If ID is provided, the label should exist.
+			id, ok := id.(int) //nolint:govet
+			if !ok {
+				return errors.Errorf(`invalid "id" in "labels" at index %d`, i)
+			}
+			if !existingLabels.Contains(id) {
+				return errors.Errorf(`label in configuration with ID %d does not exist`, id)
+			}
+			continue
+		}
+
+		name, ok := label["name"]
+		if !ok {
+			return errors.Errorf(`label in configuration at index %d does not have a name`, i)
+		}
+		id, ok = namesToIDs[name.(string)]
+		if ok {
+			label["id"] = id
+		}
+	}
+
+	wantedLabels := mapset.NewThreadUnsafeSet()
+	for _, label := range configuration.Labels {
+		id, ok := label["id"]
+		if ok {
+			wantedLabels.Add(id.(int))
+		}
+	}
+
+	extraLabels := existingLabels.Difference(wantedLabels)
+	for _, extraLabel := range extraLabels.ToSlice() {
+		labelID := extraLabel.(int) //nolint:errcheck
+		// TODO: Use go-gitlab's function once it is updated to new API.
+		//       See: https://github.com/xanzy/go-gitlab/issues/1321
+		u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(projectID), labelID)
+		req, err := client.NewRequest(http.MethodDelete, u, nil, nil)
+		if err != nil {
+			return errors.Wrapf(err, `failed to delete label %d`, labelID)
+		}
+		_, err = client.Do(req, nil)
+		if err != nil {
+			return errors.Wrapf(err, `failed to delete label %d`, labelID)
+		}
+	}
+
+	for _, label := range configuration.Labels {
+		id, ok := label["id"]
+		if !ok {
+			u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(projectID))
+			req, err := client.NewRequest(http.MethodPost, u, label, nil)
+			if err != nil {
+				// We made sure above that all labels in configuration without label ID have name.
+				return errors.Wrapf(err, `failed to create label "%s"`, label["name"].(string))
+			}
+			_, err = client.Do(req, nil)
+			if err != nil {
+				// We made sure above that all labels in configuration without label ID have name.
+				return errors.Wrapf(err, `failed to create label "%s"`, label["name"].(string))
+			}
+		} else {
+			// We made sure above that all labels in configuration with label ID exist
+			// and that they are ints.
+			id := id.(int) //nolint:errcheck
+			u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(projectID), id)
+			req, err := client.NewRequest(http.MethodPut, u, label, nil)
+			if err != nil {
+				return errors.Wrapf(err, `failed to update label %d`, id)
+			}
+			_, err = client.Do(req, nil)
+			if err != nil {
+				return errors.Wrapf(err, `failed to update label "%d`, id)
+			}
+		}
+	}
+
+	return nil
+}
