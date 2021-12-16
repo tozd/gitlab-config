@@ -72,16 +72,13 @@ fmt:
   script:
     - make fmt-ci
 
-docs:
+lint_docs:
   stage: test
 
   image: node:17-alpine3.14
 
-  before_script:
-    - npm install -g 'markdownlint-cli@~0.30.0'
-
   script:
-    - "npx --no markdownlint -- --ignore-path .gitignore --ignore testdata/ '**/*.md'"
+    - make lint-docs
 
 docker:
   stage: build

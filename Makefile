@@ -10,7 +10,7 @@ ifeq ($(REVISION),)
  REVISION = `git rev-parse HEAD`
 endif
 
-.PHONY: lint lint-ci fmt fmt-ci test test-ci clean
+.PHONY: lint lint-ci fmt fmt-ci test test-ci clean release lint-docs
 
 build:
 	go build -ldflags "-X main.version=${VERSION} -X main.buildTimestamp=${BUILD_TIMESTAMP} -X main.revision=${REVISION}" -o gitlab-config gitlab.com/tozd/gitlab/config/cmd/gitlab-config
@@ -45,3 +45,9 @@ test-ci:
 
 clean:
 	rm -f coverage.* codeclimate.json tests.xml
+
+release:
+	npx --yes --package 'release-it@~14.11.8' --package '@release-it/keep-a-changelog@~2.3.0' -- release-it
+
+lint-docs:
+	npx --yes --package 'markdownlint-cli@~0.30.0' -- markdownlint --ignore-path .gitignore --ignore testdata/ '**/*.md'
