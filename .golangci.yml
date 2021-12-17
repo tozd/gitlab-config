@@ -95,7 +95,7 @@ issues:
     - path: config\.go
       linters:
         - lll
-    - path: markdown_test\.go
+    - path: .*_test\.go
       linters:
         - lll
     - path: git_test\.go

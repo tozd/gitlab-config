@@ -11,14 +11,6 @@ import (
 //go:embed testdata/projects.md
 var testProjects []byte
 
-// Labels file is from: https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/labels.md
-//go:embed testdata/labels.md
-var testLabels []byte
-
-// Protected branches file is from: https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/protected_branches.md
-//go:embed testdata/protected_branches.md
-var testProtectedBranches []byte
-
 func TestParseProjectDocumentation(t *testing.T) {
 	data, err := parseProjectDocumentation(testProjects)
 	assert.NoError(t, err)
@@ -80,40 +72,5 @@ func TestParseProjectDocumentation(t *testing.T) {
 		"suggestion_commit_message":                        "The commit message used to apply merge request suggestions. Type: string",
 		"topics":                                           "The list of topics for the project. This replaces any existing topics that are already added to the project. (Introduced in GitLab 14.0.) Type: array",
 		"wiki_access_level":                                "One of disabled, private, or enabled. Type: string",
-	}, data)
-}
-
-func TestParseShareDocumentation(t *testing.T) {
-	data, err := parseShareDocumentation(testProjects)
-	assert.NoError(t, err)
-	assert.Equal(t, map[string]string{
-		"expires_at":   "Share expiration date in ISO 8601 format: 2016-09-26. Type: string",
-		"group_access": "The access level to grant the group. Type: integer",
-		"group_id":     "The ID of the group to share with. Type: integer",
-	}, data)
-}
-
-func TestParseLabelsDocumentation(t *testing.T) {
-	data, err := parseLabelsDocumentation(testLabels)
-	assert.NoError(t, err)
-	assert.Equal(t, map[string]string{
-		"color":       "The color of the label given in 6-digit hex notation with leading '#' sign (for example, #FFAABB) or one of the CSS color names. Type: string",
-		"description": "The description of the label. Type: string",
-		"id":          "The ID or title of a group's label. Type: integer or string",
-		"name":        "The name of the label. Type: string",
-		"priority":    "The priority of the label. Must be greater or equal than zero or null to remove the priority. Type: integer",
-	}, data)
-}
-
-func TestParseProtectedBranchesDocumentation(t *testing.T) {
-	data, err := parseProtectedBranchesDocumentation(testProtectedBranches)
-	assert.NoError(t, err)
-	assert.Equal(t, map[string]string{
-		"allow_force_push":             "Allow all users with push access to force push. (default: false) Type: boolean",
-		"allowed_to_merge":             "Array of access levels allowed to merge, with each described by a hash. Type: array",
-		"allowed_to_push":              "Array of access levels allowed to push, with each described by a hash. Type: array",
-		"allowed_to_unprotect":         "Array of access levels allowed to unprotect, with each described by a hash. Type: array",
-		"code_owner_approval_required": "Prevent pushes to this branch if it matches an item in the CODEOWNERS file. (defaults: false) Type: boolean",
-		"name":                         "The name of the branch or wildcard. Type: string",
 	}, data)
 }

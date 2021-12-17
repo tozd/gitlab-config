@@ -58,6 +58,13 @@ func getSharedWithGroups(client *gitlab.Client, project map[string]interface{}, 
 	return nil
 }
 
+// parseSharedWithGroupsDocumentation parses GitLab's documentation in Markdown for
+// projects API endpoint and extracts description of fields used to describe
+// payload for sharing a project with a group.
+func parseSharedWithGroupsDocumentation(input []byte) (map[string]string, errors.E) {
+	return parseTable(input, "Share project with group", nil)
+}
+
 // getSharedWithGroupsDescriptions obtains description of fields used to describe payload for
 // sharing a project with a group from GitLab's documentation for projects API endpoint.
 func getSharedWithGroupsDescriptions() (map[string]string, errors.E) {
@@ -65,7 +72,7 @@ func getSharedWithGroupsDescriptions() (map[string]string, errors.E) {
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get share project descriptions`)
 	}
-	return parseShareDocumentation(data)
+	return parseSharedWithGroupsDocumentation(data)
 }
 
 // updateSharedWithGroups updates GitLab project's sharing with groups using GitLab projects API endpoint

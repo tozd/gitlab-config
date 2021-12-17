@@ -81,6 +81,23 @@ func getLabels(client *gitlab.Client, projectID string, configuration *Configura
 	return nil
 }
 
+// parseLabelsDocumentation parses GitLab's documentation in Markdown for
+// labels API endpoint and extracts description of fields used to describe
+// an individual label.
+func parseLabelsDocumentation(input []byte) (map[string]string, errors.E) {
+	newDescriptions, err := parseTable(input, "Create a new label", nil)
+	if err != nil {
+		return nil, err
+	}
+	editDescriptions, err := parseTable(input, "Edit an existing label", nil)
+	if err != nil {
+		return nil, err
+	}
+	// We want to preserve label IDs so we copy edit description for it.
+	newDescriptions["id"] = editDescriptions["label_id"]
+	return newDescriptions, nil
+}
+
 // getLabelsDescriptions obtains description of fields used to describe
 // an individual label from GitLab's documentation for labels API endpoint.
 func getLabelsDescriptions() (map[string]string, errors.E) {

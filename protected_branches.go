@@ -83,6 +83,25 @@ func getProtectedBranches(client *gitlab.Client, projectID string, configuration
 	return nil
 }
 
+// parseProtectedBranchesDocumentation parses GitLab's documentation in Markdown for
+// protected branches API endpoint and extracts description of fields used to describe
+// protected branches.
+func parseProtectedBranchesDocumentation(input []byte) (map[string]string, errors.E) {
+	return parseTable(input, "Protect repository branches", func(key string) string {
+		switch key {
+		case "push_access_level", "merge_access_level", "unprotect_access_level":
+			// We just want to always use "allowed_to_push", "allowed_to_merge",
+			// and "allowed_to_unprotect" to be consistent between getting and updating.
+			// So we pass through descriptions of "allowed_to_push", "allowed_to_merge",
+			// and "allowed_to_unprotect" and then rename "push_access_levels",
+			// "merge_access_levels", and "unprotect_access_levels" to them.
+			return ""
+		default:
+			return key
+		}
+	})
+}
+
 // getProtectedBranchesDescriptions obtains description of fields used to describe
 // an individual protected branch from GitLab's documentation for protected branches API endpoint.
 func getProtectedBranchesDescriptions() (map[string]string, errors.E) {

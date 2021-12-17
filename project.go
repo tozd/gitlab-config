@@ -90,6 +90,47 @@ func getProject(client *gitlab.Client, projectID, avatarPath string, configurati
 	return nil
 }
 
+// parseProjectDocumentation parses GitLab's documentation in Markdown for
+// projects API endpoint and extracts description of fields used to describe
+// an individual project.
+func parseProjectDocumentation(input []byte) (map[string]string, errors.E) {
+	return parseTable(input, "Edit project", func(key string) string {
+		switch key {
+		case "public_builds":
+			// "public_jobs" is used in get,
+			// while "public_builds" is used in edit.
+			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/329725
+			return "public_jobs"
+		case "container_expiration_policy_attributes":
+			// "container_expiration_policy" is used in get,
+			// while "container_expiration_policy_attributes" is used in edit.
+			return "container_expiration_policy"
+		case "requirements_access_level":
+			// Currently it does not work.
+			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/323886
+			return ""
+		case "show_default_award_emojis":
+			// Currently it does not work.
+			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348365
+			return ""
+		case "analytics_access_level":
+			// Currently it does not work.
+			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348695
+			return ""
+		case "name", "path", "visibility":
+			// Only owners can have "name" and "visibility" fields present in edit
+			// project API request, otherwise GitLab returns 403, but we want it
+			// to work for maintainers as well. One can include these fields
+			// manually into project configuration and it will work for owners.
+			// If "path" is included in the request, the request does not
+			// do anything, even for the owner.
+			return ""
+		default:
+			return key
+		}
+	})
+}
+
 // getProjectDescriptions obtains description of fields used to describe
 // an individual project from GitLab's documentation for projects API endpoint.
 func getProjectDescriptions() (map[string]string, errors.E) {
