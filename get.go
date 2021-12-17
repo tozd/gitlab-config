@@ -51,5 +51,10 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 		return errE
 	}
 
+	errE = getProtectedBranches(client, c.Project, &configuration)
+	if errE != nil {
+		return errE
+	}
+
 	return saveConfiguration(&configuration, c.Output)
 }

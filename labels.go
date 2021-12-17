@@ -52,7 +52,7 @@ func getLabels(client *gitlab.Client, projectID string, configuration *Configura
 			// Making sure it is an integer.
 			label["id"] = int(label["id"].(float64))
 
-			// Only retain those keys which can be edited through the share API
+			// Only retain those keys which can be edited through the API
 			// (which are those available in descriptions).
 			for key := range label {
 				_, ok := descriptions[key]

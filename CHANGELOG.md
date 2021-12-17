@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for protected branches. [#16](https://gitlab.com/tozd/gitlab/config/-/issues/16)
+
 ## [0.1.0] - 2021-12-17
 
 ### Added

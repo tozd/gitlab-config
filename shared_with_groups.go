@@ -35,7 +35,7 @@ func getSharedWithGroups(client *gitlab.Client, project map[string]interface{}, 
 				// Making sure it is an integer.
 				sharedWithGroup["group_id"] = int(sharedWithGroup["group_id"].(float64))
 
-				// Only retain those keys which can be edited through the share API
+				// Only retain those keys which can be edited through the API
 				// (which are those available in descriptions).
 				for key := range sharedWithGroup {
 					_, ok = shareDescriptions[key]

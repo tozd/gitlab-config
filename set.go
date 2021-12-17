@@ -83,5 +83,10 @@ func (c *SetCommand) Run(globals *Globals) errors.E {
 		return errE
 	}
 
+	errE = updateProtectedBranches(client, c.Project, &configuration)
+	if errE != nil {
+		return errE
+	}
+
 	return nil
 }

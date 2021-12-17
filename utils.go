@@ -37,3 +37,33 @@ func downloadFile(url string) ([]byte, errors.E) {
 
 	return buffer.Bytes(), nil
 }
+
+// renameAnyField renames field named from to to anywhere in the arbitrary input
+// structure, even if it is nested inside other maps or slices.
+func renameAnyField(input interface{}, from, to string) {
+	switch in := input.(type) {
+	case []interface{}:
+		for _, v := range in {
+			renameAnyField(v, from, to)
+		}
+	case []map[string]interface{}:
+		for _, v := range in {
+			renameAnyField(v, from, to)
+		}
+	case map[string]interface{}:
+		renameMapField(in, from, to)
+	}
+}
+
+// renameMapField renames field named from to to anywhere in the map input
+// structure, even if it is nested inside other maps or slices.
+func renameMapField(input map[string]interface{}, from, to string) {
+	for key, value := range input {
+		renameAnyField(value, from, to)
+
+		if key == from {
+			input[to] = value
+			delete(input, key)
+		}
+	}
+}

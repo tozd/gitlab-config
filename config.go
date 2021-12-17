@@ -18,4 +18,6 @@ type Configuration struct {
 	ForkedFromProjectComment string                   `json:"comment:forked_from_project,omitempty" yaml:"comment:forked_from_project,omitempty"`
 	Labels                   []map[string]interface{} `json:"labels,omitempty" yaml:"labels,omitempty"`
 	LabelsComment            string                   `json:"comment:labels,omitempty" yaml:"comment:labels,omitempty"`
+	ProtectedBranches        []map[string]interface{} `json:"protected_branches,omitempty" yaml:"protected_branches,omitempty"`
+	ProtectedBranchesComment string                   `json:"comment:protected_branches,omitempty" yaml:"comment:protected_branches,omitempty"`
 }

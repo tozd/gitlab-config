@@ -48,7 +48,7 @@ func getProject(client *gitlab.Client, projectID, avatarPath string, configurati
 		return errE
 	}
 
-	// Only retain those keys which can be edited through the edit API
+	// Only retain those keys which can be edited through the API
 	// (which are those available in descriptions). We cannot add comments
 	// at the same time because we might delete them, too, because they are
 	// not found in descriptions.
