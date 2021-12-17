@@ -259,8 +259,10 @@ sync_config:
     - /gitlab-config set
 
   rules:
-    # Protected tags start with "v".
-    - if: '$GITLAB_API_TOKEN && ($CI_COMMIT_BRANCH == "main" || ($CI_COMMIT_TAG && $CI_COMMIT_REF_NAME =~ /^v/))'
+    - if: '$GITLAB_API_TOKEN && $CI_COMMIT_BRANCH == "main"'
+      changes:
+        - .gitlab-conf.yml
+        - .gitlab-avatar.png
 
   # We do not need build artifacts in this job.
   dependencies: []
