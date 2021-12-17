@@ -6,10 +6,10 @@ git:
   requireCommits: true
   addUntrackedFiles: false
   commit: true
-  commitMessage: "Release ${version}."
+  commitMessage: "Release v${version}."
   tag: true
   tagName: "v${version}"
-  tagAnnotation: "Release ${version}."
+  tagAnnotation: "Release v${version}."
   push: true
 plugins:
   "@release-it/keep-a-changelog":
