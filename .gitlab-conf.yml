@@ -87,6 +87,9 @@ project:
   packages_enabled: true
   # One of disabled, private, enabled, or public. Type: string
   pages_access_level: enabled
+  # Show link to create/view merge request when pushing from the command line. Type:
+  # boolean
+  printing_merge_request_link_enabled: true
   # If true, jobs can be viewed by non-project members. Type: boolean
   public_jobs: true
   # Enable Delete source branch option by default for all new merge requests. Type:

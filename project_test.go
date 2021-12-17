@@ -57,6 +57,7 @@ func TestParseProjectDocumentation(t *testing.T) {
 		"operations_access_level":                          "One of disabled, private, or enabled. Type: string",
 		"packages_enabled":                                 "Enable or disable packages repository feature. Type: boolean",
 		"pages_access_level":                               "One of disabled, private, enabled, or public. Type: string",
+		"printing_merge_request_link_enabled":              "Show link to create/view merge request when pushing from the command line. Type: boolean",
 		"public_jobs":                                      "If true, jobs can be viewed by non-project members. Type: boolean",
 		"remove_source_branch_after_merge":                 "Enable Delete source branch option by default for all new merge requests. Type: boolean",
 		"repository_access_level":                          "One of disabled, private, or enabled. Type: string",
