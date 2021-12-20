@@ -201,13 +201,13 @@ curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" "https://gitla
 | -------------------------------------------- | ---- | -------- | ----------- |
 | `id`                                         | integer/string | yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding) owned by the authenticated user |
 | `name`                                       | string         | yes | The name of the branch or wildcard |
-| `push_access_level`                          | string         | no  | Access levels allowed to push (defaults: `40`, Maintainer role) |
-| `merge_access_level`                         | string         | no  | Access levels allowed to merge (defaults: `40`, Maintainer role) |
-| `unprotect_access_level`                     | string         | no  | Access levels allowed to unprotect (defaults: `40`, Maintainer role) |
+| `push_access_level`                          | integer        | no  | Access levels allowed to push (defaults: `40`, Maintainer role) |
+| `merge_access_level`                         | integer        | no  | Access levels allowed to merge (defaults: `40`, Maintainer role) |
+| `unprotect_access_level`                     | integer        | no  | Access levels allowed to unprotect (defaults: `40`, Maintainer role) |
 | `allow_force_push`                           | boolean        | no  | Allow all users with push access to force push. (default: `false`) |
-| `allowed_to_push` **(PREMIUM)**              | array          | no  | Array of access levels allowed to push, with each described by a hash |
-| `allowed_to_merge` **(PREMIUM)**             | array          | no  | Array of access levels allowed to merge, with each described by a hash |
-| `allowed_to_unprotect` **(PREMIUM)**         | array          | no  | Array of access levels allowed to unprotect, with each described by a hash |
+| `allowed_to_push` **(PREMIUM)**              | array          | no  | Array of access levels allowed to push, with each described by a hash of the form `{user_id: integer}`, `{group_id: integer}`, or `{access_level: integer}` |
+| `allowed_to_merge` **(PREMIUM)**             | array          | no  | Array of access levels allowed to merge, with each described by a hash of the form `{user_id: integer}`, `{group_id: integer}`, or `{access_level: integer}` |
+| `allowed_to_unprotect` **(PREMIUM)**         | array          | no  | Array of access levels allowed to unprotect, with each described by a hash of the form `{user_id: integer}`, `{group_id: integer}`, or `{access_level: integer}` |
 | `code_owner_approval_required` **(PREMIUM)** | boolean        | no  | Prevent pushes to this branch if it matches an item in the [`CODEOWNERS` file](../user/project/code_owners.md). (defaults: false) |
 
 Example response:
@@ -402,7 +402,7 @@ curl --request DELETE --header "PRIVATE-TOKEN: <your_access_token>" "https://git
 | `id` | integer/string | yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding) owned by the authenticated user |
 | `name` | string | yes | The name of the branch |
 
-## Require code owner approvals for a single branch
+## Require code owner approvals for a single branch **(PREMIUM)**
 
 Update the "code owner approval required" option for the given protected branch.
 
@@ -411,11 +411,11 @@ PATCH /projects/:id/protected_branches/:name
 ```
 
 ```shell
-curl --request PATCH --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/5/protected_branches/feature-branch"
+curl --request PATCH --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/5/protected_branches/feature-branch?code_owner_approval_required=true"
 ```
 
 | Attribute                                    | Type | Required | Description |
 | -------------------------------------------- | ---- | -------- | ----------- |
 | `id`                                         | integer/string | yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding) owned by the authenticated user |
 | `name`                                       | string         | yes | The name of the branch |
-| `code_owner_approval_required` **(PREMIUM)** | boolean        | no  | Prevent pushes to this branch if it matches an item in the [`CODEOWNERS` file](../user/project/code_owners.md). (defaults: false)|
+| `code_owner_approval_required`               | boolean        | no  | Prevent pushes to this branch if it matches an item in the [`CODEOWNERS` file](../user/project/code_owners.md). (defaults: false)|
