@@ -105,7 +105,7 @@ func parseProtectedBranchesDocumentation(input []byte) (map[string]string, error
 // getProtectedBranchesDescriptions obtains description of fields used to describe
 // an individual protected branch from GitLab's documentation for protected branches API endpoint.
 func getProtectedBranchesDescriptions(gitRef string) (map[string]string, errors.E) {
-	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/protected_branches.md", gitRef))
+	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/protected_branches.md", gitRef)) //nolint:lll
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get protected branches descriptions`)
 	}
