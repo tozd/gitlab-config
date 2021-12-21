@@ -13,6 +13,8 @@ import (
 // getLabels populates configuration struct with configuration available
 // from GitLab labels API endpoint.
 func getLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	fmt.Printf("Getting labels...\n")
+
 	descriptions, errE := getLabelsDescriptions()
 	if errE != nil {
 		return errE
@@ -115,6 +117,8 @@ func getLabelsDescriptions() (map[string]string, errors.E) {
 // Unmatched labels are created as new. Save configuration with label IDs to be able
 // to rename existing labels.
 func updateLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	fmt.Printf("Updating labels...\n")
+
 	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,

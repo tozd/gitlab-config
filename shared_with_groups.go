@@ -9,9 +9,11 @@ import (
 	"gitlab.com/tozd/go/errors"
 )
 
-// getForkedFromProject populates configuration struct with GitLab's project's sharing
+// getSharedWithGroups populates configuration struct with GitLab's project's sharing
 // with groups available from GitLab projects API endpoint.
 func getSharedWithGroups(client *gitlab.Client, project map[string]interface{}, configuration *Configuration) errors.E {
+	fmt.Printf("Getting sharing with groups...\n")
+
 	sharedWithGroups, ok := project["shared_with_groups"]
 	if ok && sharedWithGroups != nil {
 		sharedWithGroups, ok := sharedWithGroups.([]interface{})
@@ -83,6 +85,8 @@ func getSharedWithGroupsDescriptions() (map[string]string, errors.E) {
 // When updating an existing group it briefly removes the group and readds it with
 // new configuration.
 func updateSharedWithGroups(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	fmt.Printf("Updating sharing with groups...\n")
+
 	project, _, err := client.Projects.GetProject(projectID, nil)
 	if err != nil {
 		return errors.Wrap(err, `failed to get project`)

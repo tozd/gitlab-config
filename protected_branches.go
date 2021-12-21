@@ -13,6 +13,8 @@ import (
 // getProtectedBranches populates configuration struct with configuration available
 // from GitLab protected branches API endpoint.
 func getProtectedBranches(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	fmt.Printf("Getting protected branches...\n")
+
 	descriptions, errE := getProtectedBranchesDescriptions()
 	if errE != nil {
 		return errE
@@ -120,6 +122,8 @@ func getProtectedBranchesDescriptions() (map[string]string, errors.E) {
 // protected branches. When updating an existing protected branch it briefly umprotects
 // the branch and reprotects it with new configuration.
 func updateProtectedBranches(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	fmt.Printf("Updating protected branches...\n")
+
 	options := &gitlab.ListProtectedBranchesOptions{
 		PerPage: maxGitLabPageSize,
 		Page:    1,

@@ -11,6 +11,8 @@ import (
 // getProject populates configuration struct with configuration available
 // from GitLab projects API endpoint.
 func getProject(client *gitlab.Client, projectID, avatarPath string, configuration *Configuration) errors.E {
+	fmt.Printf("Getting project...\n")
+
 	descriptions, errE := getProjectDescriptions()
 	if errE != nil {
 		return errE
@@ -144,6 +146,8 @@ func getProjectDescriptions() (map[string]string, errors.E) {
 // updateProject updates GitLab project's configuration using GitLab projects API endpoint
 // based on the configuration struct.
 func updateProject(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	fmt.Printf("Updating project...\n")
+
 	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
 
 	// For now we provide both keys, the new and the deprecated.

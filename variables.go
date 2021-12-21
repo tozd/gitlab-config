@@ -22,6 +22,8 @@ type opts struct {
 // getVariables populates configuration struct with configuration available
 // from GitLab project level variables API endpoint.
 func getVariables(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	fmt.Printf("Getting variables...\n")
+
 	descriptions, errE := getVariablesDescriptions()
 	if errE != nil {
 		return errE
@@ -104,6 +106,8 @@ func getVariablesDescriptions() (map[string]string, errors.E) {
 // updateVariables updates GitLab project's variables using GitLab project level
 // variables API endpoint based on the configuration struct.
 func updateVariables(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	fmt.Printf("Updating variables...\n")
+
 	options := &gitlab.ListProjectVariablesOptions{
 		PerPage: maxGitLabPageSize,
 		Page:    1,

@@ -39,6 +39,8 @@ func checkAvatarExtension(ext string) error {
 func getAvatar(
 	client *gitlab.Client, project map[string]interface{}, avatarPath string, configuration *Configuration,
 ) errors.E {
+	fmt.Printf("Getting avatar...\n")
+
 	avatarURL, ok := project["avatar_url"]
 	if ok && avatarURL != nil {
 		avatarURL, ok := avatarURL.(string)
@@ -70,6 +72,8 @@ func getAvatar(
 // updateAvatar updates GitLab project's avatar using GitLab projects API endpoint
 // based on the configuration struct.
 func updateAvatar(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	fmt.Printf("Updating avatar...\n")
+
 	if configuration.Avatar == "" {
 		u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
 

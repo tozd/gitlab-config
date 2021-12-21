@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
 )
@@ -10,6 +12,8 @@ import (
 func getForkedFromProject(
 	client *gitlab.Client, project map[string]interface{}, configuration *Configuration,
 ) errors.E {
+	fmt.Printf("Getting project fork relation...\n")
+
 	forkedFromProject, ok := project["forked_from_project"]
 	if ok && forkedFromProject != nil {
 		forkedFromProject, ok := forkedFromProject.(map[string]interface{})
@@ -36,6 +40,8 @@ func getForkedFromProject(
 // updateForkedFromProject updates GitLab project's fork relation using GitLab projects API endpoint
 // based on the configuration struct.
 func updateForkedFromProject(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	fmt.Printf("Updating project fork relation...\n")
+
 	project, _, err := client.Projects.GetProject(projectID, nil)
 	if err != nil {
 		return errors.Wrap(err, `failed to get project`)
