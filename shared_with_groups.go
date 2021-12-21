@@ -18,45 +18,44 @@ func (c *GetCommand) getSharedWithGroups(
 
 	configuration.SharedWithGroups = []map[string]interface{}{}
 
+	shareDescriptions, err := getSharedWithGroupsDescriptions(c.DocsRef)
+	if err != nil {
+		return err
+	}
+	configuration.SharedWithGroupsComment = formatDescriptions(shareDescriptions)
+
 	sharedWithGroups, ok := project["shared_with_groups"]
 	if ok && sharedWithGroups != nil {
 		sharedWithGroups, ok := sharedWithGroups.([]interface{})
 		if !ok {
 			return errors.New(`invalid "shared_with_groups"`)
 		}
-		if len(sharedWithGroups) > 0 {
-			shareDescriptions, err := getSharedWithGroupsDescriptions(c.DocsRef)
-			if err != nil {
-				return err
+		for i, sharedWithGroup := range sharedWithGroups {
+			sharedWithGroup, ok := sharedWithGroup.(map[string]interface{})
+			if !ok {
+				return errors.Errorf(`invalid "shared_with_groups" at index %d`, i)
 			}
-			for i, sharedWithGroup := range sharedWithGroups {
-				sharedWithGroup, ok := sharedWithGroup.(map[string]interface{})
+			groupFullPath := sharedWithGroup["group_full_path"]
+			// Rename because share API has a different key than get project API.
+			sharedWithGroup["group_access"] = sharedWithGroup["group_access_level"]
+			// Making sure it is an integer.
+			sharedWithGroup["group_id"] = int(sharedWithGroup["group_id"].(float64))
+
+			// Only retain those keys which can be edited through the API
+			// (which are those available in descriptions).
+			for key := range sharedWithGroup {
+				_, ok = shareDescriptions[key]
 				if !ok {
-					return errors.Errorf(`invalid "shared_with_groups" at index %d`, i)
+					delete(sharedWithGroup, key)
 				}
-				groupFullPath := sharedWithGroup["group_full_path"]
-				// Rename because share API has a different key than get project API.
-				sharedWithGroup["group_access"] = sharedWithGroup["group_access_level"]
-				// Making sure it is an integer.
-				sharedWithGroup["group_id"] = int(sharedWithGroup["group_id"].(float64))
-
-				// Only retain those keys which can be edited through the API
-				// (which are those available in descriptions).
-				for key := range sharedWithGroup {
-					_, ok = shareDescriptions[key]
-					if !ok {
-						delete(sharedWithGroup, key)
-					}
-				}
-
-				// Add comment for the sequence item itself.
-				if groupFullPath != nil {
-					sharedWithGroup["comment:"] = groupFullPath
-				}
-
-				configuration.SharedWithGroups = append(configuration.SharedWithGroups, sharedWithGroup)
 			}
-			configuration.SharedWithGroupsComment = formatDescriptions(shareDescriptions)
+
+			// Add comment for the sequence item itself.
+			if groupFullPath != nil {
+				sharedWithGroup["comment:"] = groupFullPath
+			}
+
+			configuration.SharedWithGroups = append(configuration.SharedWithGroups, sharedWithGroup)
 		}
 	}
 

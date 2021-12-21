@@ -21,6 +21,7 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 	if errE != nil {
 		return errE
 	}
+	configuration.LabelsComment = formatDescriptions(descriptions)
 
 	u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(c.Project))
 	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct
@@ -75,8 +76,6 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 	sort.Slice(configuration.Labels, func(i, j int) bool {
 		return configuration.Labels[i]["id"].(int) < configuration.Labels[j]["id"].(int)
 	})
-
-	configuration.LabelsComment = formatDescriptions(descriptions)
 
 	return nil
 }

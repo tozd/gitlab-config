@@ -125,6 +125,9 @@ project:
   # One of disabled, private, or enabled. Type: string
   wiki_access_level: disabled
 avatar: .gitlab-avatar.png
+# expires_at: Share expiration date in ISO 8601 format: 2016-09-26. Type: string
+# group_access: The access level to grant the group. Type: integer
+# group_id: The ID of the group to share with. Type: integer
 shared_with_groups: []
 forked_from_project: 0
 # color: The color of the label given in 6-digit hex notation with leading '#'

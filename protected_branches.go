@@ -21,6 +21,7 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 	if errE != nil {
 		return errE
 	}
+	configuration.ProtectedBranchesComment = formatDescriptions(descriptions)
 
 	u := fmt.Sprintf("projects/%s/protected_branches", gitlab.PathEscape(c.Project))
 	options := &gitlab.ListProtectedBranchesOptions{
@@ -77,8 +78,6 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 	sort.Slice(configuration.ProtectedBranches, func(i, j int) bool {
 		return configuration.ProtectedBranches[i]["name"].(string) < configuration.ProtectedBranches[j]["name"].(string)
 	})
-
-	configuration.ProtectedBranchesComment = formatDescriptions(descriptions)
 
 	return nil
 }

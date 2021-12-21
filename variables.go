@@ -30,6 +30,7 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 	if errE != nil {
 		return errE
 	}
+	configuration.VariablesComment = formatDescriptions(descriptions)
 
 	u := fmt.Sprintf("projects/%s/variables", gitlab.PathEscape(c.Project))
 	options := &gitlab.ListProjectVariablesOptions{
@@ -78,8 +79,6 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 	sort.Slice(configuration.Variables, func(i, j int) bool {
 		return configuration.Variables[i]["key"].(string) < configuration.Variables[j]["key"].(string)
 	})
-
-	configuration.VariablesComment = formatDescriptions(descriptions)
 
 	return nil
 }
