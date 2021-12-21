@@ -23,6 +23,7 @@ type Globals struct {
 type Commands struct {
 	Globals
 
-	Get GetCommand `cmd:"" help:"Save GitLab project's configuration to a local file."`
-	Set SetCommand `cmd:"" help:"Update GitLab project's configuration based on a local file."`
+	Get  GetCommand  `cmd:"" help:"Save GitLab project's configuration to a local file."`
+	Set  SetCommand  `cmd:"" help:"Update GitLab project's configuration based on a local file."`
+	Sops SopsCommand `cmd:"" help:"Run SOPS, an editor of encrypted files. See: https://github.com/tozd/sops"`
 }
