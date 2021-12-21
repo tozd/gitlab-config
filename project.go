@@ -174,7 +174,6 @@ func updateProject(client *gitlab.Client, projectID string, configuration *Confi
 	if err != nil {
 		return errors.Wrap(err, `failed to update GitLab project`)
 	}
-
 	_, err = client.Do(req, nil)
 	if err != nil {
 		return errors.Wrap(err, `failed to update GitLab project`)

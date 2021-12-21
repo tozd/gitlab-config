@@ -8,6 +8,7 @@ require (
 	github.com/alecthomas/kong v0.2.21-0.20211213010013-ece1f6d8cb8a
 	github.com/deckarep/golang-set v1.7.1
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/google/go-querystring v1.0.0
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/stretchr/testify v1.7.0
@@ -27,7 +28,6 @@ require (
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/golang/protobuf v1.2.0 // indirect
-	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect

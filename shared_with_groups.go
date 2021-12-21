@@ -128,7 +128,6 @@ func updateSharedWithGroups(client *gitlab.Client, projectID string, configurati
 		if err != nil {
 			return errors.Wrapf(err, `failed to share group %d`, groupID)
 		}
-
 		_, err = client.Do(req, nil)
 		if err != nil {
 			return errors.Wrapf(err, `failed to share group %d`, groupID)

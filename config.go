@@ -20,4 +20,6 @@ type Configuration struct {
 	LabelsComment            string                   `json:"comment:labels,omitempty" yaml:"comment:labels,omitempty"`
 	ProtectedBranches        []map[string]interface{} `json:"protected_branches,omitempty" yaml:"protected_branches,omitempty"`
 	ProtectedBranchesComment string                   `json:"comment:protected_branches,omitempty" yaml:"comment:protected_branches,omitempty"`
+	Variables                []map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	VariablesComment         string                   `json:"comment:variables,omitempty" yaml:"comment:variables,omitempty"`
 }

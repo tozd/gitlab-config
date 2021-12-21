@@ -165,7 +165,7 @@ func updateLabels(client *gitlab.Client, projectID string, configuration *Config
 
 		name, ok := label["name"]
 		if !ok {
-			return errors.Errorf(`label in configuration at index %d does not have a name`, i)
+			return errors.Errorf(`label in configuration at index %d does not have "name"`, i)
 		}
 		id, ok = namesToIDs[name.(string)]
 		if ok {

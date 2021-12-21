@@ -150,7 +150,7 @@ func updateProtectedBranches(client *gitlab.Client, projectID string, configurat
 	for i, protectedBranch := range configuration.ProtectedBranches {
 		name, ok := protectedBranch["name"]
 		if !ok {
-			return errors.Errorf(`protected branch in configuration at index %d does not have a name`, i)
+			return errors.Errorf(`protected branch in configuration at index %d does not have "name"`, i)
 		}
 		n, ok := name.(string)
 		if !ok {
@@ -187,7 +187,6 @@ func updateProtectedBranches(client *gitlab.Client, projectID string, configurat
 		if err != nil {
 			return errors.Wrapf(err, `failed to protect branch "%s"`, name)
 		}
-
 		_, err = client.Do(req, nil)
 		if err != nil {
 			return errors.Wrapf(err, `failed to protect branch "%s"`, name)
