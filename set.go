@@ -58,37 +58,37 @@ func (c *SetCommand) Run(globals *Globals) errors.E {
 		return errors.Wrap(err, `failed to create GitLab API client instance`)
 	}
 
-	errE := updateProject(client, c.Project, &configuration)
+	errE := c.updateProject(client, &configuration)
 	if errE != nil {
 		return errE
 	}
 
-	errE = updateAvatar(client, c.Project, &configuration)
+	errE = c.updateAvatar(client, &configuration)
 	if errE != nil {
 		return errE
 	}
 
-	errE = updateSharedWithGroups(client, c.Project, &configuration)
+	errE = c.updateSharedWithGroups(client, &configuration)
 	if errE != nil {
 		return errE
 	}
 
-	errE = updateForkedFromProject(client, c.Project, &configuration)
+	errE = c.updateForkedFromProject(client, &configuration)
 	if errE != nil {
 		return errE
 	}
 
-	errE = updateLabels(client, c.Project, &configuration)
+	errE = c.updateLabels(client, &configuration)
 	if errE != nil {
 		return errE
 	}
 
-	errE = updateProtectedBranches(client, c.Project, &configuration)
+	errE = c.updateProtectedBranches(client, &configuration)
 	if errE != nil {
 		return errE
 	}
 
-	errE = updateVariables(client, c.Project, &configuration)
+	errE = c.updateVariables(client, &configuration)
 	if errE != nil {
 		return errE
 	}

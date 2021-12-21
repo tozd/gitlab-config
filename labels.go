@@ -12,17 +12,17 @@ import (
 
 // getLabels populates configuration struct with configuration available
 // from GitLab labels API endpoint.
-func getLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configuration) errors.E {
 	fmt.Printf("Getting labels...\n")
 
 	configuration.Labels = []map[string]interface{}{}
 
-	descriptions, errE := getLabelsDescriptions()
+	descriptions, errE := getLabelsDescriptions(c.DocsRef)
 	if errE != nil {
 		return errE
 	}
 
-	u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(projectID))
+	u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(c.Project))
 	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,
@@ -100,8 +100,8 @@ func parseLabelsDocumentation(input []byte) (map[string]string, errors.E) {
 
 // getLabelsDescriptions obtains description of fields used to describe
 // an individual label from GitLab's documentation for labels API endpoint.
-func getLabelsDescriptions() (map[string]string, errors.E) {
-	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/labels.md")
+func getLabelsDescriptions(gitRef string) (map[string]string, errors.E) {
+	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/labels.md", gitRef))
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get project labels descriptions`)
 	}
@@ -114,7 +114,7 @@ func getLabelsDescriptions() (map[string]string, errors.E) {
 // Labels without the ID field are matched to existing labels based on the name.
 // Unmatched labels are created as new. Save configuration with label IDs to be able
 // to rename existing labels.
-func updateLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.Labels == nil {
 		return nil
 	}
@@ -132,7 +132,7 @@ func updateLabels(client *gitlab.Client, projectID string, configuration *Config
 	labels := []*gitlab.Label{}
 
 	for {
-		ls, response, err := client.Labels.ListLabels(projectID, options)
+		ls, response, err := client.Labels.ListLabels(c.Project, options)
 		if err != nil {
 			return errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
 		}
@@ -192,7 +192,7 @@ func updateLabels(client *gitlab.Client, projectID string, configuration *Config
 		labelID := extraLabel.(int) //nolint:errcheck
 		// TODO: Use go-gitlab's function once it is updated to new API.
 		//       See: https://github.com/xanzy/go-gitlab/issues/1321
-		u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(projectID), labelID)
+		u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(c.Project), labelID)
 		req, err := client.NewRequest(http.MethodDelete, u, nil, nil)
 		if err != nil {
 			return errors.Wrapf(err, `failed to delete label %d`, labelID)
@@ -206,7 +206,7 @@ func updateLabels(client *gitlab.Client, projectID string, configuration *Config
 	for _, label := range configuration.Labels {
 		id, ok := label["id"]
 		if !ok {
-			u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(projectID))
+			u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(c.Project))
 			req, err := client.NewRequest(http.MethodPost, u, label, nil)
 			if err != nil {
 				// We made sure above that all labels in configuration without label ID have name.
@@ -221,7 +221,7 @@ func updateLabels(client *gitlab.Client, projectID string, configuration *Config
 			// We made sure above that all labels in configuration with label ID exist
 			// and that they are ints.
 			id := id.(int) //nolint:errcheck
-			u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(projectID), id)
+			u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(c.Project), id)
 			req, err := client.NewRequest(http.MethodPut, u, label, nil)
 			if err != nil {
 				return errors.Wrapf(err, `failed to update label %d`, id)

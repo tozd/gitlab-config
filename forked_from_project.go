@@ -9,9 +9,7 @@ import (
 
 // getForkedFromProject populates configuration struct with GitLab's project fork relation
 // available from GitLab projects API endpoint.
-func getForkedFromProject(
-	client *gitlab.Client, project map[string]interface{}, configuration *Configuration,
-) errors.E {
+func (c *GetCommand) getForkedFromProject(client *gitlab.Client, project map[string]interface{}, configuration *Configuration) errors.E {
 	fmt.Printf("Getting project fork relation...\n")
 
 	forkedFromProject, ok := project["forked_from_project"]
@@ -44,36 +42,36 @@ func getForkedFromProject(
 
 // updateForkedFromProject updates GitLab project's fork relation using GitLab projects API endpoint
 // based on the configuration struct.
-func updateForkedFromProject(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+func (c *SetCommand) updateForkedFromProject(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.ForkedFromProject == nil {
 		return nil
 	}
 
 	fmt.Printf("Updating project fork relation...\n")
 
-	project, _, err := client.Projects.GetProject(projectID, nil)
+	project, _, err := client.Projects.GetProject(c.Project, nil)
 	if err != nil {
 		return errors.Wrap(err, `failed to get project`)
 	}
 
 	if *configuration.ForkedFromProject == 0 {
 		if project.ForkedFromProject != nil {
-			_, err := client.Projects.DeleteProjectForkRelation(projectID)
+			_, err := client.Projects.DeleteProjectForkRelation(c.Project)
 			if err != nil {
 				return errors.Wrap(err, `failed to delete fork relation`)
 			}
 		}
 	} else if project.ForkedFromProject == nil {
-		_, _, err := client.Projects.CreateProjectForkRelation(projectID, *configuration.ForkedFromProject)
+		_, _, err := client.Projects.CreateProjectForkRelation(c.Project, *configuration.ForkedFromProject)
 		if err != nil {
 			return errors.Wrapf(err, `failed to create fork relation to project %d`, *configuration.ForkedFromProject)
 		}
 	} else if project.ForkedFromProject.ID != *configuration.ForkedFromProject {
-		_, err := client.Projects.DeleteProjectForkRelation(projectID)
+		_, err := client.Projects.DeleteProjectForkRelation(c.Project)
 		if err != nil {
 			return errors.Wrap(err, `failed to delete fork relation before creating new`)
 		}
-		_, _, err = client.Projects.CreateProjectForkRelation(projectID, *configuration.ForkedFromProject)
+		_, _, err = client.Projects.CreateProjectForkRelation(c.Project, *configuration.ForkedFromProject)
 		if err != nil {
 			return errors.Wrapf(err, `failed to create fork relation to project %d`, *configuration.ForkedFromProject)
 		}

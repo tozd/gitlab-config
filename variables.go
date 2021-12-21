@@ -21,17 +21,17 @@ type opts struct {
 
 // getVariables populates configuration struct with configuration available
 // from GitLab project level variables API endpoint.
-func getVariables(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configuration) errors.E {
 	fmt.Printf("Getting variables...\n")
 
 	configuration.Variables = []map[string]interface{}{}
 
-	descriptions, errE := getVariablesDescriptions()
+	descriptions, errE := getVariablesDescriptions(c.DocsRef)
 	if errE != nil {
 		return errE
 	}
 
-	u := fmt.Sprintf("projects/%s/variables", gitlab.PathEscape(projectID))
+	u := fmt.Sprintf("projects/%s/variables", gitlab.PathEscape(c.Project))
 	options := &gitlab.ListProjectVariablesOptions{
 		PerPage: maxGitLabPageSize,
 		Page:    1,
@@ -93,8 +93,8 @@ func parseVariablesDocumentation(input []byte) (map[string]string, errors.E) {
 
 // getVariablesDescriptions obtains description of fields used to describe an individual
 // variable from GitLab's documentation for project level variables API endpoint.
-func getVariablesDescriptions() (map[string]string, errors.E) {
-	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/project_level_variables.md")
+func getVariablesDescriptions(gitRef string) (map[string]string, errors.E) {
+	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/project_level_variables.md", gitRef))
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get variables descriptions`)
 	}
@@ -103,7 +103,7 @@ func getVariablesDescriptions() (map[string]string, errors.E) {
 
 // updateVariables updates GitLab project's variables using GitLab project level
 // variables API endpoint based on the configuration struct.
-func updateVariables(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.Variables == nil {
 		return nil
 	}
@@ -118,7 +118,7 @@ func updateVariables(client *gitlab.Client, projectID string, configuration *Con
 	variables := []*gitlab.ProjectVariable{}
 
 	for {
-		vs, response, err := client.ProjectVariables.ListVariables(projectID, options)
+		vs, response, err := client.ProjectVariables.ListVariables(c.Project, options)
 		if err != nil {
 			return errors.Wrapf(err, `failed to get variables, page %d`, options.Page)
 		}
@@ -173,7 +173,7 @@ func updateVariables(client *gitlab.Client, projectID string, configuration *Con
 		variable := extraVariable.(Variable) //nolint:errcheck
 		// TODO: Use go-gitlab's function once it is updated to new API.
 		//       See: https://github.com/xanzy/go-gitlab/issues/1328
-		u := fmt.Sprintf("projects/%s/variables/%s", gitlab.PathEscape(projectID), gitlab.PathEscape(variable.Key))
+		u := fmt.Sprintf("projects/%s/variables/%s", gitlab.PathEscape(c.Project), gitlab.PathEscape(variable.Key))
 		req, err := client.NewRequest(http.MethodDelete, u, opts{filter{variable.EnvironmentScope}}, nil)
 		if err != nil {
 			return errors.Wrapf(err, `failed to remove variable "%s"/"%s"`, variable.Key, variable.EnvironmentScope)
@@ -194,7 +194,7 @@ func updateVariables(client *gitlab.Client, projectID string, configuration *Con
 			EnvironmentScope: environmentScope,
 		}) {
 			// Update existing variable.
-			u := fmt.Sprintf("projects/%s/variables/%s", gitlab.PathEscape(projectID), gitlab.PathEscape(key))
+			u := fmt.Sprintf("projects/%s/variables/%s", gitlab.PathEscape(c.Project), gitlab.PathEscape(key))
 			req, err := client.NewRequest(http.MethodPut, u, variable, nil)
 			if err != nil {
 				return errors.Wrapf(err, `failed to update variable "%s"/"%s"`, key, environmentScope)
@@ -210,7 +210,7 @@ func updateVariables(client *gitlab.Client, projectID string, configuration *Con
 			}
 		} else {
 			// Create new variable.
-			u := fmt.Sprintf("projects/%s/variables", gitlab.PathEscape(projectID))
+			u := fmt.Sprintf("projects/%s/variables", gitlab.PathEscape(c.Project))
 			req, err := client.NewRequest(http.MethodPost, u, variable, nil)
 			if err != nil {
 				return errors.Wrapf(err, `failed to create variable "%s"/"%s"`, key, environmentScope)

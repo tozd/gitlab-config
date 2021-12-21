@@ -11,7 +11,7 @@ import (
 
 // getSharedWithGroups populates configuration struct with GitLab's project's sharing
 // with groups available from GitLab projects API endpoint.
-func getSharedWithGroups(client *gitlab.Client, project map[string]interface{}, configuration *Configuration) errors.E {
+func (c *GetCommand) getSharedWithGroups(client *gitlab.Client, project map[string]interface{}, configuration *Configuration) errors.E {
 	fmt.Printf("Getting sharing with groups...\n")
 
 	configuration.SharedWithGroups = []map[string]interface{}{}
@@ -23,7 +23,7 @@ func getSharedWithGroups(client *gitlab.Client, project map[string]interface{}, 
 			return errors.New(`invalid "shared_with_groups"`)
 		}
 		if len(sharedWithGroups) > 0 {
-			shareDescriptions, err := getSharedWithGroupsDescriptions()
+			shareDescriptions, err := getSharedWithGroupsDescriptions(c.DocsRef)
 			if err != nil {
 				return err
 			}
@@ -70,8 +70,8 @@ func parseSharedWithGroupsDocumentation(input []byte) (map[string]string, errors
 
 // getSharedWithGroupsDescriptions obtains description of fields used to describe payload for
 // sharing a project with a group from GitLab's documentation for projects API endpoint.
-func getSharedWithGroupsDescriptions() (map[string]string, errors.E) {
-	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/projects.md")
+func getSharedWithGroupsDescriptions(gitRef string) (map[string]string, errors.E) {
+	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/projects.md", gitRef))
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get share project descriptions`)
 	}
@@ -85,14 +85,14 @@ func getSharedWithGroupsDescriptions() (map[string]string, errors.E) {
 // and then updates or adds groups for which the project should be shared with.
 // When updating an existing group it briefly removes the group and readds it with
 // new configuration.
-func updateSharedWithGroups(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.SharedWithGroups == nil {
 		return nil
 	}
 
 	fmt.Printf("Updating sharing with groups...\n")
 
-	project, _, err := client.Projects.GetProject(projectID, nil)
+	project, _, err := client.Projects.GetProject(c.Project, nil)
 	if err != nil {
 		return errors.Wrap(err, `failed to get project`)
 	}
@@ -109,13 +109,13 @@ func updateSharedWithGroups(client *gitlab.Client, projectID string, configurati
 	extraGroups := existingGroups.Difference(wantedGroups)
 	for _, extraGroup := range extraGroups.ToSlice() {
 		groupID := extraGroup.(int) //nolint:errcheck
-		_, err := client.Projects.DeleteSharedProjectFromGroup(projectID, groupID)
+		_, err := client.Projects.DeleteSharedProjectFromGroup(c.Project, groupID)
 		if err != nil {
 			return errors.Wrapf(err, `failed to unshare group %d`, groupID)
 		}
 	}
 
-	u := fmt.Sprintf("projects/%s/share", gitlab.PathEscape(projectID))
+	u := fmt.Sprintf("projects/%s/share", gitlab.PathEscape(c.Project))
 
 	for i, group := range configuration.SharedWithGroups {
 		groupID, ok := group["group_id"].(int)
@@ -127,7 +127,7 @@ func updateSharedWithGroups(client *gitlab.Client, projectID string, configurati
 		// If project is already shared with this group, we have to
 		// first unshare to be able to update the share.
 		if existingGroups.Contains(groupID) {
-			_, err := client.Projects.DeleteSharedProjectFromGroup(projectID, groupID)
+			_, err := client.Projects.DeleteSharedProjectFromGroup(c.Project, groupID)
 			if err != nil {
 				return errors.Wrapf(err, `failed to unshare group %d before resharing`, groupID)
 			}

@@ -12,17 +12,17 @@ import (
 
 // getProtectedBranches populates configuration struct with configuration available
 // from GitLab protected branches API endpoint.
-func getProtectedBranches(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *Configuration) errors.E {
 	fmt.Printf("Getting protected branches...\n")
 
 	configuration.ProtectedBranches = []map[string]interface{}{}
 
-	descriptions, errE := getProtectedBranchesDescriptions()
+	descriptions, errE := getProtectedBranchesDescriptions(c.DocsRef)
 	if errE != nil {
 		return errE
 	}
 
-	u := fmt.Sprintf("projects/%s/protected_branches", gitlab.PathEscape(projectID))
+	u := fmt.Sprintf("projects/%s/protected_branches", gitlab.PathEscape(c.Project))
 	options := &gitlab.ListProtectedBranchesOptions{
 		PerPage: maxGitLabPageSize,
 		Page:    1,
@@ -104,8 +104,8 @@ func parseProtectedBranchesDocumentation(input []byte) (map[string]string, error
 
 // getProtectedBranchesDescriptions obtains description of fields used to describe
 // an individual protected branch from GitLab's documentation for protected branches API endpoint.
-func getProtectedBranchesDescriptions() (map[string]string, errors.E) {
-	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/protected_branches.md")
+func getProtectedBranchesDescriptions(gitRef string) (map[string]string, errors.E) {
+	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/protected_branches.md", gitRef))
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get protected branches descriptions`)
 	}
@@ -119,7 +119,7 @@ func getProtectedBranchesDescriptions() (map[string]string, errors.E) {
 // configured as protected, and then updates or adds protection for configured
 // protected branches. When updating an existing protected branch it briefly umprotects
 // the branch and reprotects it with new configuration.
-func updateProtectedBranches(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.ProtectedBranches == nil {
 		return nil
 	}
@@ -134,7 +134,7 @@ func updateProtectedBranches(client *gitlab.Client, projectID string, configurat
 	protectedBranches := []*gitlab.ProtectedBranch{}
 
 	for {
-		pb, response, err := client.ProtectedBranches.ListProtectedBranches(projectID, options)
+		pb, response, err := client.ProtectedBranches.ListProtectedBranches(c.Project, options)
 		if err != nil {
 			return errors.Wrapf(err, `failed to get protected branches, page %d`, options.Page)
 		}
@@ -168,13 +168,13 @@ func updateProtectedBranches(client *gitlab.Client, projectID string, configurat
 	extraProtectedBranches := existingProtectedBranches.Difference(wantedProtectedBranches)
 	for _, extraProtectedBranch := range extraProtectedBranches.ToSlice() {
 		protectedBranchName := extraProtectedBranch.(string) //nolint:errcheck
-		_, err := client.ProtectedBranches.UnprotectRepositoryBranches(projectID, protectedBranchName)
+		_, err := client.ProtectedBranches.UnprotectRepositoryBranches(c.Project, protectedBranchName)
 		if err != nil {
 			return errors.Wrapf(err, `failed to unprotect branch "%s"`, protectedBranchName)
 		}
 	}
 
-	u := fmt.Sprintf("projects/%s/protected_branches", gitlab.PathEscape(projectID))
+	u := fmt.Sprintf("projects/%s/protected_branches", gitlab.PathEscape(c.Project))
 
 	for _, protectedBranch := range configuration.ProtectedBranches {
 		// We made sure above that all protected branches in configuration have a string name.
@@ -183,7 +183,7 @@ func updateProtectedBranches(client *gitlab.Client, projectID string, configurat
 		// If project already have this protected branch, we have to
 		// first unprotect it to be able to update the protected branch.
 		if existingProtectedBranches.Contains(name) {
-			_, err := client.ProtectedBranches.UnprotectRepositoryBranches(projectID, name)
+			_, err := client.ProtectedBranches.UnprotectRepositoryBranches(c.Project, name)
 			if err != nil {
 				return errors.Wrapf(err, `failed to unprotect group "%s" before reprotecting`, name)
 			}

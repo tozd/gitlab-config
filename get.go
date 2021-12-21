@@ -41,22 +41,22 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 
 	var configuration Configuration
 
-	errE := getProject(client, c.Project, c.Avatar, &configuration)
+	errE := c.getProject(client, &configuration)
 	if errE != nil {
 		return errE
 	}
 
-	errE = getLabels(client, c.Project, &configuration)
+	errE = c.getLabels(client, &configuration)
 	if errE != nil {
 		return errE
 	}
 
-	errE = getProtectedBranches(client, c.Project, &configuration)
+	errE = c.getProtectedBranches(client, &configuration)
 	if errE != nil {
 		return errE
 	}
 
-	errE = getVariables(client, c.Project, &configuration)
+	errE = c.getVariables(client, &configuration)
 	if errE != nil {
 		return errE
 	}

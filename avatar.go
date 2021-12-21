@@ -36,9 +36,7 @@ func checkAvatarExtension(ext string) error {
 
 // getAvatar populates configuration struct with GitLab's project avatar available
 // from GitLab projects API endpoint.
-func getAvatar(
-	client *gitlab.Client, project map[string]interface{}, avatarPath string, configuration *Configuration,
-) errors.E {
+func (c *GetCommand) getAvatar(client *gitlab.Client, project map[string]interface{}, configuration *Configuration) errors.E {
 	fmt.Printf("Getting avatar...\n")
 
 	avatarURL, ok := project["avatar_url"]
@@ -58,7 +56,7 @@ func getAvatar(
 		if err != nil {
 			return errors.Wrapf(err, `failed to get project avatar from "%s"`, avatarURL)
 		}
-		avatarPath = strings.TrimSuffix(avatarPath, path.Ext(avatarPath)) + avatarExt
+		avatarPath := strings.TrimSuffix(c.Avatar, path.Ext(c.Avatar)) + avatarExt
 		err = os.WriteFile(avatarPath, avatar, fileMode)
 		if err != nil {
 			return errors.Wrapf(err, `failed to save avatar to "%s"`, avatarPath)
@@ -74,7 +72,7 @@ func getAvatar(
 
 // updateAvatar updates GitLab project's avatar using GitLab projects API endpoint
 // based on the configuration struct.
-func updateAvatar(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+func (c *SetCommand) updateAvatar(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.Avatar == nil {
 		return nil
 	}
@@ -82,7 +80,7 @@ func updateAvatar(client *gitlab.Client, projectID string, configuration *Config
 	fmt.Printf("Updating avatar...\n")
 
 	if *configuration.Avatar == "" {
-		u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
+		u := fmt.Sprintf("projects/%s", gitlab.PathEscape(c.Project))
 
 		// TODO: Make it really remove the avatar.
 		//       See: https://gitlab.com/gitlab-org/gitlab/-/issues/348498
@@ -102,7 +100,7 @@ func updateAvatar(client *gitlab.Client, projectID string, configuration *Config
 		}
 		defer file.Close()
 		_, filename := filepath.Split(*configuration.Avatar)
-		_, _, err = client.Projects.UploadAvatar(projectID, file, filename)
+		_, _, err = client.Projects.UploadAvatar(c.Project, file, filename)
 		if err != nil {
 			return errors.Wrap(err, `failed to upload GitLab project avatar`)
 		}

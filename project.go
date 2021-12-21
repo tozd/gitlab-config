@@ -10,15 +10,15 @@ import (
 
 // getProject populates configuration struct with configuration available
 // from GitLab projects API endpoint.
-func getProject(client *gitlab.Client, projectID, avatarPath string, configuration *Configuration) errors.E {
+func (c *GetCommand) getProject(client *gitlab.Client, configuration *Configuration) errors.E {
 	fmt.Printf("Getting project...\n")
 
-	descriptions, errE := getProjectDescriptions()
+	descriptions, errE := getProjectDescriptions(c.DocsRef)
 	if errE != nil {
 		return errE
 	}
 
-	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
+	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(c.Project))
 
 	req, err := client.NewRequest(http.MethodGet, u, nil, nil)
 	if err != nil {
@@ -33,19 +33,19 @@ func getProject(client *gitlab.Client, projectID, avatarPath string, configurati
 	}
 
 	// We use a separate top-level configuration for avatar instead.
-	errE = getAvatar(client, project, avatarPath, configuration)
+	errE = c.getAvatar(client, project, configuration)
 	if errE != nil {
 		return errE
 	}
 
 	// We use a separate top-level configuration for shared with groups instead.
-	errE = getSharedWithGroups(client, project, configuration)
+	errE = c.getSharedWithGroups(client, project, configuration)
 	if errE != nil {
 		return errE
 	}
 
 	// We use a separate top-level configuration for fork relationship.
-	errE = getForkedFromProject(client, project, configuration)
+	errE = c.getForkedFromProject(client, project, configuration)
 	if errE != nil {
 		return errE
 	}
@@ -135,8 +135,8 @@ func parseProjectDocumentation(input []byte) (map[string]string, errors.E) {
 
 // getProjectDescriptions obtains description of fields used to describe
 // an individual project from GitLab's documentation for projects API endpoint.
-func getProjectDescriptions() (map[string]string, errors.E) {
-	data, err := downloadFile("https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/projects.md")
+func getProjectDescriptions(gitRef string) (map[string]string, errors.E) {
+	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/projects.md", gitRef))
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get project configuration descriptions`)
 	}
@@ -145,14 +145,14 @@ func getProjectDescriptions() (map[string]string, errors.E) {
 
 // updateProject updates GitLab project's configuration using GitLab projects API endpoint
 // based on the configuration struct.
-func updateProject(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+func (c *SetCommand) updateProject(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.Project == nil {
 		return nil
 	}
 
 	fmt.Printf("Updating project...\n")
 
-	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
+	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(c.Project))
 
 	// For now we provide both keys, the new and the deprecated.
 	containerExpirationPolicy, ok := configuration.Project["container_expiration_policy"]
