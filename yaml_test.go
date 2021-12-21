@@ -42,7 +42,15 @@ func TestSaveConfiguration(t *testing.T) {
 		config *Configuration
 		output string
 	}{
-		{&Configuration{}, "{}\n"},
+		{
+			&Configuration{}, "project: {}\n" +
+				"avatar: null\n" +
+				"shared_with_groups: []\n" +
+				"forked_from_project: null\n" +
+				"labels: []\n" +
+				"protected_branches: []\n" +
+				"variables: []\n",
+		},
 		{
 			&Configuration{
 				Project: map[string]interface{}{
@@ -78,6 +86,7 @@ func TestSaveConfiguration(t *testing.T) {
 				"  # fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in\n" +
 				"  # culpa qui officia deserunt mollit anim id est laborum.\n" +
 				"  long: something\n" +
+				"avatar: null\n" +
 				"# Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor\n" +
 				"# incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis\n" +
 				"# nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n" +
@@ -87,7 +96,11 @@ func TestSaveConfiguration(t *testing.T) {
 				"shared_with_groups:\n" +
 				"  # innert top\n" +
 				"  - # comment\n" +
-				"    x: \"y\"\n",
+				"    x: \"y\"\n" +
+				"forked_from_project: null\n" +
+				"labels: []\n" +
+				"protected_branches: []\n" +
+				"variables: []\n",
 		},
 	}
 
