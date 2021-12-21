@@ -14,6 +14,8 @@ import (
 func getSharedWithGroups(client *gitlab.Client, project map[string]interface{}, configuration *Configuration) errors.E {
 	fmt.Printf("Getting sharing with groups...\n")
 
+	configuration.SharedWithGroups = []map[string]interface{}{}
+
 	sharedWithGroups, ok := project["shared_with_groups"]
 	if ok && sharedWithGroups != nil {
 		sharedWithGroups, ok := sharedWithGroups.([]interface{})
@@ -21,7 +23,6 @@ func getSharedWithGroups(client *gitlab.Client, project map[string]interface{}, 
 			return errors.New(`invalid "shared_with_groups"`)
 		}
 		if len(sharedWithGroups) > 0 {
-			configuration.SharedWithGroups = []map[string]interface{}{}
 			shareDescriptions, err := getSharedWithGroupsDescriptions()
 			if err != nil {
 				return err
@@ -85,6 +86,10 @@ func getSharedWithGroupsDescriptions() (map[string]string, errors.E) {
 // When updating an existing group it briefly removes the group and readds it with
 // new configuration.
 func updateSharedWithGroups(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	if configuration.SharedWithGroups == nil {
+		return nil
+	}
+
 	fmt.Printf("Updating sharing with groups...\n")
 
 	project, _, err := client.Projects.GetProject(projectID, nil)

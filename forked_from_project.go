@@ -20,18 +20,23 @@ func getForkedFromProject(
 		if !ok {
 			return errors.New(`invalid "forked_from_project"`)
 		}
-		forkID, ok := forkedFromProject["id"]
-		if ok {
-			// Making sure it is an integer.
-			configuration.ForkedFromProject = int(forkID.(float64))
-			forkPathWithNamespace := forkedFromProject["path_with_namespace"]
-			if forkPathWithNamespace != nil {
-				configuration.ForkedFromProjectComment, ok = forkPathWithNamespace.(string)
-				if !ok {
-					return errors.New(`invalid "path_with_namespace" in "forked_from_project"`)
-				}
+		forkIDFloat, ok := forkedFromProject["id"]
+		if !ok {
+			return errors.New(`invalid "forked_from_project"`)
+		}
+		// Making sure it is an integer.
+		forkID := int(forkIDFloat.(float64))
+		configuration.ForkedFromProject = &forkID
+		forkPathWithNamespace := forkedFromProject["path_with_namespace"]
+		if forkPathWithNamespace != nil {
+			configuration.ForkedFromProjectComment, ok = forkPathWithNamespace.(string)
+			if !ok {
+				return errors.New(`invalid "path_with_namespace" in "forked_from_project"`)
 			}
 		}
+	} else {
+		noProject := 0
+		configuration.ForkedFromProject = &noProject
 	}
 
 	return nil
@@ -40,6 +45,10 @@ func getForkedFromProject(
 // updateForkedFromProject updates GitLab project's fork relation using GitLab projects API endpoint
 // based on the configuration struct.
 func updateForkedFromProject(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	if configuration.ForkedFromProject == nil {
+		return nil
+	}
+
 	fmt.Printf("Updating project fork relation...\n")
 
 	project, _, err := client.Projects.GetProject(projectID, nil)
@@ -47,7 +56,7 @@ func updateForkedFromProject(client *gitlab.Client, projectID string, configurat
 		return errors.Wrap(err, `failed to get project`)
 	}
 
-	if configuration.ForkedFromProject == 0 {
+	if *configuration.ForkedFromProject == 0 {
 		if project.ForkedFromProject != nil {
 			_, err := client.Projects.DeleteProjectForkRelation(projectID)
 			if err != nil {
@@ -55,18 +64,18 @@ func updateForkedFromProject(client *gitlab.Client, projectID string, configurat
 			}
 		}
 	} else if project.ForkedFromProject == nil {
-		_, _, err := client.Projects.CreateProjectForkRelation(projectID, configuration.ForkedFromProject)
+		_, _, err := client.Projects.CreateProjectForkRelation(projectID, *configuration.ForkedFromProject)
 		if err != nil {
-			return errors.Wrapf(err, `failed to create fork relation to project %d`, configuration.ForkedFromProject)
+			return errors.Wrapf(err, `failed to create fork relation to project %d`, *configuration.ForkedFromProject)
 		}
-	} else if project.ForkedFromProject.ID != configuration.ForkedFromProject {
+	} else if project.ForkedFromProject.ID != *configuration.ForkedFromProject {
 		_, err := client.Projects.DeleteProjectForkRelation(projectID)
 		if err != nil {
 			return errors.Wrap(err, `failed to delete fork relation before creating new`)
 		}
-		_, _, err = client.Projects.CreateProjectForkRelation(projectID, configuration.ForkedFromProject)
+		_, _, err = client.Projects.CreateProjectForkRelation(projectID, *configuration.ForkedFromProject)
 		if err != nil {
-			return errors.Wrapf(err, `failed to create fork relation to project %d`, configuration.ForkedFromProject)
+			return errors.Wrapf(err, `failed to create fork relation to project %d`, *configuration.ForkedFromProject)
 		}
 	}
 	return nil

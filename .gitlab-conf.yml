@@ -125,6 +125,8 @@ project:
   # One of disabled, private, or enabled. Type: string
   wiki_access_level: disabled
 avatar: .gitlab-avatar.png
+shared_with_groups: []
+forked_from_project: 0
 # color: The color of the label given in 6-digit hex notation with leading '#'
 # sign (for example, #FFAABB) or one of the CSS color names. Type: string
 # description: The description of the label. Type: string

@@ -24,6 +24,8 @@ type opts struct {
 func getVariables(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
 	fmt.Printf("Getting variables...\n")
 
+	configuration.Variables = []map[string]interface{}{}
+
 	descriptions, errE := getVariablesDescriptions()
 	if errE != nil {
 		return errE
@@ -50,10 +52,6 @@ func getVariables(client *gitlab.Client, projectID string, configuration *Config
 
 		if len(variables) == 0 {
 			break
-		}
-
-		if configuration.Variables == nil {
-			configuration.Variables = []map[string]interface{}{}
 		}
 
 		for _, variable := range variables {
@@ -106,6 +104,10 @@ func getVariablesDescriptions() (map[string]string, errors.E) {
 // updateVariables updates GitLab project's variables using GitLab project level
 // variables API endpoint based on the configuration struct.
 func updateVariables(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	if configuration.Variables == nil {
+		return nil
+	}
+
 	fmt.Printf("Updating variables...\n")
 
 	options := &gitlab.ListProjectVariablesOptions{

@@ -15,6 +15,8 @@ import (
 func getProtectedBranches(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
 	fmt.Printf("Getting protected branches...\n")
 
+	configuration.ProtectedBranches = []map[string]interface{}{}
+
 	descriptions, errE := getProtectedBranchesDescriptions()
 	if errE != nil {
 		return errE
@@ -41,10 +43,6 @@ func getProtectedBranches(client *gitlab.Client, projectID string, configuration
 
 		if len(protectedBranches) == 0 {
 			break
-		}
-
-		if configuration.ProtectedBranches == nil {
-			configuration.ProtectedBranches = []map[string]interface{}{}
 		}
 
 		for _, protectedBranch := range protectedBranches {
@@ -122,6 +120,10 @@ func getProtectedBranchesDescriptions() (map[string]string, errors.E) {
 // protected branches. When updating an existing protected branch it briefly umprotects
 // the branch and reprotects it with new configuration.
 func updateProtectedBranches(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	if configuration.ProtectedBranches == nil {
+		return nil
+	}
+
 	fmt.Printf("Updating protected branches...\n")
 
 	options := &gitlab.ListProtectedBranchesOptions{

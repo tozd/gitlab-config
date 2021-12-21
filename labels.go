@@ -15,6 +15,8 @@ import (
 func getLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
 	fmt.Printf("Getting labels...\n")
 
+	configuration.Labels = []map[string]interface{}{}
+
 	descriptions, errE := getLabelsDescriptions()
 	if errE != nil {
 		return errE
@@ -44,10 +46,6 @@ func getLabels(client *gitlab.Client, projectID string, configuration *Configura
 
 		if len(labels) == 0 {
 			break
-		}
-
-		if configuration.Labels == nil {
-			configuration.Labels = []map[string]interface{}{}
 		}
 
 		for _, label := range labels {
@@ -117,6 +115,10 @@ func getLabelsDescriptions() (map[string]string, errors.E) {
 // Unmatched labels are created as new. Save configuration with label IDs to be able
 // to rename existing labels.
 func updateLabels(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	if configuration.Labels == nil {
+		return nil
+	}
+
 	fmt.Printf("Updating labels...\n")
 
 	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct

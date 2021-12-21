@@ -146,6 +146,10 @@ func getProjectDescriptions() (map[string]string, errors.E) {
 // updateProject updates GitLab project's configuration using GitLab projects API endpoint
 // based on the configuration struct.
 func updateProject(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	if configuration.Project == nil {
+		return nil
+	}
+
 	fmt.Printf("Updating project...\n")
 
 	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))

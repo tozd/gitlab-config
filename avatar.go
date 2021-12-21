@@ -63,7 +63,10 @@ func getAvatar(
 		if err != nil {
 			return errors.Wrapf(err, `failed to save avatar to "%s"`, avatarPath)
 		}
-		configuration.Avatar = avatarPath
+		configuration.Avatar = &avatarPath
+	} else {
+		noAvatar := ""
+		configuration.Avatar = &noAvatar
 	}
 
 	return nil
@@ -72,9 +75,13 @@ func getAvatar(
 // updateAvatar updates GitLab project's avatar using GitLab projects API endpoint
 // based on the configuration struct.
 func updateAvatar(client *gitlab.Client, projectID string, configuration *Configuration) errors.E {
+	if configuration.Avatar == nil {
+		return nil
+	}
+
 	fmt.Printf("Updating avatar...\n")
 
-	if configuration.Avatar == "" {
+	if *configuration.Avatar == "" {
 		u := fmt.Sprintf("projects/%s", gitlab.PathEscape(projectID))
 
 		// TODO: Make it really remove the avatar.
@@ -89,12 +96,12 @@ func updateAvatar(client *gitlab.Client, projectID string, configuration *Config
 			return errors.Wrap(err, `failed to delete GitLab project avatar`)
 		}
 	} else {
-		file, err := os.Open(configuration.Avatar)
+		file, err := os.Open(*configuration.Avatar)
 		if err != nil {
-			return errors.Wrapf(err, `failed to open GitLab project avatar file "%s"`, configuration.Avatar)
+			return errors.Wrapf(err, `failed to open GitLab project avatar file "%s"`, *configuration.Avatar)
 		}
 		defer file.Close()
-		_, filename := filepath.Split(configuration.Avatar)
+		_, filename := filepath.Split(*configuration.Avatar)
 		_, _, err = client.Projects.UploadAvatar(projectID, file, filename)
 		if err != nil {
 			return errors.Wrap(err, `failed to upload GitLab project avatar`)
