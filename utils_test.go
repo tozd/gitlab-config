@@ -101,3 +101,88 @@ func TestRenameMapField(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveFieldSuffix(t *testing.T) {
+	tests := []struct {
+		input map[string]interface{}
+		want  map[string]interface{}
+	}{
+		{
+			map[string]interface{}{
+				"foo_suffix": "bar",
+			},
+			map[string]interface{}{
+				"foo": "bar",
+			},
+		},
+		{
+			map[string]interface{}{
+				"kkk": "bar",
+				"nested": map[string]interface{}{
+					"foo_suffix": "bar",
+				},
+			},
+			map[string]interface{}{
+				"kkk": "bar",
+				"nested": map[string]interface{}{
+					"foo": "bar",
+				},
+			},
+		},
+		{
+			map[string]interface{}{
+				"foo_suffix": "bar",
+				"array": []map[string]interface{}{
+					{
+						"foo_suffix": "bar",
+					},
+					{
+						"foo_suffix": "bar",
+					},
+				},
+			},
+			map[string]interface{}{
+				"foo": "bar",
+				"array": []map[string]interface{}{
+					{
+						"foo": "bar",
+					},
+					{
+						"foo": "bar",
+					},
+				},
+			},
+		},
+		{
+			map[string]interface{}{
+				"foo_suffix": "bar",
+				"array": []interface{}{
+					map[string]interface{}{
+						"foo_suffix": "bar",
+					},
+					map[string]interface{}{
+						"foo_suffix": "bar",
+					},
+				},
+			},
+			map[string]interface{}{
+				"foo": "bar",
+				"array": []interface{}{
+					map[string]interface{}{
+						"foo": "bar",
+					},
+					map[string]interface{}{
+						"foo": "bar",
+					},
+				},
+			},
+		},
+	}
+
+	for k, tt := range tests {
+		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			removeFieldSuffix(tt.input, "_suffix")
+			assert.Equal(t, tt.want, tt.input)
+		})
+	}
+}

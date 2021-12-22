@@ -65,6 +65,14 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 				}
 			}
 
+			if c.EncComment != "" {
+				variable["comment:value"+c.EncSuffix] = c.EncComment
+			}
+			if c.EncSuffix != "" {
+				variable["value"+c.EncSuffix] = variable["value"]
+				delete(variable, "value")
+			}
+
 			configuration.Variables = append(configuration.Variables, variable)
 		}
 

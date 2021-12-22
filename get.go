@@ -13,8 +13,10 @@ import (
 type GetCommand struct {
 	GitLab
 
-	Output string `short:"o" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."`        //nolint:lll
-	Avatar string `short:"a" placeholder:"PATH" default:".gitlab-avatar.img" help:"Where to save the avatar to. File extension is set automatically. Default is \"${default}\"."` //nolint:lll
+	Output     string `short:"o" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."`                                                    //nolint:lll
+	Avatar     string `short:"a" placeholder:"PATH" default:".gitlab-avatar.img" help:"Where to save the avatar to. File extension is set automatically. Default is \"${default}\"."`                                             //nolint:lll
+	EncComment string `short:"E" placeholder:"STRING" default:"sops:enc" help:"Annotate sensitive values with the comment, marking them for encryption with SOPS. Set to an empty string to disable. Default is \"${default}\"."` //nolint:lll
+	EncSuffix  string `short:"S" help:"Add the suffix to field names of sensitive values, marking them for encryption with SOPS. Disabled by default."`                                                                           //nolint:lll
 }
 
 // Run runs the get command.

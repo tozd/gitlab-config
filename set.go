@@ -3,8 +3,11 @@ package config
 import (
 	"io"
 	"os"
+	"reflect"
 
 	"github.com/alecthomas/kong"
+	"github.com/tozd/sops/v3"
+	"github.com/tozd/sops/v3/decrypt"
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
 	"gopkg.in/yaml.v3"
@@ -16,7 +19,9 @@ import (
 type SetCommand struct {
 	GitLab
 
-	Input string `short:"i" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to load the configuration from. Can be \"-\" for stdin. Default is \"${default}\"."` //nolint:lll
+	Input     string `short:"i" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to load the configuration from. Can be \"-\" for stdin. Default is \"${default}\"."` //nolint:lll
+	EncSuffix string `short:"S" help:"Remove the suffix from field names before calling APIs. Disabled by default."`                                                           //nolint:lll
+	NoDecrypt bool   `help:"Do not attempt to decrypt the configuration."`
 }
 
 // Run runs the set command.
@@ -47,10 +52,26 @@ func (c *SetCommand) Run(globals *Globals) errors.E {
 		return errors.Wrapf(err, `cannot read configuration from "%s"`, c.Input)
 	}
 
+	if !c.NoDecrypt {
+		decryptedInput, err := decrypt.Data(input, "yaml") //nolint:govet
+		if err == nil {
+			input = decryptedInput
+		} else if !errors.Is(err, sops.MetadataNotFound) {
+			return errors.Wrapf(err, `cannot decrypt configuration from "%s"`, c.Input)
+		}
+	}
+
 	var configuration Configuration
 	err = yaml.Unmarshal(input, &configuration)
 	if err != nil {
 		return errors.Wrapf(err, `cannot unmarshal configuration from "%s"`, c.Input)
+	}
+
+	// We use reflect to go over all struct's fields so we do not have to
+	// change this code as Configuration struct evolves.
+	v := reflect.ValueOf(configuration)
+	for i := 0; i < v.NumField(); i++ {
+		removeFieldSuffix(v.Field(i), c.EncSuffix)
 	}
 
 	client, err := gitlab.NewClient(c.Token, gitlab.WithBaseURL(c.BaseURL))

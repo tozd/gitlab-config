@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/xanzy/go-gitlab"
@@ -64,6 +65,34 @@ func renameMapField(input map[string]interface{}, from, to string) {
 		if key == from {
 			input[to] = value
 			delete(input, key)
+		}
+	}
+}
+
+// removeFieldSuffix removes suffix from field names anywhere in the arbitrary
+// input structure, even if it is nested inside other maps or slices.
+func removeFieldSuffix(input interface{}, suffix string) {
+	if suffix == "" {
+		return
+	}
+
+	switch in := input.(type) {
+	case []interface{}:
+		for _, v := range in {
+			removeFieldSuffix(v, suffix)
+		}
+	case []map[string]interface{}:
+		for _, v := range in {
+			removeFieldSuffix(v, suffix)
+		}
+	case map[string]interface{}:
+		for key, value := range in {
+			removeFieldSuffix(value, suffix)
+
+			if strings.HasSuffix(key, suffix) {
+				in[strings.TrimSuffix(key, suffix)] = value
+				delete(in, key)
+			}
 		}
 	}
 }
