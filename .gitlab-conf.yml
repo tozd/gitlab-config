@@ -216,3 +216,48 @@ protected_branches:
         user_id: null
     code_owner_approval_required: false
     name: main
+# environment_scope: The environment_scope of the variable. Default: *. Type:
+# string
+# key: The key of a variable; must have no more than 255 characters; only A-Z,
+# a-z, 0-9, and _ are allowed. Type: string
+# masked: Whether the variable is masked. Default: false. Type: boolean
+# protected: Whether the variable is protected. Default: false. Type: boolean
+# value: The value of a variable. Type: string
+# variable_type: The type of a variable. Available types are: env_var (default)
+# and file. Type: string
+variables:
+  - environment_scope: '*'
+    key: GITLAB_API_TOKEN
+    masked: true
+    protected: true
+    # sops:enc
+    value: ENC[AES256_GCM,data:c4bXOpVi2rha9WZlAWkmGCjtk0R9j4o/tM0=,iv:bw85OqXgUryPSkySrm9f4b8a94pM0/cPYWBgesSJM2A=,tag:q+y92O46tmrr8KmOxjgYTw==,type:str]
+    variable_type: env_var
+  - environment_scope: '*'
+    key: SOPS_AGE_KEY_FILE
+    masked: false
+    protected: true
+    # sops:enc
+    value: ENC[AES256_GCM,data:5v8iqzekPmr6xtjaD6VdQG1j5NghxUzxEyk+Tikjg+525rsSi18q1cHnqWylwFkV4IXI7EUlGrYvRTJdWDhoAgv31MX2M8nAH0scwI6vcqwKmrOOLSpfCbgfQK4l7FMPZ1Dr3I0fVE/UWJNToumBx5ca2VlIv/hatmGEINexTAgZViNMkBrp4OqD+h1Jx9jhzrgmj8aLPV9Yv9ppo8UtKi8Pe9bbRKRairu8rogrIjIPzjXGkCAYfGFKyghY,iv:Re2iUVkySp7BOO3BRIVGfcAGNY8ANwFN/pHyX8fS/EQ=,tag:pD2OTo/7dkCqfW62aM6nuQ==,type:str]
+    variable_type: file
+sops:
+  kms: []
+  gcp_kms: []
+  azure_kv: []
+  hc_vault: []
+  age:
+    - recipient: age1az6ujwr5u5h89esnp7hvx9nx6rmdlm67ghukrmcc7xd6s58c7auqtd9xwg
+      enc: |
+        -----BEGIN AGE ENCRYPTED FILE-----
+        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBHNkFzTjdOT1ZNUVQvSTBK
+        cHpEOVdkakRsdHJCS1RkUXN3Skl3Sk9JZFVVClBRSkRTbEtIZVZsRWwrWnAwK3pM
+        S01uQ0U5RHRxY2hSbTNqT0VZYUc2bmcKLS0tIERGRjVUTSt3eGhFcng3aHA0VjlG
+        a2IyL1IydzlxSS9hYlhxNXRLVnMreWMK3HbJTOhEsVKwTRovUfdgwCfhwbGervi6
+        DggnlmM6h0pG9rGkVqKF+IB62+qG3Nv6dSmDXj89kAOZ0nfJhJuLCw==
+        -----END AGE ENCRYPTED FILE-----
+  lastmodified: "2021-12-22T21:34:05Z"
+  mac: ENC[AES256_GCM,data:Ps7PK6XjitU4OMwwirACiriVQ9tpwy8kOBPA7+LalpYde2qzAJwZbi2kBSnmm0vyhOcNF7lEVtxR0Llm7xAxxvc93NXmxltROpQ1vIWMk9gcMERyk6HRZvT0qkZyV0sGChBuhPh/afqVxmGZbu6a1XKBOEimPH7XaDis8cfaxdQ=,iv:Vn32PMg1ImRJIRA0tg8kMU65vZr4jkON4cxcQbLVBX4=,tag:hloYr+f3Ga032svNtkv+NQ==,type:str]
+  pgp: []
+  encrypted_comment_regex: sops:enc
+  mac_only_encrypted: true
+  version: 3.7.1

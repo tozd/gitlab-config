@@ -10,7 +10,7 @@ ifeq ($(REVISION),)
  REVISION = `git rev-parse HEAD`
 endif
 
-.PHONY: lint lint-ci fmt fmt-ci test test-ci clean release lint-docs audit
+.PHONY: lint lint-ci fmt fmt-ci test test-ci clean release lint-docs audit encrypt decrypt sops
 
 build:
 	go build -ldflags "-X main.version=${VERSION} -X main.buildTimestamp=${BUILD_TIMESTAMP} -X main.revision=${REVISION}" -o gitlab-config gitlab.com/tozd/gitlab/config/cmd/gitlab-config
@@ -54,3 +54,12 @@ lint-docs:
 
 audit:
 	 go list -json -deps | nancy sleuth --skip-update-check
+
+encrypt: build
+	./gitlab-config sops -- --encrypt --mac-only-encrypted --in-place --encrypted-comment-regex sops:enc .gitlab-conf.yml
+
+decrypt: build
+	SOPS_AGE_KEY_FILE=keys.txt ./gitlab-config sops -- --decrypt --in-place .gitlab-conf.yml
+
+sops: build
+	SOPS_AGE_KEY_FILE=keys.txt ./gitlab-config sops -- .gitlab-conf.yml
