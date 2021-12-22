@@ -10,45 +10,50 @@ import (
 
 // getProject populates configuration struct with configuration available
 // from GitLab projects API endpoint.
-func (c *GetCommand) getProject(client *gitlab.Client, configuration *Configuration) errors.E {
+func (c *GetCommand) getProject(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
 	fmt.Printf("Getting project...\n")
 
 	descriptions, errE := getProjectDescriptions(c.DocsRef)
 	if errE != nil {
-		return errE
+		return false, errE
 	}
 
 	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(c.Project))
 
 	req, err := client.NewRequest(http.MethodGet, u, nil, nil)
 	if err != nil {
-		return errors.Wrap(err, `failed to get project`)
+		return false, errors.Wrap(err, `failed to get project`)
 	}
 
 	project := map[string]interface{}{}
 
 	_, err = client.Do(req, &project)
 	if err != nil {
-		return errors.Wrap(err, `failed to get project`)
+		return false, errors.Wrap(err, `failed to get project`)
 	}
+
+	hasSensitive := false
 
 	// We use a separate top-level configuration for avatar instead.
-	errE = c.getAvatar(client, project, configuration)
+	s, errE := c.getAvatar(client, project, configuration)
 	if errE != nil {
-		return errE
+		return false, errE
 	}
+	hasSensitive = hasSensitive || s
 
 	// We use a separate top-level configuration for shared with groups instead.
-	errE = c.getSharedWithGroups(client, project, configuration)
+	s, errE = c.getSharedWithGroups(client, project, configuration)
 	if errE != nil {
-		return errE
+		return false, errE
 	}
+	hasSensitive = hasSensitive || s
 
 	// We use a separate top-level configuration for fork relationship.
-	errE = c.getForkedFromProject(client, project, configuration)
+	s, errE = c.getForkedFromProject(client, project, configuration)
 	if errE != nil {
-		return errE
+		return false, errE
 	}
+	hasSensitive = hasSensitive || s
 
 	// Only retain those keys which can be edited through the API
 	// (which are those available in descriptions). We cannot add comments
@@ -69,7 +74,7 @@ func (c *GetCommand) getProject(client *gitlab.Client, configuration *Configurat
 	if project["container_expiration_policy"] != nil {
 		policy, ok := project["container_expiration_policy"].(map[string]interface{})
 		if !ok {
-			return errors.New(`invalid "container_expiration_policy"`)
+			return false, errors.New(`invalid "container_expiration_policy"`)
 		}
 		if policy["name_regex"] != nil && policy["name_regex_delete"] == nil {
 			policy["name_regex_delete"] = policy["name_regex"]
@@ -89,7 +94,7 @@ func (c *GetCommand) getProject(client *gitlab.Client, configuration *Configurat
 
 	configuration.Project = project
 
-	return nil
+	return hasSensitive, nil
 }
 
 // parseProjectDocumentation parses GitLab's documentation in Markdown for

@@ -1,7 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/xanzy/go-gitlab"
@@ -47,26 +50,31 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 	}
 
 	var configuration Configuration
+	hasSensitive := false
 
-	errE := c.getProject(client, &configuration)
+	s, errE := c.getProject(client, &configuration)
 	if errE != nil {
 		return errE
 	}
+	hasSensitive = hasSensitive || s
 
-	errE = c.getLabels(client, &configuration)
+	s, errE = c.getLabels(client, &configuration)
 	if errE != nil {
 		return errE
 	}
+	hasSensitive = hasSensitive || s
 
-	errE = c.getProtectedBranches(client, &configuration)
+	s, errE = c.getProtectedBranches(client, &configuration)
 	if errE != nil {
 		return errE
 	}
+	hasSensitive = hasSensitive || s
 
-	errE = c.getVariables(client, &configuration)
+	s, errE = c.getVariables(client, &configuration)
 	if errE != nil {
 		return errE
 	}
+	hasSensitive = hasSensitive || s
 
 	data, errE := toConfigurationYAML(&configuration)
 	if errE != nil {
@@ -80,6 +88,23 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 	}
 	if err != nil {
 		return errors.Wrapf(err, `cannot write configuration to "%s"`, c.Output)
+	}
+
+	fmt.Printf("Got everything.\n")
+	if hasSensitive {
+		args := []string{os.Args[0]}
+		if globals.ChangeTo != "" {
+			args = append(args, "-C", globals.ChangeTo)
+		}
+		// TODO: Remove "--". See: https://github.com/alecthomas/kong/issues/253
+		args = append(args, "sops", "--", "--encrypt", "--mac-only-encrypted", "--in-place")
+		if c.EncSuffix != "" {
+			args = append(args, "--encrypted-suffix", c.EncSuffix)
+		} else if c.EncComment != "" {
+			args = append(args, "--encrypted-comment-regex", regexp.QuoteMeta(c.EncComment))
+		}
+		args = append(args, c.Output)
+		fmt.Printf("WARNING: Configuration includes sensitive values. Consider encrypting the file. You can use SOPS, e.g.:\n  %s\n", strings.Join(args, " "))
 	}
 
 	return nil

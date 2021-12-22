@@ -12,14 +12,14 @@ import (
 
 // getProtectedBranches populates configuration struct with configuration available
 // from GitLab protected branches API endpoint.
-func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *Configuration) errors.E {
+func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
 	fmt.Printf("Getting protected branches...\n")
 
 	configuration.ProtectedBranches = []map[string]interface{}{}
 
 	descriptions, errE := getProtectedBranchesDescriptions(c.DocsRef)
 	if errE != nil {
-		return errE
+		return false, errE
 	}
 	configuration.ProtectedBranchesComment = formatDescriptions(descriptions)
 
@@ -32,14 +32,14 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 	for {
 		req, err := client.NewRequest(http.MethodGet, u, options, nil)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get protected branches, page %d`, options.Page)
+			return false, errors.Wrapf(err, `failed to get protected branches, page %d`, options.Page)
 		}
 
 		protectedBranches := []map[string]interface{}{}
 
 		response, err := client.Do(req, &protectedBranches)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get protected branches, page %d`, options.Page)
+			return false, errors.Wrapf(err, `failed to get protected branches, page %d`, options.Page)
 		}
 
 		if len(protectedBranches) == 0 {
@@ -79,7 +79,7 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 		return configuration.ProtectedBranches[i]["name"].(string) < configuration.ProtectedBranches[j]["name"].(string)
 	})
 
-	return nil
+	return false, nil
 }
 
 // parseProtectedBranchesDocumentation parses GitLab's documentation in Markdown for

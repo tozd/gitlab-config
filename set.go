@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"reflect"
@@ -113,6 +114,8 @@ func (c *SetCommand) Run(globals *Globals) errors.E {
 	if errE != nil {
 		return errE
 	}
+
+	fmt.Printf("Updated everything.\n")
 
 	return nil
 }

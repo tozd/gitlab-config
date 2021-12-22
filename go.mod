@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/stretchr/testify v1.7.0
-	github.com/tozd/sops/v3 v3.7.2-0.20211221165431-98605e5e5a0a
+	github.com/tozd/sops/v3 v3.7.2-0.20211222142534-da71b59d81ff
 	github.com/whilp/git-urls v1.0.0
 	github.com/xanzy/go-gitlab v0.52.2
 	github.com/yuin/goldmark v1.4.4

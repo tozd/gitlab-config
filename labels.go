@@ -12,14 +12,14 @@ import (
 
 // getLabels populates configuration struct with configuration available
 // from GitLab labels API endpoint.
-func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configuration) errors.E {
+func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
 	fmt.Printf("Getting labels...\n")
 
 	configuration.Labels = []map[string]interface{}{}
 
 	descriptions, errE := getLabelsDescriptions(c.DocsRef)
 	if errE != nil {
-		return errE
+		return false, errE
 	}
 	configuration.LabelsComment = formatDescriptions(descriptions)
 
@@ -35,14 +35,14 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 	for {
 		req, err := client.NewRequest(http.MethodGet, u, options, nil)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
+			return false, errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
 		}
 
 		labels := []map[string]interface{}{}
 
 		response, err := client.Do(req, &labels)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
+			return false, errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
 		}
 
 		if len(labels) == 0 {
@@ -77,7 +77,7 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 		return configuration.Labels[i]["id"].(int) < configuration.Labels[j]["id"].(int)
 	})
 
-	return nil
+	return false, nil
 }
 
 // parseLabelsDocumentation parses GitLab's documentation in Markdown for

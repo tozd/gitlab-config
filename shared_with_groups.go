@@ -13,14 +13,14 @@ import (
 // with groups available from GitLab projects API endpoint.
 func (c *GetCommand) getSharedWithGroups(
 	client *gitlab.Client, project map[string]interface{}, configuration *Configuration,
-) errors.E {
+) (bool, errors.E) {
 	fmt.Printf("Getting sharing with groups...\n")
 
 	configuration.SharedWithGroups = []map[string]interface{}{}
 
 	shareDescriptions, err := getSharedWithGroupsDescriptions(c.DocsRef)
 	if err != nil {
-		return err
+		return false, err
 	}
 	configuration.SharedWithGroupsComment = formatDescriptions(shareDescriptions)
 
@@ -28,12 +28,12 @@ func (c *GetCommand) getSharedWithGroups(
 	if ok && sharedWithGroups != nil {
 		sharedWithGroups, ok := sharedWithGroups.([]interface{})
 		if !ok {
-			return errors.New(`invalid "shared_with_groups"`)
+			return false, errors.New(`invalid "shared_with_groups"`)
 		}
 		for i, sharedWithGroup := range sharedWithGroups {
 			sharedWithGroup, ok := sharedWithGroup.(map[string]interface{})
 			if !ok {
-				return errors.Errorf(`invalid "shared_with_groups" at index %d`, i)
+				return false, errors.Errorf(`invalid "shared_with_groups" at index %d`, i)
 			}
 			groupFullPath := sharedWithGroup["group_full_path"]
 			// Rename because share API has a different key than get project API.
@@ -59,7 +59,7 @@ func (c *GetCommand) getSharedWithGroups(
 		}
 	}
 
-	return nil
+	return false, nil
 }
 
 // parseSharedWithGroupsDocumentation parses GitLab's documentation in Markdown for

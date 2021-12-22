@@ -11,18 +11,18 @@ import (
 // available from GitLab projects API endpoint.
 func (c *GetCommand) getForkedFromProject(
 	client *gitlab.Client, project map[string]interface{}, configuration *Configuration,
-) errors.E {
+) (bool, errors.E) {
 	fmt.Printf("Getting project fork relation...\n")
 
 	forkedFromProject, ok := project["forked_from_project"]
 	if ok && forkedFromProject != nil {
 		forkedFromProject, ok := forkedFromProject.(map[string]interface{})
 		if !ok {
-			return errors.New(`invalid "forked_from_project"`)
+			return false, errors.New(`invalid "forked_from_project"`)
 		}
 		forkIDFloat, ok := forkedFromProject["id"]
 		if !ok {
-			return errors.New(`invalid "forked_from_project"`)
+			return false, errors.New(`invalid "forked_from_project"`)
 		}
 		// Making sure it is an integer.
 		forkID := int(forkIDFloat.(float64))
@@ -31,7 +31,7 @@ func (c *GetCommand) getForkedFromProject(
 		if forkPathWithNamespace != nil {
 			configuration.ForkedFromProjectComment, ok = forkPathWithNamespace.(string)
 			if !ok {
-				return errors.New(`invalid "path_with_namespace" in "forked_from_project"`)
+				return false, errors.New(`invalid "path_with_namespace" in "forked_from_project"`)
 			}
 		}
 	} else {
@@ -39,7 +39,7 @@ func (c *GetCommand) getForkedFromProject(
 		configuration.ForkedFromProject = &noProject
 	}
 
-	return nil
+	return false, nil
 }
 
 // updateForkedFromProject updates GitLab project's fork relation using GitLab projects API endpoint

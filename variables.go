@@ -21,14 +21,14 @@ type opts struct {
 
 // getVariables populates configuration struct with configuration available
 // from GitLab project level variables API endpoint.
-func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configuration) errors.E {
+func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
 	fmt.Printf("Getting variables...\n")
 
 	configuration.Variables = []map[string]interface{}{}
 
 	descriptions, errE := getVariablesDescriptions(c.DocsRef)
 	if errE != nil {
-		return errE
+		return false, errE
 	}
 	configuration.VariablesComment = formatDescriptions(descriptions)
 
@@ -41,14 +41,14 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 	for {
 		req, err := client.NewRequest(http.MethodGet, u, options, nil)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get variables, page %d`, options.Page)
+			return false, errors.Wrapf(err, `failed to get variables, page %d`, options.Page)
 		}
 
 		variables := []map[string]interface{}{}
 
 		response, err := client.Do(req, &variables)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get variables, page %d`, options.Page)
+			return false, errors.Wrapf(err, `failed to get variables, page %d`, options.Page)
 		}
 
 		if len(variables) == 0 {
@@ -88,7 +88,7 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 		return configuration.Variables[i]["key"].(string) < configuration.Variables[j]["key"].(string)
 	})
 
-	return nil
+	return len(configuration.Variables) > 0, nil
 }
 
 // parseVariablesDocumentation parses GitLab's documentation in Markdown for
