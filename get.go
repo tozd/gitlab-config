@@ -104,7 +104,7 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 			args = append(args, "--encrypted-comment-regex", regexp.QuoteMeta(c.EncComment))
 		}
 		args = append(args, c.Output)
-		fmt.Printf("WARNING: Configuration includes sensitive values. Consider encrypting the file. You can use SOPS, e.g.:\n  %s\n", strings.Join(args, " "))
+		fmt.Printf("WARNING: Configuration includes sensitive values. Consider encrypting the file. You can use SOPS, e.g.:\n  %s\n", strings.Join(args, " ")) //nolint:lll
 	}
 
 	return nil
