@@ -2,8 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,7 +35,7 @@ func TestFormatDescriptions(t *testing.T) {
 	assert.Equal(t, expected, formatted)
 }
 
-func TestSaveConfiguration(t *testing.T) {
+func TestToConfigurationYAML(t *testing.T) {
 	tests := []struct {
 		config *Configuration
 		output string
@@ -106,14 +104,8 @@ func TestSaveConfiguration(t *testing.T) {
 
 	for k, tt := range tests {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
-			tempDir := t.TempDir()
-			output := filepath.Join(tempDir, "output.yaml")
-
-			errE := saveConfiguration(tt.config, output)
+			data, errE := toConfigurationYAML(tt.config)
 			assert.NoError(t, errE)
-
-			data, err := os.ReadFile(output)
-			assert.NoError(t, err)
 			assert.Equal(t, tt.output, string(data))
 		})
 	}

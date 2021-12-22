@@ -3,8 +3,13 @@ package config
 import (
 	"os"
 
+	"github.com/alecthomas/kong"
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
+)
+
+const (
+	fileMode = 0o600
 )
 
 // We do not use type=path for Output because we want a relative path.
@@ -63,5 +68,19 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 		return errE
 	}
 
-	return saveConfiguration(&configuration, c.Output)
+	data, errE := toConfigurationYAML(&configuration)
+	if errE != nil {
+		return errE
+	}
+
+	if c.Output != "-" {
+		err = os.WriteFile(kong.ExpandPath(c.Output), data, fileMode)
+	} else {
+		_, err = os.Stdout.Write(data)
+	}
+	if err != nil {
+		return errors.Wrapf(err, `cannot write configuration to "%s"`, c.Output)
+	}
+
+	return nil
 }

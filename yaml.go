@@ -2,11 +2,9 @@ package config
 
 import (
 	"bytes"
-	"os"
 	"sort"
 	"strings"
 
-	"github.com/alecthomas/kong"
 	"github.com/mitchellh/go-wordwrap"
 	"gitlab.com/tozd/go/errors"
 	"gopkg.in/yaml.v3"
@@ -14,7 +12,6 @@ import (
 
 const (
 	maxCommentWidth = 80
-	fileMode        = 0o600
 	yamlIndent      = 2
 )
 
@@ -35,17 +32,16 @@ func formatDescriptions(descriptions map[string]string) string {
 	return output
 }
 
-// saveConfiguration saves configuration to output file path in YAML.
-// output can be "-" to save it to stdout.
+// toConfigurationYAML returns configuration as YAML.
 //
-// Saved YAML contains configuration comments.
-func saveConfiguration(configuration *Configuration, output string) errors.E {
+// YAML contains configuration comments.
+func toConfigurationYAML(configuration *Configuration) ([]byte, errors.E) {
 	var node yaml.Node
 	err := (&node).Encode(configuration)
 	if err != nil {
-		return errors.Wrap(err, `cannot encode configuration`)
+		return nil, errors.Wrap(err, `cannot encode configuration`)
 	}
-	return writeYAML(&node, output)
+	return toYAML(&node)
 }
 
 // setYAMLComments modifies YAML node by moving comments in children nodes which have
@@ -97,11 +93,10 @@ func setYAMLComments(node *yaml.Node) {
 	}
 }
 
-// writeYAML writes YAML node to output file path.
-// output can be "-" to save it to stdout.
+// toYAML converts YAML node to bytes.
 //
-// Comments in the YAML node are written out as well.
-func writeYAML(node *yaml.Node, output string) errors.E {
+// Comments in the YAML node are converted as well.
+func toYAML(node *yaml.Node) ([]byte, errors.E) {
 	setYAMLComments(node)
 
 	buffer := bytes.Buffer{}
@@ -110,21 +105,12 @@ func writeYAML(node *yaml.Node, output string) errors.E {
 	encoder.SetIndent(yamlIndent)
 	err := encoder.Encode(node)
 	if err != nil {
-		return errors.Wrap(err, `cannot marshal configuration`)
+		return nil, errors.Wrap(err, `cannot marshal configuration`)
 	}
 	err = encoder.Close()
 	if err != nil {
-		return errors.Wrap(err, `cannot marshal configuration`)
+		return nil, errors.Wrap(err, `cannot marshal configuration`)
 	}
 
-	if output != "-" {
-		err = os.WriteFile(kong.ExpandPath(output), buffer.Bytes(), fileMode)
-	} else {
-		_, err = os.Stdout.Write(buffer.Bytes())
-	}
-	if err != nil {
-		return errors.Wrapf(err, `cannot write configuration to "%s"`, output)
-	}
-
-	return nil
+	return buffer.Bytes(), nil
 }
