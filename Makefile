@@ -10,7 +10,7 @@ ifeq ($(REVISION),)
  REVISION = `git rev-parse HEAD`
 endif
 
-.PHONY: lint lint-ci fmt fmt-ci test test-ci clean release lint-docs
+.PHONY: lint lint-ci fmt fmt-ci test test-ci clean release lint-docs audit
 
 build:
 	go build -ldflags "-X main.version=${VERSION} -X main.buildTimestamp=${BUILD_TIMESTAMP} -X main.revision=${REVISION}" -o gitlab-config gitlab.com/tozd/gitlab/config/cmd/gitlab-config
@@ -51,3 +51,6 @@ release:
 
 lint-docs:
 	npx --yes --package 'markdownlint-cli@~0.30.0' -- markdownlint --ignore-path .gitignore --ignore testdata/ '**/*.md'
+
+audit:
+	 go list -json -deps | nancy sleuth --skip-update-check
