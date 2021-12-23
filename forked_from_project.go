@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
@@ -12,7 +13,7 @@ import (
 func (c *GetCommand) getForkedFromProject(
 	client *gitlab.Client, project map[string]interface{}, configuration *Configuration,
 ) (bool, errors.E) {
-	fmt.Printf("Getting project fork relation...\n")
+	fmt.Fprintf(os.Stderr, "Getting project fork relation...\n")
 
 	forkedFromProject, ok := project["forked_from_project"]
 	if ok && forkedFromProject != nil {
@@ -49,7 +50,7 @@ func (c *SetCommand) updateForkedFromProject(client *gitlab.Client, configuratio
 		return nil
 	}
 
-	fmt.Printf("Updating project fork relation...\n")
+	fmt.Fprintf(os.Stderr, "Updating project fork relation...\n")
 
 	project, _, err := client.Projects.GetProject(c.Project, nil)
 	if err != nil {

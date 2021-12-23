@@ -39,7 +39,7 @@ func checkAvatarExtension(ext string) error {
 func (c *GetCommand) getAvatar(
 	client *gitlab.Client, project map[string]interface{}, configuration *Configuration,
 ) (bool, errors.E) {
-	fmt.Printf("Getting avatar...\n")
+	fmt.Fprintf(os.Stderr, "Getting avatar...\n")
 
 	avatarURL, ok := project["avatar_url"]
 	if ok && avatarURL != nil {
@@ -79,7 +79,7 @@ func (c *SetCommand) updateAvatar(client *gitlab.Client, configuration *Configur
 		return nil
 	}
 
-	fmt.Printf("Updating avatar...\n")
+	fmt.Fprintf(os.Stderr, "Updating avatar...\n")
 
 	if *configuration.Avatar == "" {
 		u := fmt.Sprintf("projects/%s", gitlab.PathEscape(c.Project))

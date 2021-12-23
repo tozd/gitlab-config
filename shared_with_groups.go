@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/xanzy/go-gitlab"
@@ -14,7 +15,7 @@ import (
 func (c *GetCommand) getSharedWithGroups(
 	client *gitlab.Client, project map[string]interface{}, configuration *Configuration,
 ) (bool, errors.E) {
-	fmt.Printf("Getting sharing with groups...\n")
+	fmt.Fprintf(os.Stderr, "Getting sharing with groups...\n")
 
 	configuration.SharedWithGroups = []map[string]interface{}{}
 
@@ -91,7 +92,7 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 		return nil
 	}
 
-	fmt.Printf("Updating sharing with groups...\n")
+	fmt.Fprintf(os.Stderr, "Updating sharing with groups...\n")
 
 	project, _, err := client.Projects.GetProject(c.Project, nil)
 	if err != nil {

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"sort"
 
 	mapset "github.com/deckarep/golang-set"
@@ -13,7 +14,7 @@ import (
 // getProtectedBranches populates configuration struct with configuration available
 // from GitLab protected branches API endpoint.
 func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
-	fmt.Printf("Getting protected branches...\n")
+	fmt.Fprintf(os.Stderr, "Getting protected branches...\n")
 
 	configuration.ProtectedBranches = []map[string]interface{}{}
 
@@ -123,7 +124,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 		return nil
 	}
 
-	fmt.Printf("Updating protected branches...\n")
+	fmt.Fprintf(os.Stderr, "Updating protected branches...\n")
 
 	options := &gitlab.ListProtectedBranchesOptions{
 		PerPage: maxGitLabPageSize,

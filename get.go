@@ -90,7 +90,7 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 		return errors.Wrapf(err, `cannot write configuration to "%s"`, c.Output)
 	}
 
-	fmt.Printf("Got everything.\n")
+	fmt.Fprintf(os.Stderr, "Got everything.\n")
 	if hasSensitive {
 		args := []string{os.Args[0]}
 		if globals.ChangeTo != "" {
@@ -104,7 +104,7 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 			args = append(args, "--encrypted-comment-regex", regexp.QuoteMeta(c.EncComment))
 		}
 		args = append(args, c.Output)
-		fmt.Printf("WARNING: Configuration includes sensitive values. Consider encrypting the file. You can use SOPS, e.g.:\n  %s\n", strings.Join(args, " ")) //nolint:lll
+		fmt.Fprintf(os.Stderr, "WARNING: Configuration includes sensitive values. Consider encrypting the file. You can use SOPS, e.g.:\n  %s\n", strings.Join(args, " ")) //nolint:lll
 	}
 
 	return nil

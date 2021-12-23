@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"sort"
 
 	mapset "github.com/deckarep/golang-set"
@@ -13,7 +14,7 @@ import (
 // getLabels populates configuration struct with configuration available
 // from GitLab labels API endpoint.
 func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
-	fmt.Printf("Getting labels...\n")
+	fmt.Fprintf(os.Stderr, "Getting labels...\n")
 
 	configuration.Labels = []map[string]interface{}{}
 
@@ -118,7 +119,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		return nil
 	}
 
-	fmt.Printf("Updating labels...\n")
+	fmt.Fprintf(os.Stderr, "Updating labels...\n")
 
 	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct
 		ListOptions: gitlab.ListOptions{

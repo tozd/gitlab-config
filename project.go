@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
@@ -11,7 +12,7 @@ import (
 // getProject populates configuration struct with configuration available
 // from GitLab projects API endpoint.
 func (c *GetCommand) getProject(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
-	fmt.Printf("Getting project...\n")
+	fmt.Fprintf(os.Stderr, "Getting project...\n")
 
 	descriptions, errE := getProjectDescriptions(c.DocsRef)
 	if errE != nil {
@@ -155,7 +156,7 @@ func (c *SetCommand) updateProject(client *gitlab.Client, configuration *Configu
 		return nil
 	}
 
-	fmt.Printf("Updating project...\n")
+	fmt.Fprintf(os.Stderr, "Updating project...\n")
 
 	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(c.Project))
 

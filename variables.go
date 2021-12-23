@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"sort"
 
 	mapset "github.com/deckarep/golang-set"
@@ -22,7 +23,7 @@ type opts struct {
 // getVariables populates configuration struct with configuration available
 // from GitLab project level variables API endpoint.
 func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
-	fmt.Printf("Getting variables...\n")
+	fmt.Fprintf(os.Stderr, "Getting variables...\n")
 
 	configuration.Variables = []map[string]interface{}{}
 
@@ -115,7 +116,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		return nil
 	}
 
-	fmt.Printf("Updating variables...\n")
+	fmt.Fprintf(os.Stderr, "Updating variables...\n")
 
 	options := &gitlab.ListProjectVariablesOptions{
 		PerPage: maxGitLabPageSize,

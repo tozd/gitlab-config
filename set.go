@@ -118,7 +118,7 @@ func (c *SetCommand) Run(globals *Globals) errors.E {
 		return errE
 	}
 
-	fmt.Printf("Updated everything.\n")
+	fmt.Fprintf(os.Stderr, "Updated everything.\n")
 
 	return nil
 }
