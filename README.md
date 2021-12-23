@@ -48,12 +48,15 @@ if you need to fork the project there.
 
 ## Usage
 
-The tool provides two main commands:
+The tool provides three commands:
 
 * `get` allows you to retrieve existing configuration of GitLab project and
   store it into an editable YAML file.
 * `set` updates the GitLab project's configuration based on the configuration
   in the file.
+* `sops` integrates [SOPS fork](https://github.com/tozd/sops) as a command.
+  The fork supports using comments to select values to encrypt and
+  computing MAC only over values which end up encrypted.
 
 This enables multiple workflows:
 
@@ -63,7 +66,7 @@ This enables multiple workflows:
 * You can use `gitlab-config set` inside a CI job to configure the project
   every time configuration file stored in the repository is changed.
 * You can have one repository with configuration files for many projects.
-  A CI/CD job then configures projects when their configuration files change.
+  A CI job then configures projects when their configuration files change.
 * Somebody changed project's configuration through web UI and you want to see
   what has changed, comparing `gitlab-config get` output with your backup.
 
@@ -109,7 +112,7 @@ sync_config:
     entrypoint: [""]
 
   script:
-    - /gitlab-config
+    - /gitlab-config set
 
   rules:
     - if: '$GITLAB_API_TOKEN && $CI_COMMIT_BRANCH == "main"'
@@ -141,6 +144,92 @@ An alternative is to have a separate repository which contains only the configur
 file for a project (or files, for multiple projects) and you provide the access token only there.
 Downside of this approach is that you cannot change code and project's configuration at the same
 time through one MR.
+
+## Handling sensitive values
+
+It is important to understand that some configuration values are sensitive and should be handled
+with care, e.g., CI/CD variables. There are few options available to you:
+
+* Never make configuration obtained using `gitlab-config get` public and handle the whole file
+  in a security-conscious way.
+* Do not manage configuration sections which include sensitive values using `gitlab-config`.
+  This is supported by removing (or setting to `null`) those sections in the configuration file
+  (e.g., `variables: null`). `gitlab-config` will detect that and skip them. This is different
+  than setting them to empty values (e.g., `variables: []`) which makes `gitlab-config`
+  configure GitLab's project accordingly (e.g., remove all CI/CD variables).
+* Encrypt the file or just sensitive values in the file using a suitable tool, e.g.,
+  [SOPS](https://github.com/mozilla/sops) which supports encrypting with AWS KMS, GCP KMS,
+  Azure Key Vault, age, and PGP.
+* Use the [fork of SOPS](https://github.com/tozd/sops) integrated with `gitlab-config` which
+  supports using comments to select values to encrypt and computing MAC only over values
+  which end up encrypted. This is the option we recommend and `gitlab-config` makes it
+  easy to use it.
+
+`gitlab-config get` automatically adds `sops:enc` comments to values which are
+known to be generally sensitive (you can use `--enc-comment` flag to control this
+behavior, together with alternative `--enc-suffix` flag). But those are just defaults.
+You can remove comments for values you know are not sensitive and you can add comments
+also to other values which are sensitive in your particular configuration. Once you do that,
+run the file through `gitlab-config sops --encrypt` to encrypt sensitive values in the file.
+An example using [age](https://github.com/FiloSottile/age):
+
+```sh
+$ age-keygen -o keys.txt
+Public key: age1ey5p0k4072a3nctp38xz0wh6q93s2h5qwnr0fmftuld8yxfkke9sk47feg
+$ cat > .sops.yaml
+creation_rules:
+  - path_regex: ^\.gitlab-conf\.yml$
+    age: age1ey5p0k4072a3nctp38xz0wh6q93s2h5qwnr0fmftuld8yxfkke9sk47feg
+^D
+$ export SOPS_AGE_KEY_FILE=keys.txt
+$ gitlab-config sops -- --encrypt --mac-only-encrypted --in-place --encrypted-comment-regex sops:enc .gitlab-conf.yml
+```
+
+If you want to edit the file decrypted temporarily and re-encrypted on save, you can run:
+
+```sh
+SOPS_AGE_KEY_FILE=keys.txt gitlab-config sops -- .gitlab-conf.yml
+```
+
+If you want to simply decrypt the file, run:
+
+```sh
+SOPS_AGE_KEY_FILE=keys.txt gitlab-config sops -- --decrypt --in-place .gitlab-conf.yml
+```
+
+You can safely store configuration file with encrypted values into the git repository.
+If you want to run gitlab-config inside a CI pipeline, then CI job needs access to the
+age private key. You can use gitlab-config itself to configure that. Add to your `.gitlab-conf.yml`
+
+```yaml
+variables:
+  - environment_scope: '*'
+    key: SOPS_AGE_KEY_FILE
+    masked: false
+    protected: true
+    # sops:enc
+    value: |
+      # created: 2021-12-22T22:06:09+01:00
+      # public key: age1ey5p0k4072a3nctp38xz0wh6q93s2h5qwnr0fmftuld8yxfkke9sk47feg
+      AGE-SECRET-KEY-<the rest of contents of keys.txt>
+    variable_type: file
+```
+
+Encrypt it using `gitlab-config sops --encrypt` and use `gitlab-config set` to configure
+your GitLab project. After this, CI jobs will be able to run `gitlab-config set` as well,
+automatically decrypting `.gitlab-conf.yml` file as needed.
+
+Do keep in mind that given above configuration all CI jobs running on protected branches get access
+to the age private key. So care must be taken to control what runs there.
+
+## Why does `gitlab-config get` output a new file and not just updates an existing one?
+
+Because there are many (supported) changes you might have done to the file: change comments,
+remove/nullify sections, add SOPS comments or field suffixes, encrypt or not values,
+there might even be additional API fields you have added for an updated API endpoint.
+Automatically meaningfully merging updates into those changes is not possible.
+So just generate a new file and compare with the old version yourself, resolving
+differences with your preferred tool.
 
 ## Projects configured using this tool
 
