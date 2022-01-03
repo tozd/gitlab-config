@@ -245,7 +245,7 @@ sync_releases:
   stage: sync
 
   image:
-    name: registry.gitlab.com/tozd/gitlab/release/tag/v0-2-1:latest-debug
+    name: registry.gitlab.com/tozd/gitlab/release/tag/v0-3-0:latest-debug
     entrypoint: [""]
 
   script:
