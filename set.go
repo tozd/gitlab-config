@@ -28,13 +28,6 @@ type SetCommand struct {
 
 // Run runs the set command.
 func (c *SetCommand) Run(globals *Globals) errors.E {
-	if globals.ChangeTo != "" {
-		err := os.Chdir(globals.ChangeTo)
-		if err != nil {
-			return errors.Wrapf(err, `cannot change current working directory to "%s"`, globals.ChangeTo)
-		}
-	}
-
 	if c.Project == "" {
 		projectID, errE := x.InferGitLabProjectID(".")
 		if errE != nil {

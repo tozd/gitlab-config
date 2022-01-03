@@ -5,7 +5,7 @@ go 1.17
 replace github.com/xanzy/go-gitlab v0.52.2 => github.com/mitar/go-gitlab v0.52.3-0.20211215113439-f4c5f9b00ed6
 
 require (
-	github.com/alecthomas/kong v0.2.21-0.20211213010013-ece1f6d8cb8a
+	github.com/alecthomas/kong v0.2.23-0.20220103044731-f5bd1465d89c
 	github.com/deckarep/golang-set v1.7.1
 	github.com/google/go-querystring v1.0.0
 	github.com/hashicorp/go-retryablehttp v0.7.0

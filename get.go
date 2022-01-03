@@ -30,13 +30,6 @@ type GetCommand struct {
 
 // Run runs the get command.
 func (c *GetCommand) Run(globals *Globals) errors.E {
-	if globals.ChangeTo != "" {
-		err := os.Chdir(globals.ChangeTo)
-		if err != nil {
-			return errors.Wrapf(err, `cannot change current working directory to "%s"`, globals.ChangeTo)
-		}
-	}
-
 	if c.Project == "" {
 		projectID, errE := x.InferGitLabProjectID(".")
 		if errE != nil {
@@ -95,7 +88,7 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 	if hasSensitive {
 		args := []string{os.Args[0]}
 		if globals.ChangeTo != "" {
-			args = append(args, "-C", globals.ChangeTo)
+			args = append(args, "-C", string(globals.ChangeTo))
 		}
 		// TODO: Remove "--". See: https://github.com/alecthomas/kong/issues/253
 		args = append(args, "sops", "--", "--encrypt", "--mac-only-encrypted", "--in-place")

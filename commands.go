@@ -14,8 +14,8 @@ type GitLab struct {
 
 // Globals describes top-level (global) flags.
 type Globals struct {
-	ChangeTo string           `short:"C" placeholder:"PATH" type:"existingdir" env:"CI_PROJECT_DIR" help:"Run as if the program was started in PATH instead of the current working directory. Environment variable: ${env}"`
-	Version  kong.VersionFlag `short:"V" help:"Show program's version and exit."`
+	ChangeTo kong.ChangeDirFlag `short:"C" placeholder:"PATH" env:"CI_PROJECT_DIR" help:"Run as if the program was started in PATH instead of the current working directory. Environment variable: ${env}"`
+	Version  kong.VersionFlag   `short:"V" help:"Show program's version and exit."`
 }
 
 // Commands is used as configuration for Kong command-line parser.
