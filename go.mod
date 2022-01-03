@@ -7,17 +7,20 @@ replace github.com/xanzy/go-gitlab v0.52.2 => github.com/mitar/go-gitlab v0.52.3
 require (
 	github.com/alecthomas/kong v0.2.21-0.20211213010013-ece1f6d8cb8a
 	github.com/deckarep/golang-set v1.7.1
-	github.com/go-git/go-git/v5 v5.4.2
 	github.com/google/go-querystring v1.0.0
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tozd/sops/v3 v3.7.2-0.20211222145356-dbb27aa5750b
-	github.com/whilp/git-urls v1.0.0
 	github.com/xanzy/go-gitlab v0.52.2
 	github.com/yuin/goldmark v1.4.4
-	gitlab.com/tozd/go/errors v0.2.0
+	gitlab.com/tozd/go/errors v0.3.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+)
+
+require (
+	github.com/go-git/go-git/v5 v5.4.2 // indirect
+	github.com/whilp/git-urls v1.0.0 // indirect
 )
 
 require (
@@ -79,6 +82,7 @@ require (
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
+	gitlab.com/tozd/go/x v0.0.0-20220103175954-8c4e84564e54
 	go.mozilla.org/gopgagent v0.0.0-20170926210634-4d7ea76ff71a // indirect
 	go.opencensus.io v0.22.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect

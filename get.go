@@ -9,6 +9,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
+	"gitlab.com/tozd/go/x"
 )
 
 const (
@@ -37,7 +38,7 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 	}
 
 	if c.Project == "" {
-		projectID, errE := inferProjectID(".")
+		projectID, errE := x.InferGitLabProjectID(".")
 		if errE != nil {
 			return errE
 		}

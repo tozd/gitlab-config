@@ -324,8 +324,10 @@ github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI
 github.com/xanzy/ssh-agent v0.3.0/go.mod h1:3s9xbODqPuuhK9JV1R321M/FlMZSBvE5aY6eAcqrDh0=
 github.com/yuin/goldmark v1.4.4 h1:zNWRjYUW32G9KirMXYHQHVNFkXvMI7LpgNW2AgYAoIs=
 github.com/yuin/goldmark v1.4.4/go.mod h1:rmuwmfZ0+bvzB24eSC//bk1R1Zp3hM0OXYv/G2LIilg=
-gitlab.com/tozd/go/errors v0.2.0 h1:ejLnsJJ9mAwoCQlKXax9kvNC/04REgqrjbA93E8zz9Y=
-gitlab.com/tozd/go/errors v0.2.0/go.mod h1:Zf+gInKu1RnhzKNslf637IxoCD5fKmCbrZ8ecGMZCQo=
+gitlab.com/tozd/go/errors v0.3.0 h1:5CKqYz4EfXLxYFhYtxD1s51Nh50J06flPdBqrdXn2AY=
+gitlab.com/tozd/go/errors v0.3.0/go.mod h1:Zf+gInKu1RnhzKNslf637IxoCD5fKmCbrZ8ecGMZCQo=
+gitlab.com/tozd/go/x v0.0.0-20220103175954-8c4e84564e54 h1:eXkSX6g/TI2CqfLai5NZMpJVZzHi2vICeARmAeFp0vc=
+gitlab.com/tozd/go/x v0.0.0-20220103175954-8c4e84564e54/go.mod h1:rdUBZIrRcQ3KRYIKQR96k0sCCx+QYzJ033U3FRmlwAA=
 go.mozilla.org/gopgagent v0.0.0-20170926210634-4d7ea76ff71a h1:N7VD+PwpJME2ZfQT8+ejxwA4Ow10IkGbU0MGf94ll8k=
 go.mozilla.org/gopgagent v0.0.0-20170926210634-4d7ea76ff71a/go.mod h1:YDKUvO0b//78PaaEro6CAPH6NqohCmL2Cwju5XI2HoE=
 go.opencensus.io v0.20.1/go.mod h1:6WKK9ahsWS3RSO+PY9ZHZUfv2irvY6gN279GOPZjmmk=

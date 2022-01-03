@@ -7,6 +7,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/tozd/go/x"
 )
 
 func TestE2E(t *testing.T) {
@@ -15,7 +16,7 @@ func TestE2E(t *testing.T) {
 	}
 
 	tempDir := t.TempDir()
-	projectID, errE := inferProjectID(".")
+	projectID, errE := x.InferGitLabProjectID(".")
 	require.NoError(t, errE)
 
 	for _, cmd := range []string{"get", "set"} {
