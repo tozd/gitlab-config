@@ -2,17 +2,15 @@ module gitlab.com/tozd/gitlab/config
 
 go 1.17
 
-replace github.com/xanzy/go-gitlab v0.52.2 => github.com/mitar/go-gitlab v0.52.3-0.20211215113439-f4c5f9b00ed6
-
 require (
 	github.com/alecthomas/kong v0.2.23-0.20220103044731-f5bd1465d89c
 	github.com/deckarep/golang-set v1.7.1
-	github.com/google/go-querystring v1.0.0
+	github.com/google/go-querystring v1.1.0
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tozd/sops/v3 v3.7.2-0.20211222145356-dbb27aa5750b
-	github.com/xanzy/go-gitlab v0.52.2
+	github.com/xanzy/go-gitlab v0.54.1
 	github.com/yuin/goldmark v1.4.4
 	gitlab.com/tozd/go/errors v0.3.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
