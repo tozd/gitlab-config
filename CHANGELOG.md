@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Remove the use of replace directive in `go.mod`.
+  [#20](https://gitlab.com/tozd/gitlab/config/-/issues/20)
+
 ## [0.3.0] - 2022-01-03
 
 ### Changed
