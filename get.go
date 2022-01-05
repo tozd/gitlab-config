@@ -90,8 +90,7 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 		if globals.ChangeTo != "" {
 			args = append(args, "-C", string(globals.ChangeTo))
 		}
-		// TODO: Remove "--". See: https://github.com/alecthomas/kong/issues/253
-		args = append(args, "sops", "--", "--encrypt", "--mac-only-encrypted", "--in-place")
+		args = append(args, "sops", "--encrypt", "--mac-only-encrypted", "--in-place")
 		if c.EncSuffix != "" {
 			args = append(args, "--encrypted-suffix", c.EncSuffix)
 		} else if c.EncComment != "" {
