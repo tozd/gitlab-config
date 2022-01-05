@@ -182,19 +182,19 @@ creation_rules:
     age: age1ey5p0k4072a3nctp38xz0wh6q93s2h5qwnr0fmftuld8yxfkke9sk47feg
 ^D
 $ export SOPS_AGE_KEY_FILE=keys.txt
-$ gitlab-config sops -- --encrypt --mac-only-encrypted --in-place --encrypted-comment-regex sops:enc .gitlab-conf.yml
+$ gitlab-config sops --encrypt --mac-only-encrypted --in-place --encrypted-comment-regex sops:enc .gitlab-conf.yml
 ```
 
 If you want to edit the file decrypted temporarily and re-encrypted on save, you can run:
 
 ```sh
-SOPS_AGE_KEY_FILE=keys.txt gitlab-config sops -- .gitlab-conf.yml
+SOPS_AGE_KEY_FILE=keys.txt gitlab-config sops .gitlab-conf.yml
 ```
 
 If you want to simply decrypt the file, run:
 
 ```sh
-SOPS_AGE_KEY_FILE=keys.txt gitlab-config sops -- --decrypt --in-place .gitlab-conf.yml
+SOPS_AGE_KEY_FILE=keys.txt gitlab-config sops --decrypt --in-place .gitlab-conf.yml
 ```
 
 You can safely store configuration file with encrypted values into the git repository.

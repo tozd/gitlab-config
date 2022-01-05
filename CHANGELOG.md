@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Passing arguments to `gitlab-config sops` does not require the use
+  of `--` anymore.
+
 ## [0.3.1] - 2022-01-04
 
 ### Fixed

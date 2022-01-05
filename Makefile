@@ -56,10 +56,10 @@ audit:
 	go list -json -deps | nancy sleuth --skip-update-check
 
 encrypt: build
-	./gitlab-config sops -- --encrypt --mac-only-encrypted --in-place --encrypted-comment-regex sops:enc .gitlab-conf.yml
+	./gitlab-config sops --encrypt --mac-only-encrypted --in-place --encrypted-comment-regex sops:enc .gitlab-conf.yml
 
 decrypt: build
-	SOPS_AGE_KEY_FILE=keys.txt ./gitlab-config sops -- --decrypt --in-place .gitlab-conf.yml
+	SOPS_AGE_KEY_FILE=keys.txt ./gitlab-config sops --decrypt --in-place .gitlab-conf.yml
 
 sops: build
-	SOPS_AGE_KEY_FILE=keys.txt ./gitlab-config sops -- .gitlab-conf.yml
+	SOPS_AGE_KEY_FILE=keys.txt ./gitlab-config sops .gitlab-conf.yml

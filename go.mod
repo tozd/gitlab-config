@@ -3,7 +3,7 @@ module gitlab.com/tozd/gitlab/config
 go 1.17
 
 require (
-	github.com/alecthomas/kong v0.2.23-0.20220103044731-f5bd1465d89c
+	github.com/alecthomas/kong v0.2.23-0.20220105075837-a7d3850e8012
 	github.com/deckarep/golang-set v1.7.1
 	github.com/google/go-querystring v1.1.0
 	github.com/hashicorp/go-retryablehttp v0.7.0

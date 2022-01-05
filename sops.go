@@ -7,7 +7,7 @@ import (
 
 // SopsCommand describes parameters for the sops command.
 type SopsCommand struct {
-	Arg []string `arg:"" optional:"" passthrough:"" help:"Arguments passed on to SOPS."`
+	Arg []string `arg:"" optional:"" help:"Arguments passed on to SOPS."`
 }
 
 // Run runs the sops command.
