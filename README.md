@@ -34,7 +34,7 @@ Planned:
 This is a tool implemented in Go. You can use `go install` to install the latest development version (`main` branch):
 
 ```sh
-go install gitlab.com/tozd/gitlab/config@latest
+go install gitlab.com/tozd/gitlab/config/cmd/gitlab-config@latest
 ```
 
 [Releases page](https://gitlab.com/tozd/gitlab/config/-/releases)
