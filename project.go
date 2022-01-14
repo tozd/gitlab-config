@@ -125,13 +125,11 @@ func parseProjectDocumentation(input []byte) (map[string]string, errors.E) {
 			// Currently it does not work.
 			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348695
 			return ""
-		case "name", "path", "visibility":
+		case "name", "visibility":
 			// Only owners can have "name" and "visibility" fields present in edit
 			// project API request, otherwise GitLab returns 403, but we want it
 			// to work for maintainers as well. One can include these fields
 			// manually into project configuration and it will work for owners.
-			// If "path" is included in the request, the request does not
-			// do anything, even for the owner.
 			return ""
 		default:
 			return key
