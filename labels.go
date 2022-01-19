@@ -25,7 +25,7 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 	configuration.LabelsComment = formatDescriptions(descriptions)
 
 	u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(c.Project))
-	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct
+	options := &gitlab.ListLabelsOptions{
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,
 			Page:    1,
@@ -121,7 +121,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 
 	fmt.Fprintf(os.Stderr, "Updating labels...\n")
 
-	options := &gitlab.ListLabelsOptions{ //nolint:exhaustivestruct
+	options := &gitlab.ListLabelsOptions{
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,
 			Page:    1,

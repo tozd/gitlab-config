@@ -102,7 +102,7 @@ func parseVariablesDocumentation(input []byte) (map[string]string, errors.E) {
 // getVariablesDescriptions obtains description of fields used to describe an individual
 // variable from GitLab's documentation for project level variables API endpoint.
 func getVariablesDescriptions(gitRef string) (map[string]string, errors.E) {
-	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/project_level_variables.md", gitRef)) //nolint:lll
+	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/project_level_variables.md", gitRef))
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to get variables descriptions`)
 	}
