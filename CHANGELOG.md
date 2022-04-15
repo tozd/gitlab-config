@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Work when CI/CD is disabled.
+  [#22](https://gitlab.com/tozd/gitlab/config/-/issues/22)
 - Support `analytics_access_level`, `requirements_access_level`, and `security_and_compliance_access_level`.
   [#2](https://gitlab.com/tozd/gitlab/config/-/issues/2)
   [#8](https://gitlab.com/tozd/gitlab/config/-/issues/8)

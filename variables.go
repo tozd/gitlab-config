@@ -49,6 +49,10 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 
 		response, err := client.Do(req, &variables)
 		if err != nil {
+			// When CI/CD is disabled, this call returns 403.
+			if response.StatusCode == http.StatusForbidden && options.Page == 1 {
+				break
+			}
 			return false, errors.Wrapf(err, `failed to get variables, page %d`, options.Page)
 		}
 
