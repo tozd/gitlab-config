@@ -113,23 +113,20 @@ func parseProjectDocumentation(input []byte) (map[string]string, errors.E) {
 			// "container_expiration_policy" is used in get,
 			// while "container_expiration_policy_attributes" is used in edit.
 			return "container_expiration_policy"
-		case "requirements_access_level":
-			// Currently it does not work.
-			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/323886
-			return ""
 		case "show_default_award_emojis":
 			// Currently it does not work.
 			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348365
-			return ""
-		case "analytics_access_level":
-			// Currently it does not work.
-			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348695
 			return ""
 		case "name", "visibility":
 			// Only owners can have "name" and "visibility" fields present in edit
 			// project API request, otherwise GitLab returns 403, but we want it
 			// to work for maintainers as well. One can include these fields
 			// manually into project configuration and it will work for owners.
+			return ""
+		case "path":
+			// If "path" is included in the request, the request does not
+			// do anything, even for the owner.
+			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348635
 			return ""
 		default:
 			return key

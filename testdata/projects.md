@@ -10,8 +10,8 @@ Interact with [projects](../user/project/index.md) using the REST API.
 
 ## Project visibility level
 
-Project in GitLab can be either private, internal or public.
-This is determined by the `visibility` field in the project.
+A project in GitLab can be private, internal, or public.
+The visibility level is determined by the `visibility` field in the project.
 
 Values for the project visibility level are:
 
@@ -19,7 +19,7 @@ Values for the project visibility level are:
 - `internal`: the project can be cloned by any signed-in user except [external users](../user/permissions.md#external-users).
 - `public`: the project can be accessed without any authentication.
 
-For more, read [Project visibility](../public_access/public_access.md).
+For more, read [Project visibility](../user/public_access.md).
 
 ## Project merge method
 
@@ -49,13 +49,14 @@ GET /projects
 | `archived`                                 | boolean  | **{dotted-circle}** No | Limit by archived status. |
 | `id_after`                                 | integer  | **{dotted-circle}** No | Limit results to projects with IDs greater than the specified ID. |
 | `id_before`                                | integer  | **{dotted-circle}** No | Limit results to projects with IDs less than the specified ID. |
+| `imported`                                 | boolean  | **{dotted-circle}** No | Limit results to projects which were imported from external systems by current user. |
 | `last_activity_after`                      | datetime | **{dotted-circle}** No | Limit results to projects with last_activity after specified time. Format: ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`) |
 | `last_activity_before`                     | datetime | **{dotted-circle}** No | Limit results to projects with last_activity before specified time. Format: ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`) |
 | `membership`                               | boolean  | **{dotted-circle}** No | Limit by projects that the current user is a member of. |
 | `min_access_level`                         | integer  | **{dotted-circle}** No | Limit by current user minimal [access level](members.md#valid-access-levels). |
 | `order_by`                                 | string   | **{dotted-circle}** No | Return projects ordered by `id`, `name`, `path`, `created_at`, `updated_at`, `last_activity_at`, or `similarity` fields. `repository_size`, `storage_size`, `packages_size` or `wiki_size` fields are only allowed for administrators. `similarity` ([introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/332890) in GitLab 14.1) is only available when searching and is limited to projects that the current user is a member of. Default is `created_at`. |
 | `owned`                                    | boolean  | **{dotted-circle}** No | Limit by projects explicitly owned by the current user. |
-| `repository_checksum_failed` **(PREMIUM)** | boolean  | **{dotted-circle}** No | Limit projects where the repository checksum calculation has failed ([Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/6137) in GitLab 11.2). |
+| `repository_checksum_failed` **(PREMIUM)** | boolean  | **{dotted-circle}** No | Limit projects where the repository checksum calculation has failed. |
 | `repository_storage`                       | string   | **{dotted-circle}** No | Limit results to projects stored on `repository_storage`. _(administrators only)_ |
 | `search_namespaces`                        | boolean  | **{dotted-circle}** No | Include ancestor namespaces when matching search criteria. Default is `false`. |
 | `search`                                   | string   | **{dotted-circle}** No | Return list of projects matching the search criteria. |
@@ -65,7 +66,7 @@ GET /projects
 | `statistics`                               | boolean  | **{dotted-circle}** No | Include project statistics. Only available to Reporter or higher level role members. |
 | `topic`                                    | string   | **{dotted-circle}** No | Comma-separated topic names. Limit results to projects that match all of given topics. See `topics` attribute. |
 | `visibility`                               | string   | **{dotted-circle}** No | Limit by visibility `public`, `internal`, or `private`. |
-| `wiki_checksum_failed` **(PREMIUM)**       | boolean  | **{dotted-circle}** No | Limit projects where the wiki checksum calculation has failed ([Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/6137) in GitLab 11.2). |
+| `wiki_checksum_failed` **(PREMIUM)**       | boolean  | **{dotted-circle}** No | Limit projects where the wiki checksum calculation has failed. |
 | `with_custom_attributes`                   | boolean  | **{dotted-circle}** No | Include [custom attributes](custom_attributes.md) in response. _(administrator only)_ |
 | `with_issues_enabled`                      | boolean  | **{dotted-circle}** No | Limit by enabled issues feature. |
 | `with_merge_requests_enabled`              | boolean  | **{dotted-circle}** No | Limit by enabled merge requests feature. |
@@ -151,6 +152,7 @@ When the user is authenticated and `simple` is not set this returns something li
     "resolve_outdated_diff_discussions": false,
     "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
     "container_registry_access_level": "disabled",
+    "security_and_compliance_access_level": "disabled",
     "created_at": "2013-09-30T13:46:02Z",
     "last_activity_at": "2013-09-30T13:46:02Z",
     "creator_id": 3,
@@ -245,6 +247,7 @@ When the user is authenticated and `simple` is not set this returns something li
     "resolve_outdated_diff_discussions": false,
     "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
     "container_registry_access_level": "disabled",
+    "security_and_compliance_access_level": "disabled",
     "created_at": "2013-09-30T13:46:02Z",
     "last_activity_at": "2013-09-30T13:46:02Z",
     "creator_id": 3,
@@ -372,7 +375,7 @@ Get a list of visible projects owned by the given user. When accessed without
 authentication, only public projects are returned.
 
 NOTE:
-Only the projects in the user's (specified in `user_id`) namespace are returned. Projects owned by the user in any group or subgroups are not returned.
+Only the projects in the user's (specified in `user_id`) namespace are returned. Projects owned by the user in any group or subgroups are not returned. An empty list is returned if a profile is set to private.
 
 This endpoint supports [keyset pagination](index.md#keyset-based-pagination)
 for selected `order_by` options.
@@ -383,6 +386,7 @@ GET /users/:user_id/projects
 
 | Attribute                     | Type    | Required               | Description |
 |-------------------------------|---------|------------------------|-------------|
+| `user_id`                     | string  | **{check-circle}** Yes | The ID or username of the user. |
 | `archived`                    | boolean | **{dotted-circle}** No | Limit by archived status. |
 | `id_after`                    | integer | **{dotted-circle}** No | Limit results to projects with IDs greater than the specified ID. |
 | `id_before`                   | integer | **{dotted-circle}** No | Limit results to projects with IDs less than the specified ID. |
@@ -395,7 +399,6 @@ GET /users/:user_id/projects
 | `sort`                        | string  | **{dotted-circle}** No | Return projects sorted in `asc` or `desc` order. Default is `desc`. |
 | `starred`                     | boolean | **{dotted-circle}** No | Limit by projects starred by the current user. |
 | `statistics`                  | boolean | **{dotted-circle}** No | Include project statistics. Only available to Reporter or higher level role members. |
-| `user_id`                     | string  | **{check-circle}** Yes | The ID or username of the user. |
 | `visibility`                  | string  | **{dotted-circle}** No | Limit by visibility `public`, `internal`, or `private`. |
 | `with_custom_attributes`      | boolean | **{dotted-circle}** No | Include [custom attributes](custom_attributes.md) in response. _(administrator only)_ |
 | `with_issues_enabled`         | boolean | **{dotted-circle}** No | Limit by enabled issues feature. |
@@ -440,6 +443,7 @@ GET /users/:user_id/projects
     "resolve_outdated_diff_discussions": false,
     "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
     "container_registry_access_level": "disabled",
+    "security_and_compliance_access_level": "disabled",
     "created_at": "2013-09-30T13:46:02Z",
     "last_activity_at": "2013-09-30T13:46:02Z",
     "creator_id": 3,
@@ -534,6 +538,7 @@ GET /users/:user_id/projects
     "resolve_outdated_diff_discussions": false,
     "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
     "container_registry_access_level": "disabled",
+    "security_and_compliance_access_level": "disabled",
     "created_at": "2013-09-30T13:46:02Z",
     "last_activity_at": "2013-09-30T13:46:02Z",
     "creator_id": 3,
@@ -619,7 +624,7 @@ GET /users/:user_id/projects
 
 ## List projects starred by a user
 
-Get a list of visible projects owned by the given user. When accessed without
+Get a list of visible projects starred by the given user. When accessed without
 authentication, only public projects are returned.
 
 ```plaintext
@@ -628,17 +633,17 @@ GET /users/:user_id/starred_projects
 
 | Attribute                     | Type    | Required               | Description |
 |-------------------------------|---------|------------------------|-------------|
+| `user_id`                     | string  | **{check-circle}** Yes | The ID or username of the user. |
 | `archived`                    | boolean | **{dotted-circle}** No | Limit by archived status. |
 | `membership`                  | boolean | **{dotted-circle}** No | Limit by projects that the current user is a member of. |
 | `min_access_level`            | integer | **{dotted-circle}** No | Limit by current user minimal [access level](members.md#valid-access-levels). |
 | `order_by`                    | string  | **{dotted-circle}** No | Return projects ordered by `id`, `name`, `path`, `created_at`, `updated_at`, or `last_activity_at` fields. Default is `created_at`. |
 | `owned`                       | boolean | **{dotted-circle}** No | Limit by projects explicitly owned by the current user. |
 | `search`                      | string  | **{dotted-circle}** No | Return list of projects matching the search criteria. |
-| `simple`                      | boolean | **{dotted-circle}** No | Return only limited fields for each project. This is a no-op without authentication as then _only_ simple fields are returned.. |
+| `simple`                      | boolean | **{dotted-circle}** No | Return only limited fields for each project. This is a no-op without authentication as then _only_ simple fields are returned. |
 | `sort`                        | string  | **{dotted-circle}** No | Return projects sorted in `asc` or `desc` order. Default is `desc`. |
 | `starred`                     | boolean | **{dotted-circle}** No | Limit by projects starred by the current user. |
 | `statistics`                  | boolean | **{dotted-circle}** No | Include project statistics. Only available to Reporter or higher level role members. |
-| `user_id`                     | string  | **{check-circle}** Yes | The ID or username of the user. |
 | `visibility`                  | string  | **{dotted-circle}** No | Limit by visibility `public`, `internal`, or `private`. |
 | `with_custom_attributes`      | boolean | **{dotted-circle}** No | Include [custom attributes](custom_attributes.md) in response. _(administrator only)_ |
 | `with_issues_enabled`         | boolean | **{dotted-circle}** No | Limit by enabled issues feature. |
@@ -688,6 +693,7 @@ Example response:
     "resolve_outdated_diff_discussions": false,
     "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
     "container_registry_access_level": "disabled",
+    "security_and_compliance_access_level": "disabled",
     "created_at": "2013-09-30T13:46:02Z",
     "last_activity_at": "2013-09-30T13:46:02Z",
     "creator_id": 3,
@@ -777,6 +783,7 @@ Example response:
     "resolve_outdated_diff_discussions": false,
     "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
     "container_registry_access_level": "disabled",
+    "security_and_compliance_access_level": "disabled",
     "created_at": "2013-09-30T13:46:02Z",
     "last_activity_at": "2013-09-30T13:46:02Z",
     "creator_id": 3,
@@ -910,6 +917,7 @@ GET /projects/:id
   "resolve_outdated_diff_discussions": false,
   "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
   "container_registry_access_level": "disabled",
+  "security_and_compliance_access_level": "disabled",
   "container_expiration_policy": {
     "cadence": "7d",
     "enabled": false,
@@ -1045,12 +1053,10 @@ can also see the `approvals_before_merge` parameter:
 }
 ```
 
-The `web_url` and `avatar_url` attributes on `namespace` were
-[introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/27427)
-in GitLab 11.11.
-
-If the project is a fork, and you provide a valid token to authenticate, the
-`forked_from_project` field appears in the response.
+If the project is a fork, the `forked_from_project` field appears in the response.
+For this field, if the upstream project is private, a valid token for authentication must be provided.
+The field `mr_default_target_self` appears as well. If this value is `false`, then all merge requests
+will target the upstream project by default.
 
 ```json
 {
@@ -1058,6 +1064,7 @@ If the project is a fork, and you provide a valid token to authenticate, the
 
    ...
 
+   "mr_default_target_self": false,
    "forked_from_project":{
       "id":13083,
       "description":"GitLab Community Edition",
@@ -1161,12 +1168,12 @@ GET /projects/:id/groups
 
 | Attribute                   | Type              | Required               | Description |
 |-----------------------------|-------------------|------------------------|-------------|
-| `id`                        | integer or string    | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
+| `id`                        | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
 | `search`                    | string            | **{dotted-circle}** No | Search for specific groups. |
-| `skip_groups`               | array of integers | **{dotted-circle}** No | Skip the group IDs passed. |
-| `with_shared`               | boolean           | **{dotted-circle}** No | Include projects shared with this group. Default is `false`. |
 | `shared_min_access_level`   | integer           | **{dotted-circle}** No | Limit to shared groups with at least this [access level](members.md#valid-access-levels). |
 | `shared_visible_only`       | boolean           | **{dotted-circle}** No | Limit to shared groups user has access to. |
+| `skip_groups`               | array of integers | **{dotted-circle}** No | Skip the group IDs passed. |
+| `with_shared`               | boolean           | **{dotted-circle}** No | Include projects shared with this group. Default is `false`. |
 
 ```json
 [
@@ -1208,7 +1215,7 @@ POST /projects
 | Attribute                                                   | Type    | Required               | Description |
 |-------------------------------------------------------------|---------|------------------------|-------------|
 | `name`                                                      | string  | **{check-circle}** Yes (if path isn't provided) | The name of the new project. Equals path if not provided. |
-| `path`                                                      | string  | **{check-circle}** Yes (if name isn't provided) | Repository name for new project. Generated based on name if not provided (generated as lowercase with dashes). |
+| `path`                                                      | string  | **{check-circle}** Yes (if name isn't provided) | Repository name for new project. Generated based on name if not provided (generated as lowercase with dashes). Starting with GitLab 14.9, path must not start or end with a special character and must not contain consecutive special characters. |
 | `allow_merge_on_skipped_pipeline`                           | boolean | **{dotted-circle}** No | Set whether or not merge requests can be merged with skipped jobs. |
 | `analytics_access_level`                                    | string  | **{dotted-circle}** No | One of `disabled`, `private` or `enabled` |
 | `approvals_before_merge` **(PREMIUM)**                      | integer | **{dotted-circle}** No | How many approvers should approve merge requests by default. To configure approval rules, see [Merge request approvals API](merge_request_approvals.md). |
@@ -1223,8 +1230,8 @@ POST /projects
 | `builds_access_level`                                       | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `ci_config_path`                                            | string  | **{dotted-circle}** No | The path to CI configuration file. |
 | `container_expiration_policy_attributes`                    | hash    | **{dotted-circle}** No | Update the image cleanup policy for this project. Accepts: `cadence` (string), `keep_n` (integer), `older_than` (string), `name_regex` (string), `name_regex_delete` (string), `name_regex_keep` (string), `enabled` (boolean). Valid values for `cadence` are: `1d` (every day), `7d` (every week), `14d` (every two weeks), `1month` (every month), or `3month` (every quarter). |
-| `container_registry_enabled`                                | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable container registry for this project. Use `container_registry_access_level` instead. |
 | `container_registry_access_level`                           | string  | **{dotted-circle}** No | Set visibility of container registry, for this project, to one of `disabled`, `private` or `enabled`. |
+| `container_registry_enabled`                                | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable container registry for this project. Use `container_registry_access_level` instead. |
 | `default_branch`                                            | string  | **{dotted-circle}** No | The [default branch](../user/project/repository/branches/default.md) name. Requires `initialize_with_readme` to be `true`. |
 | `description`                                               | string  | **{dotted-circle}** No | Short project description. |
 | `emails_disabled`                                           | boolean | **{dotted-circle}** No | Disable email notifications. |
@@ -1245,21 +1252,21 @@ POST /projects
 | `mirror_trigger_builds` **(PREMIUM)**                       | boolean | **{dotted-circle}** No | Pull mirroring triggers builds. |
 | `mirror` **(PREMIUM)**                                      | boolean | **{dotted-circle}** No | Enables pull mirroring in a project. |
 | `namespace_id`                                              | integer | **{dotted-circle}** No | Namespace for the new project (defaults to the current user's namespace). |
-| `operations_access_level`                                   | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `only_allow_merge_if_all_discussions_are_resolved`          | boolean | **{dotted-circle}** No | Set whether merge requests can only be merged when all the discussions are resolved. |
 | `only_allow_merge_if_pipeline_succeeds`                     | boolean | **{dotted-circle}** No | Set whether merge requests can only be merged with successful pipelines. This setting is named [**Pipelines must succeed**](../user/project/merge_requests/merge_when_pipeline_succeeds.md#only-allow-merge-requests-to-be-merged-if-the-pipeline-succeeds) in the project settings. |
+| `operations_access_level`                                   | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `packages_enabled`                                          | boolean | **{dotted-circle}** No | Enable or disable packages repository feature. |
 | `pages_access_level`                                        | string  | **{dotted-circle}** No | One of `disabled`, `private`, `enabled`, or `public`. |
-| `requirements_access_level`                                 | string  | **{dotted-circle}** No | One of `disabled`, `private`, `enabled` or `public` |
 | `printing_merge_request_link_enabled`                       | boolean | **{dotted-circle}** No | Show link to create/view merge request when pushing from the command line. |
 | `public_builds`                                             | boolean | **{dotted-circle}** No | If `true`, jobs can be viewed by non-project members. |
 | `remove_source_branch_after_merge`                          | boolean | **{dotted-circle}** No | Enable `Delete source branch` option by default for all new merge requests. |
 | `repository_access_level`                                   | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `repository_storage`                                        | string  | **{dotted-circle}** No | Which storage shard the repository is on. _(administrator only)_ |
 | `request_access_enabled`                                    | boolean | **{dotted-circle}** No | Allow users to request member access. |
+| `requirements_access_level`                                 | string  | **{dotted-circle}** No | One of `disabled`, `private` or `enabled` |
 | `resolve_outdated_diff_discussions`                         | boolean | **{dotted-circle}** No | Automatically resolve merge request diffs discussions on lines changed with a push. |
+| `security_and_compliance_access_level`                      | string  | **{dotted-circle}** No | (GitLab 14.9 and later) Security and compliance access level. One of `disabled`, `private`, or `enabled`. |
 | `shared_runners_enabled`                                    | boolean | **{dotted-circle}** No | Enable shared runners for this project. |
-| `show_default_award_emojis`                                 | boolean | **{dotted-circle}** No | Show default award emojis. |
 | `snippets_access_level`                                     | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `snippets_enabled`                                          | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable snippets for this project. Use `snippets_access_level` instead. |
 | `squash_option`                                             | string  | **{dotted-circle}** No | One of `never`, `always`, `default_on`, or `default_off`. |
@@ -1301,10 +1308,10 @@ POST /projects/user/:user_id
 | `build_timeout`                                             | integer | **{dotted-circle}** No | The maximum amount of time, in seconds, that a job can run. |
 | `builds_access_level`                                       | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `ci_config_path`                                            | string  | **{dotted-circle}** No | The path to CI configuration file. |
-| `container_registry_enabled`                                | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable container registry for this project. Use `container_registry_access_level` instead. |
 | `container_registry_access_level`                           | string  | **{dotted-circle}** No | Set visibility of container registry, for this project, to one of `disabled`, `private` or `enabled`. |
-| `description`                                               | string  | **{dotted-circle}** No | Short project description. |
+| `container_registry_enabled`                                | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable container registry for this project. Use `container_registry_access_level` instead. |
 | `default_branch`                                            | string  | **{dotted-circle}** No | The [default branch](../user/project/repository/branches/default.md) name. Requires `initialize_with_readme` to be `true`. |
+| `description`                                               | string  | **{dotted-circle}** No | Short project description. |
 | `emails_disabled`                                           | boolean | **{dotted-circle}** No | Disable email notifications. |
 | `external_authorization_classification_label` **(PREMIUM)** | string  | **{dotted-circle}** No | The classification label for the project. |
 | `forking_access_level`                                      | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
@@ -1316,19 +1323,17 @@ POST /projects/user/:user_id
 | `jobs_enabled`                                              | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable jobs for this project. Use `builds_access_level` instead. |
 | `lfs_enabled`                                               | boolean | **{dotted-circle}** No | Enable LFS. |
 | `merge_commit_template`                                     | string  | **{dotted-circle}** No | [Template](../user/project/merge_requests/commit_templates.md) used to create merge commit message in merge requests. _([Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/20263) in GitLab 14.5.)_ |
-| `squash_commit_template`                                    | string  | **{dotted-circle}** No | [Template](../user/project/merge_requests/commit_templates.md) used to create squash commit message in merge requests. _([Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/345275) in GitLab 14.6.)_ |
 | `merge_method`                                              | string  | **{dotted-circle}** No | Set the [merge method](#project-merge-method) used. |
 | `merge_requests_access_level`                               | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `merge_requests_enabled`                                    | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable merge requests for this project. Use `merge_requests_access_level` instead. |
 | `mirror_trigger_builds` **(PREMIUM)**                       | boolean | **{dotted-circle}** No | Pull mirroring triggers builds. |
 | `mirror` **(PREMIUM)**                                      | boolean | **{dotted-circle}** No | Enables pull mirroring in a project. |
 | `namespace_id`                                              | integer | **{dotted-circle}** No | Namespace for the new project (defaults to the current user's namespace). |
-| `operations_access_level`                                   | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `only_allow_merge_if_all_discussions_are_resolved`          | boolean | **{dotted-circle}** No | Set whether merge requests can only be merged when all the discussions are resolved. |
 | `only_allow_merge_if_pipeline_succeeds`                     | boolean | **{dotted-circle}** No | Set whether merge requests can only be merged with successful jobs. |
+| `operations_access_level`                                   | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `packages_enabled`                                          | boolean | **{dotted-circle}** No | Enable or disable packages repository feature. |
 | `pages_access_level`                                        | string  | **{dotted-circle}** No | One of `disabled`, `private`, `enabled`, or `public`. |
-| `requirements_access_level`                                 | string  | **{dotted-circle}** No | One of `disabled`, `private`, `enabled` or `public` |
 | `path`                                                      | string  | **{dotted-circle}** No | Custom repository name for new project. By default generated based on name. |
 | `printing_merge_request_link_enabled`                       | boolean | **{dotted-circle}** No | Show link to create/view merge request when pushing from the command line. |
 | `public_builds`                                             | boolean | **{dotted-circle}** No | If `true`, jobs can be viewed by non-project-members. |
@@ -1336,11 +1341,13 @@ POST /projects/user/:user_id
 | `repository_access_level`                                   | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `repository_storage`                                        | string  | **{dotted-circle}** No | Which storage shard the repository is on. _(administrators only)_ |
 | `request_access_enabled`                                    | boolean | **{dotted-circle}** No | Allow users to request member access. |
+| `requirements_access_level`                                 | string  | **{dotted-circle}** No | One of `disabled`, `private`, `enabled` or `public` |
 | `resolve_outdated_diff_discussions`                         | boolean | **{dotted-circle}** No | Automatically resolve merge request diffs discussions on lines changed with a push. |
+| `security_and_compliance_access_level`                      | string  | **{dotted-circle}** No | (GitLab 14.9 and later) Security and compliance access level. One of `disabled`, `private`, or `enabled`. |
 | `shared_runners_enabled`                                    | boolean | **{dotted-circle}** No | Enable shared runners for this project. |
-| `show_default_award_emojis`                                 | boolean | **{dotted-circle}** No | Show default award emojis. |
 | `snippets_access_level`                                     | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `snippets_enabled`                                          | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable snippets for this project. Use `snippets_access_level` instead. |
+| `squash_commit_template`                                    | string  | **{dotted-circle}** No | [Template](../user/project/merge_requests/commit_templates.md) used to create squash commit message in merge requests. _([Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/345275) in GitLab 14.6.)_ |
 | `squash_option`                                             | string  | **{dotted-circle}** No | One of `never`, `always`, `default_on`, or `default_off`. |
 | `suggestion_commit_message`                                 | string  | **{dotted-circle}** No | The commit message used to apply merge request [suggestions](../user/project/merge_requests/reviews/suggestions.md). |
 | `tag_list`                                                  | array   | **{dotted-circle}** No | _([Deprecated](https://gitlab.com/gitlab-org/gitlab/-/issues/328226) in GitLab 14.0)_ The list of tags for a project; put array of tags, that should be finally assigned to a project. Use `topics` instead. |
@@ -1376,6 +1383,7 @@ Supported attributes:
 
 | Attribute                                                   | Type           | Required               | Description |
 |-------------------------------------------------------------|----------------|------------------------|-------------|
+| `id`                                                        | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
 | `allow_merge_on_skipped_pipeline`                           | boolean        | **{dotted-circle}** No | Set whether or not merge requests can be merged with skipped jobs. |
 | `analytics_access_level`                                    | string         | **{dotted-circle}** No | One of `disabled`, `private` or `enabled` |
 | `approvals_before_merge` **(PREMIUM)**                      | integer        | **{dotted-circle}** No | How many approvers should approve merge request by default. To configure approval rules, see [Merge request approvals API](merge_request_approvals.md). |
@@ -1392,38 +1400,39 @@ Supported attributes:
 | `ci_default_git_depth`                                      | integer        | **{dotted-circle}** No | Default number of revisions for [shallow cloning](../ci/pipelines/settings.md#limit-the-number-of-changes-fetched-during-clone). |
 | `ci_forward_deployment_enabled`                             | boolean        | **{dotted-circle}** No | When a new deployment job starts, [skip older deployment jobs](../ci/pipelines/settings.md#skip-outdated-deployment-jobs) that are still pending |
 | `container_expiration_policy_attributes`                    | hash           | **{dotted-circle}** No | Update the image cleanup policy for this project. Accepts: `cadence` (string), `keep_n` (integer), `older_than` (string), `name_regex` (string), `name_regex_delete` (string), `name_regex_keep` (string), `enabled` (boolean). |
-| `container_registry_enabled`                                | boolean        | **{dotted-circle}** No | _(Deprecated)_ Enable container registry for this project. Use `container_registry_access_level` instead. |
 | `container_registry_access_level`                           | string         | **{dotted-circle}** No | Set visibility of container registry, for this project, to one of `disabled`, `private` or `enabled`. |
+| `container_registry_enabled`                                | boolean        | **{dotted-circle}** No | _(Deprecated)_ Enable container registry for this project. Use `container_registry_access_level` instead. |
 | `default_branch`                                            | string         | **{dotted-circle}** No | The [default branch](../user/project/repository/branches/default.md) name. |
 | `description`                                               | string         | **{dotted-circle}** No | Short project description. |
 | `emails_disabled`                                           | boolean        | **{dotted-circle}** No | Disable email notifications. |
 | `external_authorization_classification_label` **(PREMIUM)** | string         | **{dotted-circle}** No | The classification label for the project. |
 | `forking_access_level`                                      | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
-| `id`                                                        | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
 | `import_url`                                                | string         | **{dotted-circle}** No | URL to import repository from. |
 | `issues_access_level`                                       | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `issues_enabled`                                            | boolean        | **{dotted-circle}** No | _(Deprecated)_ Enable issues for this project. Use `issues_access_level` instead. |
+| `issues_template` **(PREMIUM)**                             | string         | **{dotted-circle}** No | Default description for Issues. Description is parsed with GitLab Flavored Markdown. See [Templates for issues and merge requests](#templates-for-issues-and-merge-requests). |
 | `jobs_enabled`                                              | boolean        | **{dotted-circle}** No | _(Deprecated)_ Enable jobs for this project. Use `builds_access_level` instead. |
+| `keep_latest_artifact`                                      | boolean        | **{dotted-circle}** No | Disable or enable the ability to keep the latest artifact for this project. |
 | `lfs_enabled`                                               | boolean        | **{dotted-circle}** No | Enable LFS. |
 | `merge_commit_template`                                     | string         | **{dotted-circle}** No | [Template](../user/project/merge_requests/commit_templates.md) used to create merge commit message in merge requests. _([Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/20263) in GitLab 14.5.)_ |
 | `merge_method`                                              | string         | **{dotted-circle}** No | Set the [merge method](#project-merge-method) used. |
 | `merge_pipelines_enabled`                                   | boolean        | **{dotted-circle}** No | Enable or disable merge pipelines. |
 | `merge_requests_access_level`                               | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `merge_requests_enabled`                                    | boolean        | **{dotted-circle}** No | _(Deprecated)_ Enable merge requests for this project. Use `merge_requests_access_level` instead. |
+| `merge_requests_template` **(PREMIUM)**                     | string         | **{dotted-circle}** No | Default description for merge requests. Description is parsed with GitLab Flavored Markdown. See [Templates for issues and merge requests](#templates-for-issues-and-merge-requests). |
 | `merge_trains_enabled`                                      | boolean        | **{dotted-circle}** No | Enable or disable merge trains. |
 | `mirror_overwrites_diverged_branches` **(PREMIUM)**         | boolean        | **{dotted-circle}** No | Pull mirror overwrites diverged branches. |
 | `mirror_trigger_builds` **(PREMIUM)**                       | boolean        | **{dotted-circle}** No | Pull mirroring triggers builds. |
 | `mirror_user_id` **(PREMIUM)**                              | integer        | **{dotted-circle}** No | User responsible for all the activity surrounding a pull mirror event. _(administrators only)_ |
 | `mirror` **(PREMIUM)**                                      | boolean        | **{dotted-circle}** No | Enables pull mirroring in a project. |
+| `mr_default_target_self`                                    | boolean        | **{dotted-circle}** No | For forked projects, target merge requests to this project. If `false`, the target will be the upstream project. |
 | `name`                                                      | string         | **{dotted-circle}** No | The name of the project. |
-| `operations_access_level`                                   | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `only_allow_merge_if_all_discussions_are_resolved`          | boolean        | **{dotted-circle}** No | Set whether merge requests can only be merged when all the discussions are resolved. |
 | `only_allow_merge_if_pipeline_succeeds`                     | boolean        | **{dotted-circle}** No | Set whether merge requests can only be merged with successful jobs. |
 | `only_mirror_protected_branches` **(PREMIUM)**              | boolean        | **{dotted-circle}** No | Only mirror protected branches. |
+| `operations_access_level`                                   | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `packages_enabled`                                          | boolean        | **{dotted-circle}** No | Enable or disable packages repository feature. |
 | `pages_access_level`                                        | string         | **{dotted-circle}** No | One of `disabled`, `private`, `enabled`, or `public`. |
-| `requirements_access_level`                                 | string         | **{dotted-circle}** No | One of `disabled`, `private`, `enabled` or `public` |
-| `restrict_user_defined_variables`                           | boolean        | **{dotted-circle}** No | Allow only users with the [Maintainer role](../user/permissions.md) to pass user-defined variables when triggering a pipeline. For example when the pipeline is triggered in the UI, with the API, or by a trigger token. |
 | `path`                                                      | string         | **{dotted-circle}** No | Custom repository name for the project. By default generated based on name. |
 | `printing_merge_request_link_enabled`                       | boolean        | **{dotted-circle}** No | Show link to create/view merge request when pushing from the command line. |
 | `public_builds`                                             | boolean        | **{dotted-circle}** No | If `true`, jobs can be viewed by non-project members. |
@@ -1431,10 +1440,12 @@ Supported attributes:
 | `repository_access_level`                                   | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `repository_storage`                                        | string         | **{dotted-circle}** No | Which storage shard the repository is on. _(administrators only)_ |
 | `request_access_enabled`                                    | boolean        | **{dotted-circle}** No | Allow users to request member access. |
+| `requirements_access_level`                                 | string         | **{dotted-circle}** No | One of `disabled`, `private`, `enabled` or `public` |
 | `resolve_outdated_diff_discussions`                         | boolean        | **{dotted-circle}** No | Automatically resolve merge request diffs discussions on lines changed with a push. |
+| `restrict_user_defined_variables`                           | boolean        | **{dotted-circle}** No | Allow only users with the Maintainer role to pass user-defined variables when triggering a pipeline. For example when the pipeline is triggered in the UI, with the API, or by a trigger token. |
+| `security_and_compliance_access_level`                      | string         | **{dotted-circle}** No | (GitLab 14.9 and later) Security and compliance access level. One of `disabled`, `private`, or `enabled`. |
 | `service_desk_enabled`                                      | boolean        | **{dotted-circle}** No | Enable or disable Service Desk feature. |
 | `shared_runners_enabled`                                    | boolean        | **{dotted-circle}** No | Enable shared runners for this project. |
-| `show_default_award_emojis`                                 | boolean        | **{dotted-circle}** No | Show default award emojis. |
 | `snippets_access_level`                                     | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `snippets_enabled`                                          | boolean        | **{dotted-circle}** No | _(Deprecated)_ Enable snippets for this project. Use `snippets_access_level` instead. |
 | `squash_commit_template`                                    | string         | **{dotted-circle}** No | [Template](../user/project/merge_requests/commit_templates.md) used to create squash commit message in merge requests. _([Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/345275) in GitLab 14.6.)_ |
@@ -1445,9 +1456,6 @@ Supported attributes:
 | `visibility`                                                | string         | **{dotted-circle}** No | See [project visibility level](#project-visibility-level). |
 | `wiki_access_level`                                         | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `wiki_enabled`                                              | boolean        | **{dotted-circle}** No | _(Deprecated)_ Enable wiki for this project. Use `wiki_access_level` instead. |
-| `issues_template` **(PREMIUM)**                             | string         | **{dotted-circle}** No | Default description for Issues. Description is parsed with GitLab Flavored Markdown. See [Templates for issues and merge requests](#templates-for-issues-and-merge-requests). |
-| `merge_requests_template` **(PREMIUM)**                     | string         | **{dotted-circle}** No | Default description for Merge Requests. Description is parsed with GitLab Flavored Markdown. See [Templates for issues and merge requests](#templates-for-issues-and-merge-requests). |
-| `keep_latest_artifact`                                      | boolean        | **{dotted-circle}** No | Disable or enable the ability to keep the latest artifact for this project. |
 
 ## Fork project
 
@@ -1464,17 +1472,16 @@ POST /projects/:id/fork
 | Attribute        | Type           | Required               | Description |
 |------------------|----------------|------------------------|-------------|
 | `id`             | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
+| `description`    | string         | **{dotted-circle}** No | The description assigned to the resultant project after forking.                 |
+| `mr_default_target_self` | boolean | **{dotted-circle}** No | For forked projects, target merge requests to this project. If `false`, the target will be the upstream project. |
 | `name`           | string         | **{dotted-circle}** No | The name assigned to the resultant project after forking.                        |
 | `namespace_id`   | integer        | **{dotted-circle}** No | The ID of the namespace that the project is forked to.                           |
 | `namespace_path` | string         | **{dotted-circle}** No | The path of the namespace that the project is forked to.                         |
 | `namespace`      | integer or string | **{dotted-circle}** No | _(Deprecated)_ The ID or path of the namespace that the project is forked to.    |
 | `path`           | string         | **{dotted-circle}** No | The path assigned to the resultant project after forking.                        |
-| `description`    | string         | **{dotted-circle}** No | The description assigned to the resultant project after forking.                 |
 | `visibility`     | string         | **{dotted-circle}** No | The [visibility level](#project-visibility-level) assigned to the resultant project after forking. |
 
-## List Forks of a project
-
-> Introduced in GitLab 10.1.
+## List forks of a project
 
 List the projects accessible to the calling user that have an established,
 forked relationship with the specified project
@@ -1485,8 +1492,8 @@ GET /projects/:id/forks
 
 | Attribute                     | Type           | Required               | Description |
 |-------------------------------|----------------|------------------------|-------------|
-| `archived`                    | boolean        | **{dotted-circle}** No | Limit by archived status. |
 | `id`                          | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
+| `archived`                    | boolean        | **{dotted-circle}** No | Limit by archived status. |
 | `membership`                  | boolean        | **{dotted-circle}** No | Limit by projects that the current user is a member of. |
 | `min_access_level`            | integer        | **{dotted-circle}** No | Limit by current user minimal [access level](members.md#valid-access-levels). |
 | `order_by`                    | string         | **{dotted-circle}** No | Return projects ordered by `id`, `name`, `path`, `created_at`, `updated_at`, or `last_activity_at` fields. Default is `created_at`. |
@@ -1540,6 +1547,7 @@ Example responses:
     "resolve_outdated_diff_discussions": false,
     "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
     "container_registry_access_level": "disabled",
+    "security_and_compliance_access_level": "disabled",
     "created_at": "2013-09-30T13:46:02Z",
     "last_activity_at": "2013-09-30T13:46:02Z",
     "creator_id": 3,
@@ -1634,6 +1642,7 @@ Example response:
   "resolve_outdated_diff_discussions": false,
   "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
   "container_registry_access_level": "disabled",
+  "security_and_compliance_access_level": "disabled",
   "created_at": "2013-09-30T13:46:02Z",
   "last_activity_at": "2013-09-30T13:46:02Z",
   "creator_id": 3,
@@ -1734,6 +1743,7 @@ Example response:
   "resolve_outdated_diff_discussions": false,
   "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
   "container_registry_access_level": "disabled",
+  "security_and_compliance_access_level": "disabled",
   "created_at": "2013-09-30T13:46:02Z",
   "last_activity_at": "2013-09-30T13:46:02Z",
   "creator_id": 3,
@@ -1784,7 +1794,7 @@ Example response:
 }
 ```
 
-## List Starrers of a project
+## List starrers of a project
 
 List the users who starred the specified project.
 
@@ -1914,6 +1924,7 @@ Example response:
   "resolve_outdated_diff_discussions": false,
   "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
   "container_registry_access_level": "disabled",
+  "security_and_compliance_access_level": "disabled",
   "created_at": "2013-09-30T13:46:02Z",
   "last_activity_at": "2013-09-30T13:46:02Z",
   "creator_id": 3,
@@ -2035,6 +2046,7 @@ Example response:
   "resolve_outdated_diff_discussions": false,
   "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
   "container_registry_access_level": "disabled",
+  "security_and_compliance_access_level": "disabled",
   "created_at": "2013-09-30T13:46:02Z",
   "last_activity_at": "2013-09-30T13:46:02Z",
   "creator_id": 3,
@@ -2262,10 +2274,10 @@ POST /projects/:id/share
 
 | Attribute      | Type           | Required               | Description |
 |----------------|----------------|------------------------|-------------|
-| `expires_at`   | string         | **{dotted-circle}** No | Share expiration date in ISO 8601 format: 2016-09-26 |
 | `group_access` | integer        | **{check-circle}** Yes | The [access level](members.md#valid-access-levels) to grant the group. |
 | `group_id`     | integer        | **{check-circle}** Yes | The ID of the group to share with. |
 | `id`           | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
+| `expires_at`   | string         | **{dotted-circle}** No | Share expiration date in ISO 8601 format: 2016-09-26 |
 
 ## Delete a shared project link within a group
 
@@ -2370,11 +2382,12 @@ POST /projects/:id/hooks
 
 | Attribute                    | Type           | Required               | Description |
 |------------------------------|----------------|------------------------|-------------|
+| `id`                         | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
+| `url`                        | string         | **{check-circle}** Yes | The hook URL. |
 | `confidential_issues_events` | boolean        | **{dotted-circle}** No | Trigger hook on confidential issues events. |
 | `confidential_note_events`   | boolean        | **{dotted-circle}** No | Trigger hook on confidential note events. |
 | `deployment_events`          | boolean        | **{dotted-circle}** No | Trigger hook on deployment events. |
 | `enable_ssl_verification`    | boolean        | **{dotted-circle}** No | Do SSL verification when triggering the hook. |
-| `id`                         | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
 | `issues_events`              | boolean        | **{dotted-circle}** No | Trigger hook on issues events. |
 | `job_events`                 | boolean        | **{dotted-circle}** No | Trigger hook on job events. |
 | `merge_requests_events`      | boolean        | **{dotted-circle}** No | Trigger hook on merge requests events. |
@@ -2382,9 +2395,9 @@ POST /projects/:id/hooks
 | `pipeline_events`            | boolean        | **{dotted-circle}** No | Trigger hook on pipeline events. |
 | `push_events_branch_filter`  | string         | **{dotted-circle}** No | Trigger hook on push events for matching branches only. |
 | `push_events`                | boolean        | **{dotted-circle}** No | Trigger hook on push events. |
+| `releases_events`            | boolean        | **{dotted-circle}** No | Trigger hook on release events. |
 | `tag_push_events`            | boolean        | **{dotted-circle}** No | Trigger hook on tag push events. |
 | `token`                      | string         | **{dotted-circle}** No | Secret token to validate received payloads; this isn't returned in the response. |
-| `url`                        | string         | **{check-circle}** Yes | The hook URL. |
 | `wiki_page_events`           | boolean        | **{dotted-circle}** No | Trigger hook on wiki events. |
 
 ### Edit project hook
@@ -2397,12 +2410,13 @@ PUT /projects/:id/hooks/:hook_id
 
 | Attribute                    | Type           | Required               | Description |
 |------------------------------|----------------|------------------------|-------------|
+| `hook_id`                    | integer        | **{check-circle}** Yes | The ID of the project hook. |
+| `id`                         | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
+| `url`                        | string         | **{check-circle}** Yes | The hook URL. |
 | `confidential_issues_events` | boolean        | **{dotted-circle}** No | Trigger hook on confidential issues events. |
 | `confidential_note_events`   | boolean        | **{dotted-circle}** No | Trigger hook on confidential note events. |
 | `deployment_events`          | boolean        | **{dotted-circle}** No | Trigger hook on deployment events. |
 | `enable_ssl_verification`    | boolean        | **{dotted-circle}** No | Do SSL verification when triggering the hook. |
-| `hook_id`                    | integer        | **{check-circle}** Yes | The ID of the project hook. |
-| `id`                         | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
 | `issues_events`              | boolean        | **{dotted-circle}** No | Trigger hook on issues events. |
 | `job_events`                 | boolean        | **{dotted-circle}** No | Trigger hook on job events. |
 | `merge_requests_events`      | boolean        | **{dotted-circle}** No | Trigger hook on merge requests events. |
@@ -2410,11 +2424,10 @@ PUT /projects/:id/hooks/:hook_id
 | `pipeline_events`            | boolean        | **{dotted-circle}** No | Trigger hook on pipeline events. |
 | `push_events_branch_filter`  | string         | **{dotted-circle}** No | Trigger hook on push events for matching branches only. |
 | `push_events`                | boolean        | **{dotted-circle}** No | Trigger hook on push events. |
+| `releases_events`            | boolean        | **{dotted-circle}** No | Trigger hook on release events. |
 | `tag_push_events`            | boolean        | **{dotted-circle}** No | Trigger hook on tag push events. |
 | `token`                      | string         | **{dotted-circle}** No | Secret token to validate received payloads; this isn't returned in the response. |
-| `url`                        | string         | **{check-circle}** Yes | The hook URL. |
 | `wiki_page_events`           | boolean        | **{dotted-circle}** No | Trigger hook on wiki page events. |
-| `releases_events`            | boolean        | **{dotted-circle}** No | Trigger hook on release events. |
 
 ### Delete project hook
 
@@ -2472,8 +2485,8 @@ GET /projects
 
 | Attribute  | Type   | Required               | Description |
 |------------|--------|------------------------|-------------|
-| `order_by` | string | **{dotted-circle}** No | Return requests ordered by `id`, `name`, `created_at` or `last_activity_at` fields. |
 | `search`   | string | **{check-circle}** Yes | A string contained in the project name. |
+| `order_by` | string | **{dotted-circle}** No | Return requests ordered by `id`, `name`, `created_at` or `last_activity_at` fields. |
 | `sort`     | string | **{dotted-circle}** No | Return requests sorted in `asc` or `desc` order. |
 
 ```shell
@@ -2490,11 +2503,11 @@ POST /projects/:id/housekeeping
 |-----------|----------------|------------------------|-------------|
 | `id`      | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
 
-## Push Rules **(PREMIUM)**
+## Push rules **(PREMIUM)**
 
 ### Get project push rules
 
-Get the [push rules](../push_rules/push_rules.md#enabling-push-rules) of a
+Get the [push rules](../user/project/repository/push_rules.md#enabling-push-rules) of a
 project.
 
 ```plaintext
@@ -2548,14 +2561,14 @@ POST /projects/:id/push_rule
 
 | Attribute                               | Type           | Required               | Description |
 |-----------------------------------------|----------------|------------------------|-------------|
+| `id`                                    | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
 | `author_email_regex`                    | string         | **{dotted-circle}** No | All commit author emails must match this, for example `@my-company.com$`. |
 | `branch_name_regex`                     | string         | **{dotted-circle}** No | All branch names must match this, for example `(feature|hotfix)\/*`. |
-| `commit_committer_check`                | boolean        | **{dotted-circle}** No | Users can only push commits to this repository that were committed with one of their own verified emails. |
+| `commit_committer_check`                | boolean        | **{dotted-circle}** No | Users can only push commits to this repository if the committer email is one of their own verified emails. |
 | `commit_message_negative_regex`         | string         | **{dotted-circle}** No | No commit message is allowed to match this, for example `ssh\:\/\/`. |
 | `commit_message_regex`                  | string         | **{dotted-circle}** No | All commit messages must match this, for example `Fixed \d+\..*`. |
 | `deny_delete_tag`                       | boolean        | **{dotted-circle}** No | Deny deleting a tag. |
 | `file_name_regex`                       | string         | **{dotted-circle}** No | All committed filenames must **not** match this, for example `(jar|exe)$`. |
-| `id`                                    | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding), |
 | `max_file_size`                         | integer        | **{dotted-circle}** No | Maximum file size (MB). |
 | `member_check`                          | boolean        | **{dotted-circle}** No | Restrict commits by author (email) to existing GitLab users. |
 | `prevent_secrets`                       | boolean        | **{dotted-circle}** No | GitLab rejects any files that are likely to contain secrets. |
@@ -2571,14 +2584,14 @@ PUT /projects/:id/push_rule
 
 | Attribute                               | Type           | Required               | Description |
 |-----------------------------------------|----------------|------------------------|-------------|
+| `id`                                    | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
 | `author_email_regex`                    | string         | **{dotted-circle}** No | All commit author emails must match this, for example `@my-company.com$`. |
 | `branch_name_regex`                     | string         | **{dotted-circle}** No | All branch names must match this, for example `(feature|hotfix)\/*`. |
-| `commit_committer_check`                | boolean        | **{dotted-circle}** No | Users can only push commits to this repository that were committed with one of their own verified emails. |
+| `commit_committer_check`                | boolean        | **{dotted-circle}** No | Users can only push commits to this repository if the committer email is one of their own verified emails. |
 | `commit_message_negative_regex`         | string         | **{dotted-circle}** No | No commit message is allowed to match this, for example `ssh\:\/\/`. |
 | `commit_message_regex`                  | string         | **{dotted-circle}** No | All commit messages must match this, for example `Fixed \d+\..*`. |
 | `deny_delete_tag`                       | boolean        | **{dotted-circle}** No | Deny deleting a tag. |
 | `file_name_regex`                       | string         | **{dotted-circle}** No | All committed filenames must **not** match this, for example `(jar|exe)$`. |
-| `id`                                    | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
 | `max_file_size`                         | integer        | **{dotted-circle}** No | Maximum file size (MB). |
 | `member_check`                          | boolean        | **{dotted-circle}** No | Restrict commits by author (email) to existing GitLab users. |
 | `prevent_secrets`                       | boolean        | **{dotted-circle}** No | GitLab rejects any files that are likely to contain secrets. |
@@ -2601,7 +2614,8 @@ DELETE /projects/:id/push_rule
 
 ## Transfer a project to a new namespace
 
-> Introduced in GitLab 11.1.
+See the [Project documentation](../user/project/settings/index.md#transferring-an-existing-project-into-another-namespace)
+for prerequisites to transfer a project.
 
 ```plaintext
 PUT /projects/:id/transfer
@@ -2693,6 +2707,7 @@ Example response:
   "builds_access_level": "enabled",
   "snippets_access_level": "enabled",
   "pages_access_level": "enabled",
+  "security_and_compliance_access_level": "enabled",
   "emails_disabled": null,
   "shared_runners_enabled": true,
   "lfs_enabled": true,
@@ -2730,7 +2745,7 @@ Example response:
 
 Read more in the [Branches](branches.md) documentation.
 
-## Project Import/Export
+## Project import/export
 
 Read more in the [Project import/export](project_import_export.md) documentation.
 
@@ -2744,8 +2759,7 @@ Read more in the [Project vulnerabilities](project_vulnerabilities.md) documenta
 
 ## Configure pull mirroring for a project **(PREMIUM)**
 
-> - Introduced in GitLab 11.
-> - Moved to GitLab Premium in 13.9.
+> Moved to GitLab Premium in 13.9.
 
 Configure pull mirroring while [creating a new project](#create-project)
 or [updating an existing project](#edit-project) using the API
@@ -2761,6 +2775,7 @@ with the API scope enabled.
 |--------------|---------|------------------------|-------------|
 | `import_url` | string  | **{check-circle}** Yes | URL of remote repository being mirrored (with `user:token` if needed). |
 | `mirror`     | boolean | **{check-circle}** Yes | Enables pull mirroring on project when set to `true`. |
+| `mirror_trigger_builds`| boolean | **{dotted-circle}** No | Trigger pipelines for mirror updates when set to `true`. |
 | `only_mirror_protected_branches`| boolean | **{dotted-circle}** No | Limits mirroring to only protected branches when set to `true`. |
 
 ## Start the pull mirroring process for a Project **(PREMIUM)**
@@ -2784,8 +2799,6 @@ curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" "https://gitla
 Read more in the [Project Badges](project_badges.md) documentation.
 
 ## Download snapshot of a Git repository
-
-> Introduced in GitLab 10.7
 
 This endpoint may only be accessed by an administrative user.
 
