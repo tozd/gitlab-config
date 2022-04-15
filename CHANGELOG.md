@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2022-04-16
+
 ### Fixed
 
 - Work when CI/CD is disabled.
@@ -74,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First public release.
 
-[Unreleased]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.3.2...main
+[unreleased]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.3.3...main
+[0.3.3]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.3.2...v0.3.3
 [0.3.2]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.3.1...v0.3.2
 [0.3.1]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.3.0...v0.3.1
 [0.3.0]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.2.0...v0.3.0
