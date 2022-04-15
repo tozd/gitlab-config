@@ -16,6 +16,7 @@ func TestParseProjectDocumentation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"allow_merge_on_skipped_pipeline":                  "Set whether or not merge requests can be merged with skipped jobs. Type: boolean",
+		"analytics_access_level":                           "One of disabled, private or enabled. Type: string",
 		"approvals_before_merge":                           "How many approvers should approve merge request by default. To configure approval rules, see Merge request approvals API. Type: integer",
 		"auto_cancel_pending_pipelines":                    "Auto-cancel pending pipelines. This isn't a boolean, but enabled/disabled. Type: string",
 		"auto_devops_deploy_strategy":                      "Auto Deploy strategy (continuous, manual, or timed_incremental). Type: string",
@@ -58,13 +59,13 @@ func TestParseProjectDocumentation(t *testing.T) {
 		"operations_access_level":                          "One of disabled, private, or enabled. Type: string",
 		"packages_enabled":                                 "Enable or disable packages repository feature. Type: boolean",
 		"pages_access_level":                               "One of disabled, private, enabled, or public. Type: string",
-		"path":                                             "Custom repository name for the project. By default generated based on name. Type: string",
 		"printing_merge_request_link_enabled":              "Show link to create/view merge request when pushing from the command line. Type: boolean",
 		"public_jobs":                                      "If true, jobs can be viewed by non-project members. Type: boolean",
 		"remove_source_branch_after_merge":                 "Enable Delete source branch option by default for all new merge requests. Type: boolean",
 		"repository_access_level":                          "One of disabled, private, or enabled. Type: string",
 		"repository_storage":                               "Which storage shard the repository is on. (administrators only) Type: string",
 		"request_access_enabled":                           "Allow users to request member access. Type: boolean",
+		"requirements_access_level":                        "One of disabled, private, enabled or public. Type: string",
 		"resolve_outdated_diff_discussions":                "Automatically resolve merge request diffs discussions on lines changed with a push. Type: boolean",
 		"restrict_user_defined_variables":                  "Allow only users with the Maintainer role to pass user-defined variables when triggering a pipeline. For example when the pipeline is triggered in the UI, with the API, or by a trigger token. Type: boolean",
 		"security_and_compliance_access_level":             "(GitLab 14.9 and later) Security and compliance access level. One of disabled, private, or enabled. Type: string",
