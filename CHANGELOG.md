@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Support `analytics_access_level`, `requirements_access_level`, and `security_and_compliance_access_level`.
+  [#2](https://gitlab.com/tozd/gitlab/config/-/issues/2)
+  [#8](https://gitlab.com/tozd/gitlab/config/-/issues/8)
+  [#15](https://gitlab.com/tozd/gitlab/config/-/issues/15)
+
 ## [0.3.2] - 2022-01-05
 
 ### Fixed
@@ -37,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--enc-suffix` flag to `gitlab-config set` command to configure the field suffix to be
   removed before calling APIs. Useful if `--enc-suffix` has been used with `gitlab-config get`.
   Disabled by default.
-- `--enc-suffix` flag to  `gitlab-config get` command to configure the suffix to field
+- `--enc-suffix` flag to `gitlab-config get` command to configure the suffix to field
   names of sensitive values, marking them for encryption with SOPS. Disabled by default.
 - `--enc-comment` flag to `gitlab-config get` command to configure the comment which is
   used to annotate sensitive values, marking them for encryption with SOPS.
