@@ -47,7 +47,7 @@ clean:
 	rm -f coverage.* codeclimate.json tests.xml
 
 release:
-	npx --yes --package 'release-it@14.11.6' --package 'git+https://github.com/mitar/keep-a-changelog.git#better-gitlab' -- release-it
+	npx --yes --package 'release-it@14.14.2' --package '@release-it/keep-a-changelog@2.5.0' -- release-it
 
 lint-docs:
 	npx --yes --package 'markdownlint-cli@~0.30.0' -- markdownlint --ignore-path .gitignore --ignore testdata/ '**/*.md'
