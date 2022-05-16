@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Debug Docker images run as root to ease installation of additional packages.
+  [#23](https://gitlab.com/tozd/gitlab/config/-/issues/23)
+  [!1](https://gitlab.com/tozd/gitlab/config/-/merge_requests/1)
+
 ## [0.3.3] - 2022-04-16
 
 ### Fixed
