@@ -20,14 +20,13 @@ COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /etc/group /etc/group
 COPY --from=build /go/bin/gitlab-config /
-USER user:user
 ENTRYPOINT ["/gitlab-config"]
 
 FROM scratch AS production
 RUN --mount=from=busybox:1.34,src=/bin/,dst=/bin/ ["/bin/mkdir", "-m", "1755", "/tmp"]
 COPY --from=build /etc/services /etc/services
 COPY --from=build /etc/protocols /etc/protocols
-# The rest is the same as for the debug image.
+# Apart from the USER statement, the rest is the same as for the debug image.
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /etc/passwd /etc/passwd
