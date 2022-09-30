@@ -19,7 +19,7 @@ variables:
 test:
   stage: test
 
-  image: golang:1.17-alpine3.14
+  image: golang:1.19.1-alpine3.15
 
   before_script:
     - apk --update add make gcc musl-dev
@@ -46,7 +46,7 @@ test:
 lint:
   stage: test
 
-  image: golang:1.17-alpine3.14
+  image: golang:1.19.1-alpine3.15
 
   before_script:
     - apk --update add make gcc musl-dev
@@ -64,7 +64,7 @@ lint:
 fmt:
   stage: test
 
-  image: golang:1.17-alpine3.14
+  image: golang:1.19.1-alpine3.15
 
   before_script:
     - apk --update add make git gcc musl-dev grep
@@ -88,7 +88,7 @@ lint_docs:
 audit:
   stage: test
 
-  image: golang:1.17-alpine3.14
+  image: golang:1.19.1-alpine3.15
 
   before_script:
     - apk --update add make git gcc musl-dev
@@ -100,7 +100,7 @@ audit:
 commits:
   stage: test
 
-  image: golang:1.17-alpine3.14
+  image: golang:1.19.1-alpine3.15
 
   variables:
     GIT_DEPTH: "0"
@@ -245,7 +245,7 @@ upload_binaries:
 publish:
   stage: deploy
 
-  image: golang:1.17-alpine3.14
+  image: golang:1.19.1-alpine3.15
 
   script:
     - GOPROXY=proxy.golang.org go list -m "gitlab.com/tozd/gitlab/config@$CI_COMMIT_REF_NAME"

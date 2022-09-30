@@ -1,20 +1,20 @@
 # This Dockerfile requires DOCKER_BUILDKIT=1 to be build.
 # We do not use syntax header so that we do not have to wait
 # for the Dockerfile frontend image to be pulled.
-FROM golang:1.17-alpine3.14 AS build
+FROM golang:1.19.1-alpine3.15 AS build
 
 RUN apk --update add make git gcc musl-dev ca-certificates tzdata && \
- adduser -D -H -g "" -s /sbin/nologin -u 1000 user
+  adduser -D -H -g "" -s /sbin/nologin -u 1000 user
 COPY . /go/src/gitlab-config
 WORKDIR /go/src/gitlab-config
 # We want Docker image for build timestamp label to match the one in
 # the binary so we take a timestamp once outside and pass it in.
 ARG BUILD_TIMESTAMP
 RUN \
- BUILD_TIMESTAMP=$BUILD_TIMESTAMP make build-static && \
- mv gitlab-config /go/bin/gitlab-config
+  BUILD_TIMESTAMP=$BUILD_TIMESTAMP make build-static && \
+  mv gitlab-config /go/bin/gitlab-config
 
-FROM alpine:3.14 AS debug
+FROM alpine:3.15 AS debug
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /etc/passwd /etc/passwd

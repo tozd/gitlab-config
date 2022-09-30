@@ -1,6 +1,6 @@
 module gitlab.com/tozd/gitlab/config
 
-go 1.17
+go 1.19
 
 require (
 	github.com/alecthomas/kong v0.2.23-0.20220105075837-a7d3850e8012
