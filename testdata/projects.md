@@ -1,7 +1,7 @@
 ---
 stage: Plan
 group: Project Management
-info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#assignments
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/product/ux/technical-writing/#assignments
 ---
 
 # Projects API **(FREE)**
@@ -15,7 +15,7 @@ The visibility level is determined by the `visibility` field in the project.
 
 Values for the project visibility level are:
 
-- `private`: project access must be granted explicitly for each user.
+- `private`: project access must be granted explicitly to each user.
 - `internal`: the project can be cloned by any signed-in user except [external users](../user/permissions.md#external-users).
 - `public`: the project can be accessed without any authentication.
 
@@ -28,13 +28,14 @@ There are three options for `merge_method` to choose from:
 - `merge`: a merge commit is created for every merge, and merging is allowed if
   there are no conflicts.
 - `rebase_merge`: a merge commit is created for every merge, but merging is only
-  allowed if fast-forward merge is possible. This way you could make sure that
-  if this merge request would build, after merging to target branch it would
-  also build.
-- `ff`: no merge commits are created and all merges are fast-forwarded, which
-  means that merging is only allowed if the branch could be fast-forwarded.
+  allowed if fast-forward merge is possible. You can make sure that the target
+  branch would build after this merge request builds and merges.
+- `ff`: no merge commits are created and all merges are fast-forwarded. Merging
+  is only allowed if the branch could be fast-forwarded.
 
 ## List all projects
+
+> The `_links.cluster_agents` attribute in the response was [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/347047) in GitLab 15.0.
 
 Get a list of all visible projects across GitLab for the authenticated user.
 When accessed without authentication, only public projects with _simple_ fields
@@ -65,6 +66,7 @@ GET /projects
 | `starred`                                  | boolean  | **{dotted-circle}** No | Limit by projects starred by the current user. |
 | `statistics`                               | boolean  | **{dotted-circle}** No | Include project statistics. Only available to Reporter or higher level role members. |
 | `topic`                                    | string   | **{dotted-circle}** No | Comma-separated topic names. Limit results to projects that match all of given topics. See `topics` attribute. |
+| `topic_id`                                 | integer  | **{dotted-circle}** No | Limit results to projects with the assigned topic given by the topic ID. |
 | `visibility`                               | string   | **{dotted-circle}** No | Limit by visibility `public`, `internal`, or `private`. |
 | `wiki_checksum_failed` **(PREMIUM)**       | boolean  | **{dotted-circle}** No | Limit projects where the wiki checksum calculation has failed. |
 | `with_custom_attributes`                   | boolean  | **{dotted-circle}** No | Include [custom attributes](custom_attributes.md) in response. _(administrator only)_ |
@@ -77,17 +79,26 @@ for selected `order_by` options.
 
 When `simple=true` or the user is unauthenticated this returns something like:
 
+Example request:
+
+```shell
+curl --request GET "https://gitlab.example.com/api/v4/projects"
+```
+
+Example response:
+
 ```json
 [
   {
     "id": 4,
     "description": null,
-    "default_branch": "master",
-    "ssh_url_to_repo": "git@example.com:diaspora/diaspora-client.git",
-    "http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",
-    "web_url": "http://example.com/diaspora/diaspora-client",
-    "readme_url": "http://example.com/diaspora/diaspora-client/blob/master/README.md",
-    "tag_list": [ //deprecated, use `topics` instead
+    "name": "Diaspora Client",
+    "name_with_namespace": "Diaspora / Diaspora Client",
+    "path": "diaspora-client",
+    "path_with_namespace": "diaspora/diaspora-client",
+    "created_at": "2013-09-30T13:46:02Z",
+    "default_branch": "main",
+    "tag_list": [
       "example",
       "disapora client"
     ],
@@ -95,21 +106,28 @@ When `simple=true` or the user is unauthenticated this returns something like:
       "example",
       "disapora client"
     ],
-    "name": "Diaspora Client",
-    "name_with_namespace": "Diaspora / Diaspora Client",
-    "path": "diaspora-client",
-    "path_with_namespace": "diaspora/diaspora-client",
-    "created_at": "2013-09-30T13:46:02Z",
-    "last_activity_at": "2013-09-30T13:46:02Z",
+    "ssh_url_to_repo": "git@gitlab.example.com:diaspora/diaspora-client.git",
+    "http_url_to_repo": "https://gitlab.example.com/diaspora/diaspora-client.git",
+    "web_url": "https://gitlab.example.com/diaspora/diaspora-client",
+    "readme_url": "https://gitlab.example.com/diaspora/diaspora-client/blob/master/README.md",
+    "avatar_url": "https://gitlab.example.com/uploads/project/avatar/4/uploads/avatar.png",
     "forks_count": 0,
-    "avatar_url": "http://example.com/uploads/project/avatar/4/uploads/avatar.png",
-    "star_count": 0
+    "star_count": 0,
+    "last_activity_at": "2013-09-30T13:46:02Z",
+    "namespace": {
+      "id": 2,
+      "name": "Diaspora",
+      "path": "diaspora",
+      "kind": "group",
+      "full_path": "diaspora",
+      "parent_id": null,
+      "avatar_url": null,
+      "web_url": "https://gitlab.example.com/diaspora"
+    }
   },
   {
-    "id": 6,
-    "description": null,
-    "default_branch": "master",
-...
+    ...
+  }
 ```
 
 When the user is authenticated and `simple` is not set this returns something like:
@@ -119,12 +137,12 @@ When the user is authenticated and `simple` is not set this returns something li
   {
     "id": 4,
     "description": null,
-    "default_branch": "master",
-    "visibility": "private",
-    "ssh_url_to_repo": "git@example.com:diaspora/diaspora-client.git",
-    "http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",
-    "web_url": "http://example.com/diaspora/diaspora-client",
-    "readme_url": "http://example.com/diaspora/diaspora-client/blob/master/README.md",
+    "name": "Diaspora Client",
+    "name_with_namespace": "Diaspora / Diaspora Client",
+    "path": "diaspora-client",
+    "path_with_namespace": "diaspora/diaspora-client",
+    "created_at": "2013-09-30T13:46:02Z",
+    "default_branch": "main",
     "tag_list": [ //deprecated, use `topics` instead
       "example",
       "disapora client"
@@ -133,200 +151,115 @@ When the user is authenticated and `simple` is not set this returns something li
       "example",
       "disapora client"
     ],
-    "owner": {
-      "id": 3,
-      "name": "Diaspora",
-      "created_at": "2013-09-30T13:46:02Z"
-    },
-    "name": "Diaspora Client",
-    "name_with_namespace": "Diaspora / Diaspora Client",
-    "path": "diaspora-client",
-    "path_with_namespace": "diaspora/diaspora-client",
-    "issues_enabled": true,
-    "open_issues_count": 1,
-    "merge_requests_enabled": true,
-    "jobs_enabled": true,
-    "wiki_enabled": true,
-    "snippets_enabled": false,
-    "can_create_merge_request_in": true,
-    "resolve_outdated_diff_discussions": false,
-    "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
-    "container_registry_access_level": "disabled",
-    "security_and_compliance_access_level": "disabled",
-    "created_at": "2013-09-30T13:46:02Z",
-    "last_activity_at": "2013-09-30T13:46:02Z",
-    "creator_id": 3,
+    "ssh_url_to_repo": "git@gitlab.example.com:diaspora/diaspora-client.git",
+    "http_url_to_repo": "https://gitlab.example.com/diaspora/diaspora-client.git",
+    "web_url": "https://gitlab.example.com/diaspora/diaspora-client",
+    "readme_url": "https://gitlab.example.com/diaspora/diaspora-client/blob/master/README.md",
+    "avatar_url": "https://gitlab.example.com/uploads/project/avatar/4/uploads/avatar.png",
+    "forks_count": 0,
+    "star_count": 0,
+    "last_activity_at": "2022-06-24T17:11:26.841Z",
     "namespace": {
       "id": 3,
       "name": "Diaspora",
       "path": "diaspora",
       "kind": "group",
-      "full_path": "diaspora"
+      "full_path": "diaspora",
+      "parent_id": null,
+      "avatar_url": "https://gitlab.example.com/uploads/project/avatar/6/uploads/avatar.png",
+      "web_url": "https://gitlab.example.com/diaspora"
     },
-    "import_status": "none",
+    "container_registry_image_prefix": "registry.gitlab.example.com/diaspora/diaspora-client",
+    "_links": {
+      "self": "https://gitlab.example.com/api/v4/projects/4",
+      "issues": "https://gitlab.example.com/api/v4/projects/4/issues",
+      "merge_requests": "https://gitlab.example.com/api/v4/projects/4/merge_requests",
+      "repo_branches": "https://gitlab.example.com/api/v4/projects/4/repository/branches",
+      "labels": "https://gitlab.example.com/api/v4/projects/4/labels",
+      "events": "https://gitlab.example.com/api/v4/projects/4/events",
+      "members": "https://gitlab.example.com/api/v4/projects/4/members",
+      "cluster_agents": "https://gitlab.example.com/api/v4/projects/4/cluster_agents"
+    },
+    "packages_enabled": true,
+    "empty_repo": false,
     "archived": false,
-    "avatar_url": "http://example.com/uploads/project/avatar/4/uploads/avatar.png",
+    "visibility": "public",
+    "resolve_outdated_diff_discussions": false,
+    "container_expiration_policy": {
+      "cadence": "1month",
+      "enabled": true,
+      "keep_n": 1,
+      "older_than": "14d",
+      "name_regex": "",
+      "name_regex_keep": ".*-main",
+      "next_run_at": "2022-06-25T17:11:26.865Z"
+    },
+    "issues_enabled": true,
+    "merge_requests_enabled": true,
+    "wiki_enabled": true,
+    "jobs_enabled": true,
+    "snippets_enabled": true,
+    "container_registry_enabled": true,
+    "service_desk_enabled": true,
+    "can_create_merge_request_in": true,
+    "issues_access_level": "enabled",
+    "repository_access_level": "enabled",
+    "merge_requests_access_level": "enabled",
+    "forking_access_level": "enabled",
+    "wiki_access_level": "enabled",
+    "builds_access_level": "enabled",
+    "snippets_access_level": "enabled",
+    "pages_access_level": "enabled",
+    "operations_access_level": "enabled",
+    "analytics_access_level": "enabled",
+    "container_registry_access_level": "enabled",
+    "security_and_compliance_access_level": "private",
+    "emails_disabled": null,
     "shared_runners_enabled": true,
-    "forks_count": 0,
-    "star_count": 0,
-    "runners_token": "b8547b1dc37721d05889db52fa2f02",
-    "ci_default_git_depth": 50,
+    "lfs_enabled": true,
+    "creator_id": 1,
+    "import_status": "none",
+    "open_issues_count": 0,
+    "ci_default_git_depth": 20,
     "ci_forward_deployment_enabled": true,
+    "ci_allow_fork_pipelines_to_run_in_parent_project": true,
+    "ci_job_token_scope_enabled": false,
+    "ci_separated_caches": true,
     "public_jobs": true,
+    "build_timeout": 3600,
+    "auto_cancel_pending_pipelines": "enabled",
+    "ci_config_path": "",
     "shared_with_groups": [],
     "only_allow_merge_if_pipeline_succeeds": false,
-    "allow_merge_on_skipped_pipeline": false,
+    "allow_merge_on_skipped_pipeline": null,
     "restrict_user_defined_variables": false,
+    "request_access_enabled": true,
     "only_allow_merge_if_all_discussions_are_resolved": false,
-    "remove_source_branch_after_merge": false,
-    "request_access_enabled": false,
+    "remove_source_branch_after_merge": true,
+    "printing_merge_request_link_enabled": true,
     "merge_method": "merge",
-    "squash_option": "default_on",
-    "autoclose_referenced_issues": true,
+    "squash_option": "default_off",
+    "enforce_auth_checks_on_uploads": true,
     "suggestion_commit_message": null,
     "merge_commit_template": null,
     "squash_commit_template": null,
-    "marked_for_deletion_at": "2020-04-03", // Deprecated and will be removed in API v5 in favor of marked_for_deletion_on
-    "marked_for_deletion_on": "2020-04-03",
-    "statistics": {
-      "commit_count": 37,
-      "storage_size": 1038090,
-      "repository_size": 1038090,
-      "wiki_size" : 0,
-      "lfs_objects_size": 0,
-      "job_artifacts_size": 0,
-      "pipeline_artifacts_size": 0,
-      "packages_size": 0,
-      "snippets_size": 0,
-      "uploads_size": 0
-    },
-    "container_registry_image_prefix": "registry.example.com/diaspora/diaspora-client",
-    "_links": {
-      "self": "http://example.com/api/v4/projects",
-      "issues": "http://example.com/api/v4/projects/1/issues",
-      "merge_requests": "http://example.com/api/v4/projects/1/merge_requests",
-      "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
-      "labels": "http://example.com/api/v4/projects/1/labels",
-      "events": "http://example.com/api/v4/projects/1/events",
-      "members": "http://example.com/api/v4/projects/1/members"
+    "auto_devops_enabled": false,
+    "auto_devops_deploy_strategy": "continuous",
+    "autoclose_referenced_issues": true,
+    "keep_latest_artifact": true,
+    "runner_token_expiration_interval": null,
+    "external_authorization_classification_label": "",
+    "requirements_enabled": false,
+    "requirements_access_level": "enabled",
+    "security_and_compliance_enabled": false,
+    "compliance_frameworks": [],
+    "permissions": {
+      "project_access": null,
+      "group_access": null
     }
   },
   {
-    "id": 6,
-    "description": null,
-    "default_branch": "master",
-    "visibility": "private",
-    "ssh_url_to_repo": "git@example.com:brightbox/puppet.git",
-    "http_url_to_repo": "http://example.com/brightbox/puppet.git",
-    "web_url": "http://example.com/brightbox/puppet",
-    "readme_url": "http://example.com/brightbox/puppet/blob/master/README.md",
-    "tag_list": [ //deprecated, use `topics` instead
-      "example",
-      "puppet"
-    ],
-    "topics": [
-      "example",
-      "puppet"
-    ],
-    "owner": {
-      "id": 4,
-      "name": "Brightbox",
-      "created_at": "2013-09-30T13:46:02Z"
-    },
-    "name": "Puppet",
-    "name_with_namespace": "Brightbox / Puppet",
-    "path": "puppet",
-    "path_with_namespace": "brightbox/puppet",
-    "issues_enabled": true,
-    "open_issues_count": 1,
-    "merge_requests_enabled": true,
-    "jobs_enabled": true,
-    "wiki_enabled": true,
-    "snippets_enabled": false,
-    "can_create_merge_request_in": true,
-    "resolve_outdated_diff_discussions": false,
-    "container_registry_enabled": false, // deprecated, use container_registry_access_level instead
-    "container_registry_access_level": "disabled",
-    "security_and_compliance_access_level": "disabled",
-    "created_at": "2013-09-30T13:46:02Z",
-    "last_activity_at": "2013-09-30T13:46:02Z",
-    "creator_id": 3,
-    "namespace": {
-      "id": 4,
-      "name": "Brightbox",
-      "path": "brightbox",
-      "kind": "group",
-      "full_path": "brightbox"
-    },
-    "import_status": "none",
-    "import_error": null,
-    "permissions": {
-      "project_access": {
-        "access_level": 10,
-        "notification_level": 3
-      },
-      "group_access": {
-        "access_level": 50,
-        "notification_level": 3
-      }
-    },
-    "archived": false,
-    "avatar_url": null,
-    "shared_runners_enabled": true,
-    "forks_count": 0,
-    "star_count": 0,
-    "runners_token": "b8547b1dc37721d05889db52fa2f02",
-    "ci_default_git_depth": 0,
-    "ci_forward_deployment_enabled": true,
-    "public_jobs": true,
-    "shared_with_groups": [],
-    "only_allow_merge_if_pipeline_succeeds": false,
-    "allow_merge_on_skipped_pipeline": false,
-    "restrict_user_defined_variables": false,
-    "only_allow_merge_if_all_discussions_are_resolved": false,
-    "remove_source_branch_after_merge": false,
-    "request_access_enabled": false,
-    "merge_method": "merge",
-    "squash_option": "default_on",
-    "auto_devops_enabled": true,
-    "auto_devops_deploy_strategy": "continuous",
-    "repository_storage": "default",
-    "approvals_before_merge": 0,
-    "mirror": false,
-    "mirror_user_id": 45,
-    "mirror_trigger_builds": false,
-    "only_mirror_protected_branches": false,
-    "mirror_overwrites_diverged_branches": false,
-    "external_authorization_classification_label": null,
-    "packages_enabled": true,
-    "service_desk_enabled": false,
-    "service_desk_address": null,
-    "autoclose_referenced_issues": true,
-    "suggestion_commit_message": null,
-    "merge_commit_template": null,
-    "squash_commit_template": null,
-    "statistics": {
-      "commit_count": 12,
-      "storage_size": 2066080,
-      "repository_size": 2066080,
-      "wiki_size" : 0,
-      "lfs_objects_size": 0,
-      "job_artifacts_size": 0,
-      "pipeline_artifacts_size": 0,
-      "packages_size": 0,
-      "snippets_size": 0,
-      "uploads_size": 0
-    },
-    "container_registry_image_prefix": "registry.example.com/brightbox/puppet",
-    "_links": {
-      "self": "http://example.com/api/v4/projects",
-      "issues": "http://example.com/api/v4/projects/1/issues",
-      "merge_requests": "http://example.com/api/v4/projects/1/merge_requests",
-      "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
-      "labels": "http://example.com/api/v4/projects/1/labels",
-      "events": "http://example.com/api/v4/projects/1/events",
-      "members": "http://example.com/api/v4/projects/1/members"
-    }
+    ...
   }
 ]
 ```
@@ -360,6 +293,12 @@ You can filter by [custom attributes](custom_attributes.md) with:
 GET /projects?custom_attributes[key]=value&custom_attributes[other_key]=other_value
 ```
 
+Example request:
+
+```shell
+curl --globoff --request GET "https://gitlab.example.com/api/v4/projects?custom_attributes[location]=Antarctica&custom_attributes[role]=Developer"
+```
+
 ### Pagination limits
 
 In GitLab 13.0 and later, [offset-based pagination](index.md#offset-based-pagination)
@@ -370,6 +309,8 @@ projects beyond this limit.
 Keyset pagination supports only `order_by=id`. Other sorting options aren't available.
 
 ## List user projects
+
+> The `_links.cluster_agents` attribute in the response [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/347047) in GitLab 14.10.
 
 Get a list of visible projects owned by the given user. When accessed without
 authentication, only public projects are returned.
@@ -463,6 +404,8 @@ GET /users/:user_id/projects
     "runners_token": "b8547b1dc37721d05889db52fa2f02",
     "ci_default_git_depth": 50,
     "ci_forward_deployment_enabled": true,
+    "ci_allow_fork_pipelines_to_run_in_parent_project": true,
+    "ci_separated_caches": true,
     "public_jobs": true,
     "shared_with_groups": [],
     "only_allow_merge_if_pipeline_succeeds": false,
@@ -474,6 +417,7 @@ GET /users/:user_id/projects
     "merge_method": "merge",
     "squash_option": "default_on",
     "autoclose_referenced_issues": true,
+    "enforce_auth_checks_on_uploads": true,
     "suggestion_commit_message": null,
     "merge_commit_template": null,
     "squash_commit_template": null,
@@ -499,7 +443,8 @@ GET /users/:user_id/projects
       "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
       "labels": "http://example.com/api/v4/projects/1/labels",
       "events": "http://example.com/api/v4/projects/1/events",
-      "members": "http://example.com/api/v4/projects/1/members"
+      "members": "http://example.com/api/v4/projects/1/members",
+      "cluster_agents": "http://example.com/api/v4/projects/1/cluster_agents"
     }
   },
   {
@@ -569,6 +514,8 @@ GET /users/:user_id/projects
     "runners_token": "b8547b1dc37721d05889db52fa2f02",
     "ci_default_git_depth": 0,
     "ci_forward_deployment_enabled": true,
+    "ci_allow_fork_pipelines_to_run_in_parent_project": true,
+    "ci_separated_caches": true,
     "public_jobs": true,
     "shared_with_groups": [],
     "only_allow_merge_if_pipeline_succeeds": false,
@@ -593,6 +540,7 @@ GET /users/:user_id/projects
     "service_desk_enabled": false,
     "service_desk_address": null,
     "autoclose_referenced_issues": true,
+    "enforce_auth_checks_on_uploads": true,
     "suggestion_commit_message": null,
     "merge_commit_template": null,
     "squash_commit_template": null,
@@ -616,13 +564,16 @@ GET /users/:user_id/projects
       "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
       "labels": "http://example.com/api/v4/projects/1/labels",
       "events": "http://example.com/api/v4/projects/1/events",
-      "members": "http://example.com/api/v4/projects/1/members"
+      "members": "http://example.com/api/v4/projects/1/members",
+      "cluster_agents": "http://example.com/api/v4/projects/1/cluster_agents"
     }
   }
 ]
 ```
 
 ## List projects starred by a user
+
+> The `_links.cluster_agents` attribute in the response [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/347047) in GitLab 14.10.
 
 Get a list of visible projects starred by the given user. When accessed without
 authentication, only public projects are returned.
@@ -722,6 +673,7 @@ Example response:
     "merge_method": "merge",
     "squash_option": "default_on",
     "autoclose_referenced_issues": true,
+    "enforce_auth_checks_on_uploads": true,
     "suggestion_commit_message": null,
     "merge_commit_template": null,
     "squash_commit_template": null,
@@ -744,7 +696,8 @@ Example response:
       "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
       "labels": "http://example.com/api/v4/projects/1/labels",
       "events": "http://example.com/api/v4/projects/1/events",
-      "members": "http://example.com/api/v4/projects/1/members"
+      "members": "http://example.com/api/v4/projects/1/members",
+      "cluster_agents": "http://example.com/api/v4/projects/1/cluster_agents"
     }
   },
   {
@@ -836,6 +789,7 @@ Example response:
     "service_desk_enabled": false,
     "service_desk_address": null,
     "autoclose_referenced_issues": true,
+    "enforce_auth_checks_on_uploads": true,
     "suggestion_commit_message": null,
     "merge_commit_template": null,
     "squash_commit_template": null,
@@ -858,13 +812,16 @@ Example response:
       "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
       "labels": "http://example.com/api/v4/projects/1/labels",
       "events": "http://example.com/api/v4/projects/1/events",
-      "members": "http://example.com/api/v4/projects/1/members"
+      "members": "http://example.com/api/v4/projects/1/members",
+      "cluster_agents": "http://example.com/api/v4/projects/1/cluster_agents"
     }
   }
 ]
 ```
 
 ## Get single project
+
+> The `_links.cluster_agents` attribute in the response [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/347047) in GitLab 14.10.
 
 Get a specific project. This endpoint can be accessed without authentication if
 the project is publicly accessible.
@@ -968,6 +925,8 @@ GET /projects/:id
   "runners_token": "b8bc4a7a29eb76ea83cf79e4908c2b",
   "ci_default_git_depth": 50,
   "ci_forward_deployment_enabled": true,
+  "ci_allow_fork_pipelines_to_run_in_parent_project": true,
+  "ci_separated_caches": true,
   "public_jobs": true,
   "shared_with_groups": [
     {
@@ -1007,6 +966,7 @@ GET /projects/:id
   "service_desk_address": null,
   "autoclose_referenced_issues": true,
   "suggestion_commit_message": null,
+  "enforce_auth_checks_on_uploads": true,
   "merge_commit_template": null,
   "squash_commit_template": null,
   "marked_for_deletion_at": "2020-04-03", // Deprecated and will be removed in API v5 in favor of marked_for_deletion_on
@@ -1032,7 +992,8 @@ GET /projects/:id
     "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
     "labels": "http://example.com/api/v4/projects/1/labels",
     "events": "http://example.com/api/v4/projects/1/events",
-    "members": "http://example.com/api/v4/projects/1/members"
+    "members": "http://example.com/api/v4/projects/1/members",
+    "cluster_agents": "http://example.com/api/v4/projects/1/cluster_agents"
   }
 }
 ```
@@ -1212,6 +1173,16 @@ where `password` is a public access key with the `api` scope enabled.
 POST /projects
 ```
 
+Example request:
+
+```shell
+curl --request POST --header "PRIVATE-TOKEN: <your-token>" \
+     --header "Content-Type: application/json" --data '{
+        "name": "new_project", "description": "New Project", "path": "new_project",
+        "namespace_id": "42", "initialize_with_readme": "true"}' \
+     --url 'https://gitlab.example.com/api/v4/projects/'
+```
+
 | Attribute                                                   | Type    | Required               | Description |
 |-------------------------------------------------------------|---------|------------------------|-------------|
 | `name`                                                      | string  | **{check-circle}** Yes (if path isn't provided) | The name of the new project. Equals path if not provided. |
@@ -1224,12 +1195,11 @@ POST /projects
 | `auto_devops_enabled`                                       | boolean | **{dotted-circle}** No | Enable Auto DevOps for this project. |
 | `autoclose_referenced_issues`                               | boolean | **{dotted-circle}** No | Set whether auto-closing referenced issues on default branch. |
 | `avatar`                                                    | mixed   | **{dotted-circle}** No | Image file for avatar of the project.                |
-| `build_coverage_regex`                                      | string  | **{dotted-circle}** No | Test coverage parsing. |
 | `build_git_strategy`                                        | string  | **{dotted-circle}** No | The Git strategy. Defaults to `fetch`. |
 | `build_timeout`                                             | integer | **{dotted-circle}** No | The maximum amount of time, in seconds, that a job can run. |
 | `builds_access_level`                                       | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `ci_config_path`                                            | string  | **{dotted-circle}** No | The path to CI configuration file. |
-| `container_expiration_policy_attributes`                    | hash    | **{dotted-circle}** No | Update the image cleanup policy for this project. Accepts: `cadence` (string), `keep_n` (integer), `older_than` (string), `name_regex` (string), `name_regex_delete` (string), `name_regex_keep` (string), `enabled` (boolean). Valid values for `cadence` are: `1d` (every day), `7d` (every week), `14d` (every two weeks), `1month` (every month), or `3month` (every quarter). |
+| `container_expiration_policy_attributes`                    | hash    | **{dotted-circle}** No | Update the image cleanup policy for this project. Accepts: `cadence` (string), `keep_n` (integer), `older_than` (string), `name_regex` (string), `name_regex_delete` (string), `name_regex_keep` (string), `enabled` (boolean). See the [Container Registry](../user/packages/container_registry/reduce_container_registry_storage.md#use-the-cleanup-policy-api) documentation for more information on `cadence`, `keep_n` and `older_than` values. |
 | `container_registry_access_level`                           | string  | **{dotted-circle}** No | Set visibility of container registry, for this project, to one of `disabled`, `private` or `enabled`. |
 | `container_registry_enabled`                                | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable container registry for this project. Use `container_registry_access_level` instead. |
 | `default_branch`                                            | string  | **{dotted-circle}** No | The [default branch](../user/project/repository/branches/default.md) name. Requires `initialize_with_readme` to be `true`. |
@@ -1238,8 +1208,8 @@ POST /projects
 | `external_authorization_classification_label` **(PREMIUM)** | string  | **{dotted-circle}** No | The classification label for the project. |
 | `forking_access_level`                                      | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `group_with_project_templates_id` **(PREMIUM)**             | integer | **{dotted-circle}** No | For group-level custom templates, specifies ID of group from which all the custom project templates are sourced. Leave empty for instance-level templates. Requires `use_custom_template` to be true. |
-| `import_url`                                                | string  | **{dotted-circle}** No | URL to import repository from. |
-| `initialize_with_readme`                                    | boolean | **{dotted-circle}** No | `false` by default. |
+| `import_url`                                                | string  | **{dotted-circle}** No | URL to import repository from. When this isn't empty, you must not set `initialize_with_readme` to `true`. Doing so might result in the [following error](https://gitlab.com/gitlab-org/gitlab/-/issues/360266): `not a git repository`. |
+| `initialize_with_readme`                                    | boolean | **{dotted-circle}** No | Whether to create a Git repository with just a `README.md` file. Default is `false`. When this is true, you must not pass `import_url` or other attributes of this endpoint which specify alternative contents for the repository. Doing so might result in the [following error](https://gitlab.com/gitlab-org/gitlab/-/issues/360266): `not a git repository`. |
 | `issues_access_level`                                       | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `issues_enabled`                                            | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable issues for this project. Use `issues_access_level` instead. |
 | `jobs_enabled`                                              | boolean | **{dotted-circle}** No | _(Deprecated)_ Enable jobs for this project. Use `builds_access_level` instead. |
@@ -1253,7 +1223,7 @@ POST /projects
 | `mirror` **(PREMIUM)**                                      | boolean | **{dotted-circle}** No | Enables pull mirroring in a project. |
 | `namespace_id`                                              | integer | **{dotted-circle}** No | Namespace for the new project (defaults to the current user's namespace). |
 | `only_allow_merge_if_all_discussions_are_resolved`          | boolean | **{dotted-circle}** No | Set whether merge requests can only be merged when all the discussions are resolved. |
-| `only_allow_merge_if_pipeline_succeeds`                     | boolean | **{dotted-circle}** No | Set whether merge requests can only be merged with successful pipelines. This setting is named [**Pipelines must succeed**](../user/project/merge_requests/merge_when_pipeline_succeeds.md#only-allow-merge-requests-to-be-merged-if-the-pipeline-succeeds) in the project settings. |
+| `only_allow_merge_if_pipeline_succeeds`                     | boolean | **{dotted-circle}** No | Set whether merge requests can only be merged with successful pipelines. This setting is named [**Pipelines must succeed**](../user/project/merge_requests/merge_when_pipeline_succeeds.md#require-a-successful-pipeline-for-merge) in the project settings. |
 | `operations_access_level`                                   | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `packages_enabled`                                          | boolean | **{dotted-circle}** No | Enable or disable packages repository feature. |
 | `pages_access_level`                                        | string  | **{dotted-circle}** No | One of `disabled`, `private`, `enabled`, or `public`. |
@@ -1303,7 +1273,6 @@ POST /projects/user/:user_id
 | `auto_devops_enabled`                                       | boolean | **{dotted-circle}** No | Enable Auto DevOps for this project. |
 | `autoclose_referenced_issues`                               | boolean | **{dotted-circle}** No | Set whether auto-closing referenced issues on default branch. |
 | `avatar`                                                    | mixed   | **{dotted-circle}** No | Image file for avatar of the project. |
-| `build_coverage_regex`                                      | string  | **{dotted-circle}** No | Test coverage parsing. |
 | `build_git_strategy`                                        | string  | **{dotted-circle}** No | The Git strategy. Defaults to `fetch`. |
 | `build_timeout`                                             | integer | **{dotted-circle}** No | The maximum amount of time, in seconds, that a job can run. |
 | `builds_access_level`                                       | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
@@ -1313,6 +1282,7 @@ POST /projects/user/:user_id
 | `default_branch`                                            | string  | **{dotted-circle}** No | The [default branch](../user/project/repository/branches/default.md) name. Requires `initialize_with_readme` to be `true`. |
 | `description`                                               | string  | **{dotted-circle}** No | Short project description. |
 | `emails_disabled`                                           | boolean | **{dotted-circle}** No | Disable email notifications. |
+| `enforce_auth_checks_on_uploads`                            | boolean | **{dotted-circle}** No | Enforce [auth checks](../security/user_file_uploads.md#enable-authorization-checks-for-all-media-files) on uploads. |
 | `external_authorization_classification_label` **(PREMIUM)** | string  | **{dotted-circle}** No | The classification label for the project. |
 | `forking_access_level`                                      | string  | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `group_with_project_templates_id` **(PREMIUM)**             | integer | **{dotted-circle}** No | For group-level custom templates, specifies ID of group from which all the custom project templates are sourced. Leave empty for instance-level templates. Requires `use_custom_template` to be true. |
@@ -1392,22 +1362,24 @@ Supported attributes:
 | `auto_devops_enabled`                                       | boolean        | **{dotted-circle}** No | Enable Auto DevOps for this project. |
 | `autoclose_referenced_issues`                               | boolean        | **{dotted-circle}** No | Set whether auto-closing referenced issues on default branch. |
 | `avatar`                                                    | mixed          | **{dotted-circle}** No | Image file for avatar of the project.                |
-| `build_coverage_regex`                                      | string         | **{dotted-circle}** No | Test coverage parsing. |
 | `build_git_strategy`                                        | string         | **{dotted-circle}** No | The Git strategy. Defaults to `fetch`. |
 | `build_timeout`                                             | integer        | **{dotted-circle}** No | The maximum amount of time, in seconds, that a job can run. |
 | `builds_access_level`                                       | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `ci_config_path`                                            | string         | **{dotted-circle}** No | The path to CI configuration file. |
 | `ci_default_git_depth`                                      | integer        | **{dotted-circle}** No | Default number of revisions for [shallow cloning](../ci/pipelines/settings.md#limit-the-number-of-changes-fetched-during-clone). |
 | `ci_forward_deployment_enabled`                             | boolean        | **{dotted-circle}** No | When a new deployment job starts, [skip older deployment jobs](../ci/pipelines/settings.md#skip-outdated-deployment-jobs) that are still pending |
+| `ci_allow_fork_pipelines_to_run_in_parent_project`          | boolean        | **{dotted-circle}** No | Enable or disable [running pipelines in the parent project for merge requests from forks](../ci/pipelines/merge_request_pipelines.md#run-pipelines-in-the-parent-project). _([Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/325189) in GitLab 15.3.)_ |
+| `ci_separated_caches`                                       | boolean        | **{dotted-circle}** No | Set whether or not caches should be [separated](../ci/caching/index.md#cache-key-names) by branch protection status. |
 | `container_expiration_policy_attributes`                    | hash           | **{dotted-circle}** No | Update the image cleanup policy for this project. Accepts: `cadence` (string), `keep_n` (integer), `older_than` (string), `name_regex` (string), `name_regex_delete` (string), `name_regex_keep` (string), `enabled` (boolean). |
 | `container_registry_access_level`                           | string         | **{dotted-circle}** No | Set visibility of container registry, for this project, to one of `disabled`, `private` or `enabled`. |
 | `container_registry_enabled`                                | boolean        | **{dotted-circle}** No | _(Deprecated)_ Enable container registry for this project. Use `container_registry_access_level` instead. |
 | `default_branch`                                            | string         | **{dotted-circle}** No | The [default branch](../user/project/repository/branches/default.md) name. |
 | `description`                                               | string         | **{dotted-circle}** No | Short project description. |
 | `emails_disabled`                                           | boolean        | **{dotted-circle}** No | Disable email notifications. |
+| `enforce_auth_checks_on_uploads`                            | boolean | **{dotted-circle}** No | Enforce [auth checks](../security/user_file_uploads.md#enable-authorization-checks-for-all-media-files) on uploads. |
 | `external_authorization_classification_label` **(PREMIUM)** | string         | **{dotted-circle}** No | The classification label for the project. |
 | `forking_access_level`                                      | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
-| `import_url`                                                | string         | **{dotted-circle}** No | URL to import repository from. |
+| `import_url`                                                | string         | **{dotted-circle}** No | URL the repository was imported from. |
 | `issues_access_level`                                       | string         | **{dotted-circle}** No | One of `disabled`, `private`, or `enabled`. |
 | `issues_enabled`                                            | boolean        | **{dotted-circle}** No | _(Deprecated)_ Enable issues for this project. Use `issues_access_level` instead. |
 | `issues_template` **(PREMIUM)**                             | string         | **{dotted-circle}** No | Default description for Issues. Description is parsed with GitLab Flavored Markdown. See [Templates for issues and merge requests](#templates-for-issues-and-merge-requests). |
@@ -1482,6 +1454,8 @@ POST /projects/:id/fork
 | `visibility`     | string         | **{dotted-circle}** No | The [visibility level](#project-visibility-level) assigned to the resultant project after forking. |
 
 ## List forks of a project
+
+> The `_links.cluster_agents` attribute in the response [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/347047) in GitLab 14.10.
 
 List the projects accessible to the calling user that have an established,
 forked relationship with the specified project
@@ -1575,6 +1549,7 @@ Example responses:
     "merge_method": "merge",
     "squash_option": "default_on",
     "autoclose_referenced_issues": true,
+    "enforce_auth_checks_on_uploads": true,
     "suggestion_commit_message": null,
     "merge_commit_template": null,
     "container_registry_image_prefix": "registry.example.com/diaspora/diaspora-project-site",
@@ -1585,13 +1560,16 @@ Example responses:
       "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
       "labels": "http://example.com/api/v4/projects/1/labels",
       "events": "http://example.com/api/v4/projects/1/events",
-      "members": "http://example.com/api/v4/projects/1/members"
+      "members": "http://example.com/api/v4/projects/1/members",
+      "cluster_agents": "http://example.com/api/v4/projects/1/cluster_agents"
     }
   }
 ]
 ```
 
 ## Star a project
+
+> The `_links.cluster_agents` attribute in the response [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/347047) in GitLab 14.10.
 
 Stars a given project. Returns status code `304` if the project is already
 starred.
@@ -1678,6 +1656,7 @@ Example response:
   "merge_method": "merge",
   "squash_option": "default_on",
   "autoclose_referenced_issues": true,
+  "enforce_auth_checks_on_uploads": true,
   "suggestion_commit_message": null,
   "merge_commit_template": null,
   "container_registry_image_prefix": "registry.example.com/diaspora/diaspora-project-site",
@@ -1688,12 +1667,15 @@ Example response:
     "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
     "labels": "http://example.com/api/v4/projects/1/labels",
     "events": "http://example.com/api/v4/projects/1/events",
-    "members": "http://example.com/api/v4/projects/1/members"
+    "members": "http://example.com/api/v4/projects/1/members",
+    "cluster_agents": "http://example.com/api/v4/projects/1/cluster_agents"
   }
 }
 ```
 
 ## Unstar a project
+
+> The `_links.cluster_agents` attribute in the response [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/347047) in GitLab 14.10.
 
 Unstars a given project. Returns status code `304` if the project is not starred.
 
@@ -1779,6 +1761,7 @@ Example response:
   "merge_method": "merge",
   "squash_option": "default_on",
   "autoclose_referenced_issues": true,
+  "enforce_auth_checks_on_uploads": true,
   "suggestion_commit_message": null,
   "merge_commit_template": null,
   "container_registry_image_prefix": "registry.example.com/diaspora/diaspora-project-site",
@@ -1789,7 +1772,8 @@ Example response:
     "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
     "labels": "http://example.com/api/v4/projects/1/labels",
     "events": "http://example.com/api/v4/projects/1/events",
-    "members": "http://example.com/api/v4/projects/1/members"
+    "members": "http://example.com/api/v4/projects/1/members",
+    "cluster_agents": "http://example.com/api/v4/projects/1/cluster_agents"
   }
 }
 ```
@@ -1868,6 +1852,8 @@ Example response:
 ```
 
 ## Archive a project
+
+> The `_links.cluster_agents` attribute in the response [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/347047) in GitLab 14.10.
 
 Archives the project if the user is either an administrator or the owner of this
 project. This action is idempotent, thus archiving an already archived project
@@ -1963,6 +1949,8 @@ Example response:
   "runners_token": "b8bc4a7a29eb76ea83cf79e4908c2b",
   "ci_default_git_depth": 50,
   "ci_forward_deployment_enabled": true,
+  "ci_allow_fork_pipelines_to_run_in_parent_project": true,
+  "ci_separated_caches": true,
   "public_jobs": true,
   "shared_with_groups": [],
   "only_allow_merge_if_pipeline_succeeds": false,
@@ -1974,6 +1962,7 @@ Example response:
   "merge_method": "merge",
   "squash_option": "default_on",
   "autoclose_referenced_issues": true,
+  "enforce_auth_checks_on_uploads": true,
   "suggestion_commit_message": null,
   "merge_commit_template": null,
   "container_registry_image_prefix": "registry.example.com/diaspora/diaspora-project-site",
@@ -1984,12 +1973,15 @@ Example response:
     "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
     "labels": "http://example.com/api/v4/projects/1/labels",
     "events": "http://example.com/api/v4/projects/1/events",
-    "members": "http://example.com/api/v4/projects/1/members"
+    "members": "http://example.com/api/v4/projects/1/members",
+    "cluster_agents": "http://example.com/api/v4/projects/1/cluster_agents"
   }
 }
 ```
 
 ## Unarchive a project
+
+> The `_links.cluster_agents` attribute in the response [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/347047) in GitLab 14.10.
 
 Unarchives the project if the user is either an administrator or the owner of
 this project. This action is idempotent, thus unarchiving a non-archived project
@@ -2085,6 +2077,8 @@ Example response:
   "runners_token": "b8bc4a7a29eb76ea83cf79e4908c2b",
   "ci_default_git_depth": 50,
   "ci_forward_deployment_enabled": true,
+  "ci_allow_fork_pipelines_to_run_in_parent_project": true,
+  "ci_separated_caches": true,
   "public_jobs": true,
   "shared_with_groups": [],
   "only_allow_merge_if_pipeline_succeeds": false,
@@ -2096,6 +2090,7 @@ Example response:
   "merge_method": "merge",
   "squash_option": "default_on",
   "autoclose_referenced_issues": true,
+  "enforce_auth_checks_on_uploads": true,
   "suggestion_commit_message": null,
   "merge_commit_template": null,
   "container_registry_image_prefix": "registry.example.com/diaspora/diaspora-project-site",
@@ -2106,7 +2101,8 @@ Example response:
     "repo_branches": "http://example.com/api/v4/projects/1/repository_branches",
     "labels": "http://example.com/api/v4/projects/1/labels",
     "events": "http://example.com/api/v4/projects/1/events",
-    "members": "http://example.com/api/v4/projects/1/members"
+    "members": "http://example.com/api/v4/projects/1/members",
+    "cluster_agents": "http://example.com/api/v4/projects/1/cluster_agents"
   }
 }
 ```
@@ -2123,15 +2119,15 @@ This endpoint:
   is applied if enabled.
 - From [GitLab 13.2](https://gitlab.com/gitlab-org/gitlab/-/issues/220382) on
   [Premium or higher](https://about.gitlab.com/pricing/) tiers, group
-  administrators can [configure](../user/group/index.md#enable-delayed-project-deletion)
+  administrators can [configure](../user/group/manage.md#enable-delayed-project-deletion)
   projects within a group to be deleted after a delayed period. When enabled,
   actual deletion happens after the number of days specified in the
-  [default deletion delay](../user/admin_area/settings/visibility_and_access_controls.md#default-deletion-delay).
+  [default deletion delay](../user/admin_area/settings/visibility_and_access_controls.md#deletion-protection).
 
 WARNING:
 The default behavior of [Delayed Project deletion](https://gitlab.com/gitlab-org/gitlab/-/issues/32935)
 in GitLab 12.6 was changed to [Immediate deletion](https://gitlab.com/gitlab-org/gitlab/-/issues/220382)
-in GitLab 13.2, as discussed in [Enable delayed project deletion](../user/group/index.md#enable-delayed-project-deletion).
+in GitLab 13.2, as discussed in [Enable delayed project deletion](../user/group/manage.md#enable-delayed-project-deletion).
 
 ```plaintext
 DELETE /projects/:id
@@ -2262,6 +2258,19 @@ Returned object:
 {
   "avatar_url": "https://gitlab.example.com/uploads/-/system/project/avatar/2/dk.png"
 }
+```
+
+## Remove a project avatar
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/92604) in GitLab 15.4.
+
+To remove a project avatar, use a blank value for the `avatar` attribute.
+
+Example request:
+
+```shell
+curl --request PUT --header "PRIVATE-TOKEN: <your_access_token>" \
+     --data "avatar=" "https://gitlab.example.com/api/v4/projects/5"
 ```
 
 ## Share project with group
@@ -2507,7 +2516,7 @@ POST /projects/:id/housekeeping
 
 ### Get project push rules
 
-Get the [push rules](../user/project/repository/push_rules.md#enabling-push-rules) of a
+Get the [push rules](../user/project/repository/push_rules.md) of a
 project.
 
 ```plaintext
@@ -2599,7 +2608,7 @@ PUT /projects/:id/push_rule
 
 ### Delete project push rule
 
-> - Moved to GitLab Premium in 13.9.
+> Moved to GitLab Premium in 13.9.
 
 Removes a push rule from a project. This is an idempotent method and can be
 called multiple times. Either the push rule is available or not.
@@ -2612,9 +2621,55 @@ DELETE /projects/:id/push_rule
 |-----------|----------------|------------------------|-------------|
 | `id`      | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
 
+## Get groups to which a user can transfer a project
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/371006) in GitLab 15.4
+
+Retrieve a list of groups to which the user can transfer a project.
+
+```plaintext
+GET /projects/:id/transfer_locations
+```
+
+| Attribute   | Type           | Required               | Description |
+|-------------|----------------|------------------------|-------------|
+| `id`        | integer or string | **{check-circle}** Yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding). |
+| `search` | string | **{dotted-circle}** No  | The group names to search for. |
+
+Example request:
+
+```shell
+curl --request GET "https://gitlab.example.com/api/v4/projects/1/transfer_locations"
+```
+
+Example response:
+
+```json
+[
+  {
+    "id": 27,
+    "web_url": "https://gitlab.example.com/groups/gitlab",
+    "name": "GitLab",
+    "avatar_url": null,
+    "full_name": "GitLab",
+    "full_path": "GitLab"
+  },
+  {
+    "id": 31,
+    "web_url": "https://gitlab.example.com/groups/foobar",
+    "name": "FooBar",
+    "avatar_url": null,
+    "full_name": "FooBar",
+    "full_path": "FooBar"
+  }
+]
+```
+
 ## Transfer a project to a new namespace
 
-See the [Project documentation](../user/project/settings/index.md#transferring-an-existing-project-into-another-namespace)
+> The `_links.cluster_agents` attribute in the response [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/347047) in GitLab 14.10.
+
+See the [Project documentation](../user/project/settings/index.md#transfer-a-project-to-another-namespace)
 for prerequisites to transfer a project.
 
 ```plaintext
@@ -2718,7 +2773,6 @@ Example response:
   "public_jobs": true,
   "build_timeout": 3600,
   "auto_cancel_pending_pipelines": "enabled",
-  "build_coverage_regex": null,
   "ci_config_path": null,
   "shared_with_groups": [],
   "only_allow_merge_if_pipeline_succeeds": false,
@@ -2780,7 +2834,7 @@ with the API scope enabled.
 
 ## Start the pull mirroring process for a Project **(PREMIUM)**
 
-> - Moved to GitLab Premium in 13.9.
+> Moved to GitLab Premium in 13.9.
 
 ```plaintext
 POST /projects/:id/mirror/pull

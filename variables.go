@@ -31,6 +31,10 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 	if errE != nil {
 		return false, errE
 	}
+	// We need "key" later on.
+	if _, ok := descriptions["key"]; !ok {
+		return false, errors.New(`"key" missing in variables descriptions`)
+	}
 	configuration.VariablesComment = formatDescriptions(descriptions)
 
 	u := fmt.Sprintf("projects/%s/variables", gitlab.PathEscape(c.Project))
@@ -100,7 +104,7 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 // project level variables API endpoint and extracts description of fields
 // used to describe an individual variable.
 func parseVariablesDocumentation(input []byte) (map[string]string, errors.E) {
-	return parseTable(input, "Create variable", nil)
+	return parseTable(input, "Create a variable", nil)
 }
 
 // getVariablesDescriptions obtains description of fields used to describe an individual
