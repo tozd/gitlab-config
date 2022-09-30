@@ -46,7 +46,7 @@ contains a list of stable versions. Each includes:
 To install the latest development version (`main` branch):
 
 ```sh
-go install gitlab.com/tozd/gitlab/release/cmd/gitlab-release@main
+go install gitlab.com/tozd/gitlab/config/cmd/gitlab-config@main
 ```
 
 There is also a [read-only GitHub mirror available](https://github.com/tozd/gitlab-config),
