@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.1
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/stretchr/testify v1.7.2
-	github.com/tozd/sops/v3 v3.7.2-0.20220930121046-54ac4612a2c6
+	github.com/tozd/sops/v3 v3.7.2-0.20220930125159-b6444c829c5a
 	github.com/xanzy/go-gitlab v0.54.1
 	github.com/yuin/goldmark v1.4.4
 	gitlab.com/tozd/go/errors v0.3.0
