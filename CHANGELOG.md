@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix fetching of CI/CD variables.
+
 ### Changed
 
 - Debug Docker images run as root to ease installation of additional packages.
