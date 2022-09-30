@@ -8,6 +8,7 @@ import (
 )
 
 // Project level variables file is from: https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/project_level_variables.md
+//
 //go:embed testdata/project_level_variables.md
 var testVariables []byte
 

@@ -8,6 +8,7 @@ import (
 )
 
 // Projects file is from: https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/projects.md
+//
 //go:embed testdata/projects.md
 var testProjects []byte
 

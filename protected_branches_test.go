@@ -8,6 +8,7 @@ import (
 )
 
 // Protected branches file is from: https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/protected_branches.md
+//
 //go:embed testdata/protected_branches.md
 var testProtectedBranches []byte
 

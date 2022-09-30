@@ -8,6 +8,7 @@ import (
 )
 
 // Labels file is from: https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/labels.md
+//
 //go:embed testdata/labels.md
 var testLabels []byte
 
