@@ -520,8 +520,8 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.2 h1:4jaiDzPyXQvSd7D0EjG45355tLlV3VOECpq10pLC+8s=
 github.com/stretchr/testify v1.7.2/go.mod h1:R6va5+xMeoiuVRoj+gSkQ7d3FALtqAAGI1FQKckRals=
-github.com/tozd/sops/v3 v3.7.2-0.20220930125159-b6444c829c5a h1:DZ/kokaJdOzMhwZ5O0tbkAL+ZXTR6aLVQcDzhGgySf0=
-github.com/tozd/sops/v3 v3.7.2-0.20220930125159-b6444c829c5a/go.mod h1:871AiEkXBWG2dKbzJH/kPn8n5ezTrJJpbHwh+Rgi2iI=
+github.com/tozd/sops/v3 v3.7.2-0.20220930121046-54ac4612a2c6 h1:l3K8odakHZHCYSJSw4oXe7qPl6DnEsGiAVr5SyA+ANs=
+github.com/tozd/sops/v3 v3.7.2-0.20220930121046-54ac4612a2c6/go.mod h1:arSTKEzwlXlSClCMGB9vrYB0DiJz1TyWeQTmiIue+e8=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/urfave/cli v1.22.7 h1:aXiFAgRugfJ27UFDsGJ9DB2FvTC73hlVXFSqq5bo9eU=
 github.com/urfave/cli v1.22.7/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
