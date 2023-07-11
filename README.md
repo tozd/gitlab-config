@@ -13,35 +13,37 @@ In short, GitLab project's configuration as code.
 
 Features:
 
-* gitlab-config is able to retrieve existing GitLab project's configuration and store it into a YAML file.
-* Configuration file is automatically annotated with comments describing each setting.
-* gitlab-config can update GitLab project's configuration to match the configuration file.
-* Designed to be future proof and many API requests are made directly using fields as stored in the
+- gitlab-config is able to retrieve existing GitLab project's configuration and store it into a YAML file.
+- Configuration file is automatically annotated with comments describing each setting.
+- gitlab-config can update GitLab project's configuration to match the configuration file.
+- Designed to be future proof and many API requests are made directly using fields as stored in the
   configuration file. This means that gitlab-config does not have to be updated to support new
   GitLab API changes.
-* Can run as a CI job.
+- Can run as a CI job.
 
 Planned:
 
-* Not all GitLab API endpoints are integrated at this point.
+- Not all GitLab API endpoints are integrated at this point.
   [#16](https://gitlab.com/tozd/gitlab/config/-/issues/16)
-* There are
+- There are
   [known issues](https://gitlab.com/tozd/gitlab/config/-/issues?label_name%5B%5D=blocked+on+gitlab)
   with some GitLab API endpoints on their side.
 
 ## Installation
 
-This is a tool implemented in Go. You can use `go install` to install the latest stable (released) version:
+[Releases page](https://gitlab.com/tozd/gitlab/config/-/releases)
+contains a list of stable versions. Each includes:
+
+- Statically compiled binaries.
+- Docker images.
+
+You should just download/use the latest one.
+
+The tool implemented in Go. You can also use `go install` to install the latest stable (released) version:
 
 ```sh
 go install gitlab.com/tozd/gitlab/config/cmd/gitlab-config@latest
 ```
-
-[Releases page](https://gitlab.com/tozd/gitlab/config/-/releases)
-contains a list of stable versions. Each includes:
-
-* Statically compiled binaries.
-* Docker images.
 
 To install the latest development version (`main` branch):
 
@@ -49,31 +51,28 @@ To install the latest development version (`main` branch):
 go install gitlab.com/tozd/gitlab/config/cmd/gitlab-config@main
 ```
 
-There is also a [read-only GitHub mirror available](https://github.com/tozd/gitlab-config),
-if you need to fork the project there.
-
 ## Usage
 
 The tool provides three commands:
 
-* `get` allows you to retrieve existing configuration of GitLab project and
+- `get` allows you to retrieve existing configuration of GitLab project and
   store it into an editable YAML file.
-* `set` updates the GitLab project's configuration based on the configuration
+- `set` updates the GitLab project's configuration based on the configuration
   in the file.
-* `sops` integrates [SOPS fork](https://github.com/tozd/sops) as a command.
+- `sops` integrates [SOPS fork](https://github.com/tozd/sops) as a command.
   The fork supports using comments to select values to encrypt and
   computing MAC only over values which end up encrypted.
 
 This enables multiple workflows:
 
-* You can use `gitlab-config get` to backup project's configuration.
-* You can first use `gitlab-config get` and then `gitlab-config set` to
+- You can use `gitlab-config get` to backup project's configuration.
+- You can first use `gitlab-config get` and then `gitlab-config set` to
   copy configuration from one project to another.
-* You can use `gitlab-config set` inside a CI job to configure the project
+- You can use `gitlab-config set` inside a CI job to configure the project
   every time configuration file stored in the repository is changed.
-* You can have one repository with configuration files for many projects.
+- You can have one repository with configuration files for many projects.
   A CI job then configures projects when their configuration files change.
-* Somebody changed project's configuration through web UI and you want to see
+- Somebody changed project's configuration through web UI and you want to see
   what has changed, comparing `gitlab-config get` output with your backup.
 
 Output of `gitlab-config get` can change through time even if you have not
@@ -97,13 +96,13 @@ and at least [maintainer role](https://docs.gitlab.com/ee/user/permissions.html)
 
 Notes:
 
-* Project's name and visibility can be changed only by owners and is because of that
+- Project's name and visibility can be changed only by owners and is because of that
   not exposed by default in configuration as returned by `gitlab-config get`. You can
   manually add them if you want them in there, but then you have to use an access token
   with owner role even if you are not changing them.
-* Fork relationship between projects can be changed only by owners. `gitlab-config get`
+- Fork relationship between projects can be changed only by owners. `gitlab-config get`
   returns it because owner role permissions are required only if you want to change the relationship.
-* Project's path cannot be changed through the API. [#13](https://gitlab.com/tozd/gitlab/config/-/issues/13)
+- Project's path cannot be changed through the API. [#13](https://gitlab.com/tozd/gitlab/config/-/issues/13)
 
 ### GitLab CI configuration
 
@@ -129,15 +128,15 @@ sync_config:
 
 Notes:
 
-* Job runs only when `GITLAB_API_TOKEN` is present (e.g., only on protected branches)
+- Job runs only when `GITLAB_API_TOKEN` is present (e.g., only on protected branches)
   and only on the `main` branch (e.g., one with the latest stable version of the configuration file).
   Change to suit your needs.
-* Configure `GITLAB_API_TOKEN` as [GitLab CI/CD variable](https://docs.gitlab.com/ee/ci/variables/index.html).
+- Configure `GITLAB_API_TOKEN` as [GitLab CI/CD variable](https://docs.gitlab.com/ee/ci/variables/index.html).
   Protected and masked.
-* The example above uses the latest version of the tool from the `main` branch.
+- The example above uses the latest version of the tool from the `main` branch.
   Consider using a Docker image corresponding to the
   [latest released stable version](https://gitlab.com/tozd/gitlab/config/-/releases).
-* Use of `-debug` Docker image is currently required.
+- Use of `-debug` Docker image is currently required.
   See [this issue](https://gitlab.com/tozd/gitlab/config/-/issues/12) for more details.
 
 The configuration above is suitable when you want to manage configuration of a project
@@ -156,17 +155,17 @@ time through one MR.
 It is important to understand that some configuration values are sensitive and should be handled
 with care, e.g., CI/CD variables. There are few options available to you:
 
-* Never make configuration obtained using `gitlab-config get` public and handle the whole file
+- Never make configuration obtained using `gitlab-config get` public and handle the whole file
   in a security-conscious way.
-* Do not manage configuration sections which include sensitive values using `gitlab-config`.
+- Do not manage configuration sections which include sensitive values using `gitlab-config`.
   This is supported by removing (or setting to `null`) those sections in the configuration file
   (e.g., `variables: null`). `gitlab-config` will detect that and skip them. This is different
   than setting them to empty values (e.g., `variables: []`) which makes `gitlab-config`
   configure GitLab's project accordingly (e.g., remove all CI/CD variables).
-* Encrypt the file or just sensitive values in the file using a suitable tool, e.g.,
+- Encrypt the file or just sensitive values in the file using a suitable tool, e.g.,
   [SOPS](https://github.com/mozilla/sops) which supports encrypting with AWS KMS, GCP KMS,
   Azure Key Vault, age, and PGP.
-* Use the [fork of SOPS](https://github.com/tozd/sops) integrated with `gitlab-config` which
+- Use the [fork of SOPS](https://github.com/tozd/sops) integrated with `gitlab-config` which
   supports using comments to select values to encrypt and computing MAC only over values
   which end up encrypted. This is the option we recommend and `gitlab-config` makes it
   easy to use it.
@@ -209,7 +208,7 @@ age private key. You can use gitlab-config itself to configure that. Add to your
 
 ```yaml
 variables:
-  - environment_scope: '*'
+  - environment_scope: "*"
     key: SOPS_AGE_KEY_FILE
     masked: false
     protected: true
@@ -242,21 +241,26 @@ differences with your preferred tool.
 To see projects which use this tool and how their configuration looks like,
 check out these projects:
 
-* [This project itself](https://gitlab.com/tozd/gitlab/config/-/blob/main/.gitlab-conf.yml)
-* [gitlab-release tool](https://gitlab.com/tozd/gitlab/release/-/blob/main/.gitlab-conf.yml)
-* [`gitlab.com/tozd/go/errors` Go package](https://gitlab.com/tozd/go/errors/-/blob/main/.gitlab-conf.yml)
+- [This project itself](https://gitlab.com/tozd/gitlab/config/-/blob/main/.gitlab-conf.yml)
+- [gitlab-release tool](https://gitlab.com/tozd/gitlab/release/-/blob/main/.gitlab-conf.yml)
+- [`gitlab.com/tozd/go/errors` Go package](https://gitlab.com/tozd/go/errors/-/blob/main/.gitlab-conf.yml)
 
 _Feel free to make a merge-request adding yours to the list._
 
 ## Related projects
 
-* [GitLabForm](https://github.com/gdubicki/gitlabform) – A similar tool written in Python.
+- [GitLabForm](https://github.com/gdubicki/gitlabform) – A similar tool written in Python.
   It supports configuring many projects and not just an individual one like gitlab-config.
   On the other hand gitlab-config tries to be just a simple
   translator between a configuration file and API endpoints and do that well,
   making sure you can safely commit your configuration file into a public git
   repository, if you want.
-* [GitLab provider for Terraform](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs) –
+- [GitLab provider for Terraform](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs) –
   Supports configuring GitLab projects using Terraform.
   A big hammer if you just want to use it for one project. Moreover, it
   uses a custom language to define configuration.
+
+## GitHub mirror
+
+There is also a [read-only GitHub mirror available](https://github.com/tozd/gitlab-config),
+if you need to fork the project there.
