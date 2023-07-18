@@ -107,6 +107,9 @@ func getProtectedBranchesDescriptions(gitRef string) (map[string]string, errors.
 
 // updateProtectedBranches updates GitLab project's protected branches using GitLab
 // protected branches API endpoint based on the configuration struct.
+//
+// Access levels without the ID field are matched to existing access labels based on
+// their fields. Unmatched access levels are created as new.
 func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.ProtectedBranches == nil {
 		return nil
@@ -182,33 +185,109 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 				Name         string
 				AccessLevels []*gitlab.BranchAccessDescription
 			}{
-				{"push_access_levels", existingProtectedBranch.PushAccessLevels},
+				{"allowed_to_push", existingProtectedBranch.PushAccessLevels},
 				{"allowed_to_merge", existingProtectedBranch.MergeAccessLevels},
-				{"unprotect_access_levels", existingProtectedBranch.UnprotectAccessLevels},
+				{"allowed_to_unprotect", existingProtectedBranch.UnprotectAccessLevels},
 			} {
 				existingAccessLevelsSet := mapset.NewThreadUnsafeSet()
+				accessLevelToIDs := map[int]int{}
+				userIDtoIDs := map[int]int{}
+				groupIDtoIDs := map[int]int{}
 				for _, accessLevel := range ii.AccessLevels {
+					if accessLevel.AccessLevel != 0 {
+						accessLevelToIDs[int(accessLevel.AccessLevel)] = accessLevel.ID
+					}
+					if accessLevel.UserID != 0 {
+						userIDtoIDs[accessLevel.UserID] = accessLevel.ID
+					}
+					if accessLevel.GroupID != 0 {
+						groupIDtoIDs[accessLevel.GroupID] = accessLevel.ID
+					}
 					existingAccessLevelsSet.Add(accessLevel.ID)
 				}
 
 				wantedAccessLevels, ok := protectedBranch[ii.Name]
-				if ok {
-					levels, ok := wantedAccessLevels.([]interface{})
+				if !ok {
+					wantedAccessLevels = []interface{}{}
+				}
+
+				levels, ok := wantedAccessLevels.([]interface{})
+				if !ok {
+					return errors.Errorf(`invalid access levels "%s" for protected branch "%s"`, ii.Name, name)
+				}
+
+				// Set access level IDs if a matching existing access level can be found.
+				for i, level := range levels {
+					l, ok := level.(map[string]interface{})
 					if !ok {
-						return errors.Errorf(`invalid access level in "%s" for protected branch "%s"`, ii.Name, name)
+						return errors.Errorf(`invalid access level "%s" at index %d for protected branch "%s"`, ii.Name, i, name)
 					}
-					for _, level := range levels {
-						l, ok := level.(map[string]interface{})
+
+					// Is access level ID already set?
+					id, ok := l["id"]
+					if ok {
+						// If ID is provided, the access level should exist.
+						id, ok := id.(int) //nolint:govet
 						if !ok {
-							return errors.Errorf(`invalid access level in "%s" for protected branch "%s"`, ii.Name, name)
+							return errors.Errorf(`invalid "id" for access level "%s" at index %d for protected branch "%s"`, ii.Name, i, name)
 						}
-						id, ok := l["id"]
-						if ok && !existingAccessLevelsSet.Contains(id.(int)) {
-							// We mark any access level with ID which does not exist among
-							// existing access levels for deletion (destroy).
-							l["_destroy"] = true
+						if existingAccessLevelsSet.Contains(id) {
+							continue
+						}
+						// Access level does not exist with that ID. We remove the ID and leave to matching to
+						// find the correct ID, if it exists. Otherwise we will just create a new access level.
+						delete(l, "id")
+					}
+
+					accessLevel, ok := l["access_level"]
+					if ok {
+						a, ok := accessLevel.(int)
+						if ok {
+							id, ok = accessLevelToIDs[a]
+							if ok {
+								l["id"] = id
+							}
 						}
 					}
+					userID, ok := l["user_id"]
+					if ok {
+						u, ok := userID.(int)
+						if ok {
+							id, ok = userIDtoIDs[u]
+							if ok {
+								l["id"] = id
+							}
+						}
+					}
+					groupID, ok := l["group_id"]
+					if ok {
+						g, ok := groupID.(int)
+						if ok {
+							id, ok = groupIDtoIDs[g]
+							if ok {
+								l["id"] = id
+							}
+						}
+					}
+				}
+
+				wantedAccessLevelsSet := mapset.NewThreadUnsafeSet()
+				for _, level := range levels {
+					// We know it has to be a map.
+					id, ok := level.(map[string]interface{})["id"]
+					if ok {
+						wantedAccessLevelsSet.Add(id.(int))
+					}
+				}
+
+				extraAccessLevelsSet := existingAccessLevelsSet.Difference(wantedAccessLevelsSet)
+				for _, extraAccessLevel := range extraAccessLevelsSet.ToSlice() {
+					accessLevelID := extraAccessLevel.(int) //nolint:errcheck
+
+					protectedBranch[ii.Name] = append(levels, map[string]interface{}{
+						"id":       accessLevelID,
+						"_destroy": true,
+					})
 				}
 			}
 

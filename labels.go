@@ -166,8 +166,8 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 			if existingLabelsSet.Contains(id) {
 				continue
 			}
-			// Label does not exist with that ID. We remove the ID and leave to name matching to
-			// find the correct ID, if it exists. Otherwise we will just create a new lable.
+			// Label does not exist with that ID. We remove the ID and leave to matching to
+			// find the correct ID, if it exists. Otherwise we will just create a new label.
 			delete(label, "id")
 		}
 
@@ -175,9 +175,12 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		if !ok {
 			return errors.Errorf(`label in configuration at index %d does not have "name"`, i)
 		}
-		id, ok = namesToIDs[name.(string)]
+		n, ok := name.(string)
 		if ok {
-			label["id"] = id
+			id, ok = namesToIDs[n]
+			if ok {
+				label["id"] = id
+			}
 		}
 	}
 
