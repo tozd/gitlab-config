@@ -1,13 +1,13 @@
 project:
   # Set whether or not merge requests can be merged with skipped jobs. Type: boolean
   allow_merge_on_skipped_pipeline: null
+  # Set whether or not a pipeline triggerer is allowed to approve deployments. Type:
+  # boolean
+  allow_pipeline_trigger_approve_deployment: false
   # One of disabled, private or enabled. Type: string
   analytics_access_level: enabled
-  # How many approvers should approve merge request by default. To configure
-  # approval rules, see Merge request approvals API. Type: integer
-  approvals_before_merge: 0
-  # Auto-cancel pending pipelines. This isn't a boolean, but enabled/disabled. Type:
-  # string
+  # Auto-cancel pending pipelines. This action toggles between an enabled state and
+  # a disabled state; it is not a boolean. Type: string
   auto_cancel_pending_pipelines: enabled
   # Auto Deploy strategy (continuous, manual, or timed_incremental). Type: string
   auto_devops_deploy_strategy: continuous
@@ -28,8 +28,7 @@ project:
   ci_config_path: ""
   # Default number of revisions for shallow cloning. Type: integer
   ci_default_git_depth: 50
-  # When a new deployment job starts, skip older deployment jobs that are still
-  # pending. Type: boolean
+  # Enable or disable prevent outdated deployment jobs. Type: boolean
   ci_forward_deployment_enabled: true
   # Set whether or not caches should be separated by branch protection status. Type:
   # boolean
@@ -55,12 +54,23 @@ project:
   emails_disabled: false
   # Enforce auth checks on uploads. Type: boolean
   enforce_auth_checks_on_uploads: true
+  # One of disabled, private, or enabled. Type: string
+  environments_access_level: disabled
   # The classification label for the project. Type: string
   external_authorization_classification_label: ""
   # One of disabled, private, or enabled. Type: string
+  feature_flags_access_level: disabled
+  # One of disabled, private, or enabled. Type: string
   forking_access_level: enabled
+  # Enable group runners for this project. Type: boolean
+  group_runners_enabled: true
   # URL the repository was imported from. Type: string
   import_url: null
+  # One of disabled, private, or enabled. Type: string
+  infrastructure_access_level: disabled
+  # Template used to suggest names for branches created from issues. (Introduced in
+  # GitLab 15.6.) Type: string
+  issue_branch_template: null
   # One of disabled, private, or enabled. Type: string
   issues_access_level: enabled
   # Default description for Issues. Description is parsed with GitLab Flavored
@@ -85,14 +95,19 @@ project:
   merge_requests_template: null
   # Enable or disable merge trains. Type: boolean
   merge_trains_enabled: false
+  # One of disabled, private, or enabled. Type: string
+  monitor_access_level: disabled
   # Set whether merge requests can only be merged when all the discussions are
   # resolved. Type: boolean
   only_allow_merge_if_all_discussions_are_resolved: false
+  # Indicates that merges of merge requests should be blocked unless all status
+  # checks have passed. Defaults to false.Introduced in GitLab 15.5 with feature
+  # flag only_allow_merge_if_all_status_checks_passed disabled by default. The
+  # feature flag was enabled by default in GitLab 15.9. Type: boolean
+  only_allow_merge_if_all_status_checks_passed: false
   # Set whether merge requests can only be merged with successful jobs. Type:
   # boolean
   only_allow_merge_if_pipeline_succeeds: false
-  # One of disabled, private, or enabled. Type: string
-  operations_access_level: disabled
   # Enable or disable packages repository feature. Type: boolean
   packages_enabled: true
   # One of disabled, private, enabled, or public. Type: string
@@ -102,6 +117,8 @@ project:
   printing_merge_request_link_enabled: true
   # If true, jobs can be viewed by non-project members. Type: boolean
   public_jobs: true
+  # One of disabled, private, or enabled. Type: string
+  releases_access_level: enabled
   # Enable Delete source branch option by default for all new merge requests. Type:
   # boolean
   remove_source_branch_after_merge: true
@@ -141,7 +158,7 @@ project:
   wiki_access_level: disabled
 avatar: .gitlab-avatar.png
 # expires_at: Share expiration date in ISO 8601 format: 2016-09-26. Type: string
-# group_access: The access level to grant the group. Type: integer
+# group_access: The role (access_level) to grant the group. Type: integer
 # group_id: The ID of the group to share with. Type: integer
 shared_with_groups: []
 forked_from_project: 0
@@ -198,20 +215,17 @@ labels:
     id: 23026466
     name: blocked on gitlab
     priority: null
-# allow_force_push: Allow all users with push access to force push. (default:
-# false) Type: boolean
-# allowed_to_merge: Array of access levels allowed to merge, with each described
-# by a hash of the form {user_id: integer}, {group_id: integer}, or {access_level:
-# integer}. Type: array
-# allowed_to_push: Array of access levels allowed to push, with each described by
-# a hash of the form {user_id: integer}, {group_id: integer}, or {access_level:
-# integer}. Type: array
-# allowed_to_unprotect: Array of access levels allowed to unprotect, with each
-# described by a hash of the form {user_id: integer}, {group_id: integer}, or
-# {access_level: integer}. Type: array
+# allow_force_push: When enabled, members who can push to this branch can also
+# force push. Type: boolean
+# allowed_to_merge: Array of merge access levels, with each described by a hash.
+# Type: array
+# allowed_to_push: Array of push access levels, with each described by a hash.
+# Type: array
+# allowed_to_unprotect: Array of unprotect access levels, with each described by a
+# hash. The access level No access is not available for this field. Type: array
 # code_owner_approval_required: Prevent pushes to this branch if it matches an
-# item in the CODEOWNERS file. (defaults: false) Type: boolean
-# name: The name of the branch or wildcard. Type: string
+# item in the CODEOWNERS file. Defaults to false. Type: boolean
+# name: The name of the branch. Type: string
 protected_branches:
   - allow_force_push: false
     allowed_to_merge:
@@ -237,6 +251,8 @@ protected_branches:
 # a-z, 0-9, and _ are allowed. Type: string
 # masked: Whether the variable is masked. Default: false. Type: boolean
 # protected: Whether the variable is protected. Default: false. Type: boolean
+# raw: Whether the variable is treated as a raw string. Default: false. When true,
+# variables in the value are not expanded. Type: boolean
 # value: The value of a variable. Type: string
 # variable_type: The type of a variable. Available types are: env_var (default)
 # and file. Type: string
@@ -245,6 +261,7 @@ variables:
     key: GITLAB_API_TOKEN
     masked: true
     protected: true
+    raw: false
     # sops:enc
     value: ENC[AES256_GCM,data:c4bXOpVi2rha9WZlAWkmGCjtk0R9j4o/tM0=,iv:bw85OqXgUryPSkySrm9f4b8a94pM0/cPYWBgesSJM2A=,tag:q+y92O46tmrr8KmOxjgYTw==,type:str]
     variable_type: env_var
@@ -252,6 +269,7 @@ variables:
     key: SOPS_AGE_KEY_FILE
     masked: false
     protected: true
+    raw: false
     # sops:enc
     value: ENC[AES256_GCM,data:5v8iqzekPmr6xtjaD6VdQG1j5NghxUzxEyk+Tikjg+525rsSi18q1cHnqWylwFkV4IXI7EUlGrYvRTJdWDhoAgv31MX2M8nAH0scwI6vcqwKmrOOLSpfCbgfQK4l7FMPZ1Dr3I0fVE/UWJNToumBx5ca2VlIv/hatmGEINexTAgZViNMkBrp4OqD+h1Jx9jhzrgmj8aLPV9Yv9ppo8UtKi8Pe9bbRKRairu8rogrIjIPzjXGkCAYfGFKyghY,iv:Re2iUVkySp7BOO3BRIVGfcAGNY8ANwFN/pHyX8fS/EQ=,tag:pD2OTo/7dkCqfW62aM6nuQ==,type:str]
     variable_type: file
