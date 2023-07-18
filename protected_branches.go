@@ -167,8 +167,6 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 		}
 	}
 
-	u := fmt.Sprintf("projects/%s/protected_branches", gitlab.PathEscape(c.Project))
-
 	for _, protectedBranch := range configuration.ProtectedBranches {
 		// We made sure above that all protected branches in configuration have a string name.
 		name := protectedBranch["name"].(string) //nolint:errcheck
@@ -195,22 +193,26 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 
 				wantedAccessLevels, ok := protectedBranch[ii.Name]
 				if ok {
-					levels, ok := wantedAccessLevels.([]map[string]interface{})
+					levels, ok := wantedAccessLevels.([]interface{})
 					if !ok {
 						return errors.Errorf(`invalid access level in "%s" for protected branch "%s"`, ii.Name, name)
 					}
 					for _, level := range levels {
-						id, ok := level["id"]
+						l, ok := level.(map[string]interface{})
+						if !ok {
+							return errors.Errorf(`invalid access level in "%s" for protected branch "%s"`, ii.Name, name)
+						}
+						id, ok := l["id"]
 						if ok && !existingAccessLevelsSet.Contains(id.(int)) {
 							// We mark any access level with ID which does not exist among
 							// existing access levels for deletion (destroy).
-							level["_destroy"] = true
+							l["_destroy"] = true
 						}
 					}
 				}
 			}
 
-			req, err := client.NewRequest(http.MethodPatch, u, protectedBranch, nil)
+			req, err := client.NewRequest(http.MethodPatch, fmt.Sprintf("projects/%s/protected_branches/%s", gitlab.PathEscape(c.Project), name), protectedBranch, nil)
 			if err != nil {
 				return errors.Wrapf(err, `failed to update protected branch "%s"`, name)
 			}
@@ -220,7 +222,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 			}
 		} else {
 			// We create a new protected branch.
-			req, err := client.NewRequest(http.MethodPost, u, protectedBranch, nil)
+			req, err := client.NewRequest(http.MethodPost, fmt.Sprintf("projects/%s/protected_branches", gitlab.PathEscape(c.Project)), protectedBranch, nil)
 			if err != nil {
 				return errors.Wrapf(err, `failed to protect branch "%s"`, name)
 			}
