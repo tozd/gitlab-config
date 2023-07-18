@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed integrated SOPS.
+- Fix integrated SOPS.
 
 ### Changed
 
-- Updated used GitLab API version to v16.1.2.
+- Update used GitLab API version to v16.1.2.
 - By default gitlab-config does not use anymore the latest API version but a fixed one
   (you can change the version with `--docs` flag).
 
