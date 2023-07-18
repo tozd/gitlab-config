@@ -55,7 +55,7 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 			protectedBranch["allowed_to_merge"] = protectedBranch["merge_access_levels"]
 			protectedBranch["allowed_to_unprotect"] = protectedBranch["unprotect_access_levels"]
 
-			// Making sure id is an integer.
+			// Making sure ids and levels are an integer.
 			castFloatsToInts(protectedBranch)
 
 			// Only retain those keys which can be edited through the API
