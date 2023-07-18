@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix fetching of CI/CD variables.
+- Improve how protected branches are updated.
+  [#18](https://gitlab.com/tozd/gitlab/config/-/issues/18)
 
 ### Changed
 
