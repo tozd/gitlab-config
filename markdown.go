@@ -190,6 +190,7 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 			// TODO: Remove other possible plan suffixes, too.
 			//       See: https://gitlab.com/gitlab-org/gitlab/-/blob/master/doc/development/documentation/styleguide/index.md#available-product-tier-badges
 			key = strings.TrimSuffix(key, " (PREMIUM)")
+			key = strings.TrimSuffix(key, " (ULTIMATE)")
 			if key == "id" {
 				// This is a documented parameter for project ID.
 				key = ""

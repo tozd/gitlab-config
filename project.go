@@ -128,6 +128,9 @@ func parseProjectDocumentation(input []byte) (map[string]string, errors.E) {
 			// do anything, even for the owner.
 			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/348635
 			return ""
+		case "approvals_before_merge":
+			// Deprecated in GitLab 16.0.
+			return ""
 		default:
 			return key
 		}

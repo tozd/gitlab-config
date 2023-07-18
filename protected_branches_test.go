@@ -19,7 +19,7 @@ func TestParseProtectedBranchesDocumentation(t *testing.T) {
 		"allow_force_push":             "Allow all users with push access to force push. (default: false) Type: boolean",
 		"allowed_to_merge":             "Array of access levels allowed to merge, with each described by a hash of the form {user_id: integer}, {group_id: integer}, or {access_level: integer}. Type: array",
 		"allowed_to_push":              "Array of access levels allowed to push, with each described by a hash of the form {user_id: integer}, {group_id: integer}, or {access_level: integer}. Type: array",
-		"allowed_to_unprotect":         "Array of access levels allowed to unprotect, with each described by a hash of the form {user_id: integer}, {group_id: integer}, or {access_level: integer}. Type: array",
+		"allowed_to_unprotect":         "Array of access levels allowed to unprotect, with each described by a hash of the form {user_id: integer}, {group_id: integer}, or {access_level: integer}. The access level No access is not available for this field. Type: array",
 		"code_owner_approval_required": "Prevent pushes to this branch if it matches an item in the CODEOWNERS file. (defaults: false) Type: boolean",
 		"name":                         "The name of the branch or wildcard. Type: string",
 	}, data)

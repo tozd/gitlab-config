@@ -6,7 +6,7 @@ info: To determine the technical writer assigned to the Stage/Group associated w
 
 # Protected branches API **(FREE)**
 
-**Valid access levels**
+## Valid access levels
 
 The access levels are defined in the `ProtectedRefAccess.allowed_access_levels` method. Currently, these levels are recognized:
 
@@ -19,7 +19,11 @@ The access levels are defined in the `ProtectedRefAccess.allowed_access_levels` 
 
 ## List protected branches
 
-Gets a list of protected branches from a project as they are defined [in the UI](../user/project/protected_branches.md#configure-a-protected-branch). If a wildcard is set, it is returned instead of the exact name of the branches that match that wildcard.
+> Deploy key information [introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/116846) in GitLab 16.0.
+
+Gets a list of [protected branches](../user/project/protected_branches.md) from a project
+as they are defined in the UI. If a wildcard is set, it is returned instead of the exact name
+of the branches that match that wildcard.
 
 ```plaintext
 GET /projects/:id/protected_branches
@@ -27,7 +31,7 @@ GET /projects/:id/protected_branches
 
 | Attribute | Type | Required | Description |
 | --------- | ---- | -------- | ----------- |
-| `id` | integer/string | yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding) owned by the authenticated user |
+| `id` | integer/string | yes | The ID or [URL-encoded path of the project](rest/index.md#namespaced-path-encoding) owned by the authenticated user |
 | `search` | string | no | Name or part of the name of protected branches to be searched for |
 
 ```shell
@@ -43,12 +47,20 @@ Example response:
     "name": "master",
     "push_access_levels": [
       {
+        "id":  1,
         "access_level": 40,
         "access_level_description": "Maintainers"
+      },
+      {
+        "id": 2,
+        "access_level": 40,
+        "access_level_description": "Deploy key",
+        "deploy_key_id": 1
       }
     ],
     "merge_access_levels": [
       {
+        "id":  1,
         "access_level": 40,
         "access_level_description": "Maintainers"
       }
@@ -61,12 +73,14 @@ Example response:
     "name": "release/*",
     "push_access_levels": [
       {
+        "id":  1,
         "access_level": 40,
         "access_level_description": "Maintainers"
       }
     ],
     "merge_access_levels": [
       {
+        "id":  1,
         "access_level": 40,
         "access_level_description": "Maintainers"
       }
@@ -78,8 +92,9 @@ Example response:
 ]
 ```
 
-Users on GitLab Premium or higher also see
-the `user_id` and `group_id` parameters:
+Users on GitLab Premium or Ultimate also see
+the `user_id`, `group_id` and `inherited` parameters. If the `inherited` parameter
+exists, means the setting was inherited from the project's group.
 
 Example response:
 
@@ -90,14 +105,24 @@ Example response:
     "name": "master",
     "push_access_levels": [
       {
+        "id":  1,
         "access_level": 40,
         "user_id": null,
         "group_id": null,
         "access_level_description": "Maintainers"
+      },
+      {
+        "id": 2,
+        "access_level": 40,
+        "access_level_description": "Deploy key",
+        "deploy_key_id": 1,
+        "user_id": null,
+        "group_id": null
       }
     ],
     "merge_access_levels": [
       {
+        "id":  1,
         "access_level": null,
         "user_id": null,
         "group_id": 1234,
@@ -105,7 +130,8 @@ Example response:
       }
     ],
     "allow_force_push":false,
-    "code_owner_approval_required": false
+    "code_owner_approval_required": false,
+    "inherited": true
   },
   ...
 ]
@@ -121,7 +147,7 @@ GET /projects/:id/protected_branches/:name
 
 | Attribute | Type | Required | Description |
 | --------- | ---- | -------- | ----------- |
-| `id` | integer/string | yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding) owned by the authenticated user |
+| `id` | integer/string | yes | The ID or [URL-encoded path of the project](rest/index.md#namespaced-path-encoding) owned by the authenticated user |
 | `name` | string | yes | The name of the branch or wildcard |
 
 ```shell
@@ -136,12 +162,14 @@ Example response:
   "name": "master",
   "push_access_levels": [
     {
+      "id":  1,
       "access_level": 40,
       "access_level_description": "Maintainers"
     }
   ],
   "merge_access_levels": [
     {
+      "id":  1,
       "access_level": 40,
       "access_level_description": "Maintainers"
     }
@@ -151,7 +179,7 @@ Example response:
 }
 ```
 
-Users on GitLab Premium or higher also see
+Users on GitLab Premium or Ultimate also see
 the `user_id` and `group_id` parameters:
 
 Example response:
@@ -162,6 +190,7 @@ Example response:
   "name": "master",
   "push_access_levels": [
     {
+      "id":  1,
       "access_level": 40,
       "user_id": null,
       "group_id": null,
@@ -170,6 +199,7 @@ Example response:
   ],
   "merge_access_levels": [
     {
+      "id":  1,
       "access_level": null,
       "user_id": null,
       "group_id": 1234,
@@ -196,16 +226,16 @@ curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" "https://gitla
 
 | Attribute                                    | Type | Required | Description |
 | -------------------------------------------- | ---- | -------- | ----------- |
-| `id`                                         | integer/string | yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding) owned by the authenticated user |
-| `name`                                       | string         | yes | The name of the branch or wildcard |
-| `push_access_level`                          | integer        | no  | Access levels allowed to push (defaults: `40`, Maintainer role) |
-| `merge_access_level`                         | integer        | no  | Access levels allowed to merge (defaults: `40`, Maintainer role) |
-| `unprotect_access_level`                     | integer        | no  | Access levels allowed to unprotect (defaults: `40`, Maintainer role) |
-| `allow_force_push`                           | boolean        | no  | Allow all users with push access to force push. (default: `false`) |
-| `allowed_to_push` **(PREMIUM)**              | array          | no  | Array of access levels allowed to push, with each described by a hash of the form `{user_id: integer}`, `{group_id: integer}`, or `{access_level: integer}` |
-| `allowed_to_merge` **(PREMIUM)**             | array          | no  | Array of access levels allowed to merge, with each described by a hash of the form `{user_id: integer}`, `{group_id: integer}`, or `{access_level: integer}` |
-| `allowed_to_unprotect` **(PREMIUM)**         | array          | no  | Array of access levels allowed to unprotect, with each described by a hash of the form `{user_id: integer}`, `{group_id: integer}`, or `{access_level: integer}` |
-| `code_owner_approval_required` **(PREMIUM)** | boolean        | no  | Prevent pushes to this branch if it matches an item in the [`CODEOWNERS` file](../user/project/code_owners.md). (defaults: false) |
+| `id`                                         | integer/string | yes | The ID or [URL-encoded path of the project](rest/index.md#namespaced-path-encoding) owned by the authenticated user.
+| `name`                                       | string         | yes | The name of the branch or wildcard.
+| `allow_force_push`                           | boolean        | no  | Allow all users with push access to force push. (default: `false`)
+| `allowed_to_merge` **(PREMIUM)**             | array          | no  | Array of access levels allowed to merge, with each described by a hash of the form `{user_id: integer}`, `{group_id: integer}`, or `{access_level: integer}`.
+| `allowed_to_push` **(PREMIUM)**              | array          | no  | Array of access levels allowed to push, with each described by a hash of the form `{user_id: integer}`, `{group_id: integer}`, or `{access_level: integer}`.
+| `allowed_to_unprotect` **(PREMIUM)**         | array          | no  | Array of access levels allowed to unprotect, with each described by a hash of the form `{user_id: integer}`, `{group_id: integer}`, or `{access_level: integer}`. The access level `No access` is not available for this field. |
+| `code_owner_approval_required` **(PREMIUM)** | boolean        | no  | Prevent pushes to this branch if it matches an item in the [`CODEOWNERS` file](../user/project/codeowners/index.md). (defaults: false)
+| `merge_access_level`                         | integer        | no  | Access levels allowed to merge. (defaults: `40`, Maintainer role)
+| `push_access_level`                          | integer        | no  | Access levels allowed to push. (defaults: `40`, Maintainer role)
+| `unprotect_access_level`                     | integer        | no  | Access levels allowed to unprotect. (defaults: `40`, Maintainer role)
 
 Example response:
 
@@ -215,18 +245,21 @@ Example response:
   "name": "*-stable",
   "push_access_levels": [
     {
+      "id":  1,
       "access_level": 30,
       "access_level_description": "Developers + Maintainers"
     }
   ],
   "merge_access_levels": [
     {
+      "id":  1,
       "access_level": 30,
       "access_level_description": "Developers + Maintainers"
     }
   ],
   "unprotect_access_levels": [
     {
+      "id":  1,
       "access_level": 40,
       "access_level_description": "Maintainers"
     }
@@ -236,7 +269,7 @@ Example response:
 }
 ```
 
-Users on GitLab Premium or higher also see
+Users on GitLab Premium or Ultimate also see
 the `user_id` and `group_id` parameters:
 
 Example response:
@@ -247,6 +280,7 @@ Example response:
   "name": "*-stable",
   "push_access_levels": [
     {
+      "id":  1,
       "access_level": 30,
       "user_id": null,
       "group_id": null,
@@ -255,6 +289,7 @@ Example response:
   ],
   "merge_access_levels": [
     {
+      "id":  1,
       "access_level": 30,
       "user_id": null,
       "group_id": null,
@@ -263,6 +298,7 @@ Example response:
   ],
   "unprotect_access_levels": [
     {
+      "id":  1,
       "access_level": 40,
       "user_id": null,
       "group_id": null,
@@ -291,6 +327,7 @@ Example response:
   "name": "*-stable",
   "push_access_levels": [
     {
+      "id":  1,
       "access_level": null,
       "user_id": 1,
       "group_id": null,
@@ -299,6 +336,7 @@ Example response:
   ],
   "merge_access_levels": [
     {
+      "id":  1,
       "access_level": 40,
       "user_id": null,
       "group_id": null,
@@ -307,6 +345,7 @@ Example response:
   ],
   "unprotect_access_levels": [
     {
+      "id":  1,
       "access_level": 40,
       "user_id": null,
       "group_id": null,
@@ -348,6 +387,7 @@ Example response:
     "name": "master",
     "push_access_levels": [
         {
+            "id": 1,
             "access_level": 30,
             "access_level_description": "Developers + Maintainers",
             "user_id": null,
@@ -356,12 +396,14 @@ Example response:
     ],
     "merge_access_levels": [
         {
+            "id": 1,
             "access_level": 30,
             "access_level_description": "Developers + Maintainers",
             "user_id": null,
             "group_id": null
         },
         {
+            "id": 2,
             "access_level": 40,
             "access_level_description": "Maintainers",
             "user_id": null,
@@ -370,6 +412,7 @@ Example response:
     ],
     "unprotect_access_levels": [
         {
+            "id": 1,
             "access_level": 40,
             "access_level_description": "Maintainers",
             "user_id": null,
@@ -395,23 +438,118 @@ curl --request DELETE --header "PRIVATE-TOKEN: <your_access_token>" "https://git
 
 | Attribute | Type | Required | Description |
 | --------- | ---- | -------- | ----------- |
-| `id` | integer/string | yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding) owned by the authenticated user |
+| `id` | integer/string | yes | The ID or [URL-encoded path of the project](rest/index.md#namespaced-path-encoding) owned by the authenticated user |
 | `name` | string | yes | The name of the branch |
 
-## Require code owner approvals for a single branch **(PREMIUM)**
+## Update a protected branch
 
-Update the "code owner approval required" option for the given protected branch.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/101903) in GitLab 15.6.
+
+Updates a protected branch.
 
 ```plaintext
 PATCH /projects/:id/protected_branches/:name
 ```
 
 ```shell
-curl --request PATCH --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/5/protected_branches/feature-branch?code_owner_approval_required=true"
+curl --request PATCH --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/5/protected_branches/feature-branch?allow_force_push=true&code_owner_approval_required=true"
 ```
 
-| Attribute                                    | Type | Required | Description |
+| Attribute                                    | Type           | Required | Description |
 | -------------------------------------------- | ---- | -------- | ----------- |
-| `id`                                         | integer/string | yes | The ID or [URL-encoded path of the project](index.md#namespaced-path-encoding) owned by the authenticated user |
-| `name`                                       | string         | yes | The name of the branch |
-| `code_owner_approval_required`               | boolean        | no  | Prevent pushes to this branch if it matches an item in the [`CODEOWNERS` file](../user/project/code_owners.md). (defaults: false)|
+| `id`                                         | integer/string | yes      | The ID or [URL-encoded path of the project](rest/index.md#namespaced-path-encoding) owned by the authenticated user.
+| `name`                                       | string         | yes      | The name of the branch.
+| `allow_force_push`                           | boolean        | no       | When enabled, members who can push to this branch can also force push.
+| `allowed_to_push` **(PREMIUM)**              | array          | no       | Array of push access levels, with each described by a hash.
+| `allowed_to_merge` **(PREMIUM)**             | array          | no       | Array of merge access levels, with each described by a hash.
+| `allowed_to_unprotect` **(PREMIUM)**         | array          | no       | Array of unprotect access levels, with each described by a hash. The access level `No access` is not available for this field.
+| `code_owner_approval_required` **(PREMIUM)** | boolean        | no       | Prevent pushes to this branch if it matches an item in the [`CODEOWNERS` file](../user/project/codeowners/index.md). Defaults to `false`. |
+
+Elements in the `allowed_to_push`, `allowed_to_merge` and `allowed_to_unprotect` arrays should be one of `user_id`, `group_id` or
+`access_level`, and take the form `{user_id: integer}`, `{group_id: integer}` or
+`{access_level: integer}`.
+
+To update:
+
+- `user_id`: Ensure the updated user has access to the project. You must also pass the
+  `id` of the `access_level` in the respective hash.
+- `group_id`: Ensure the updated group [has this project shared](../user/project/members/share_project_with_groups.md).
+  You must also pass the `id` of the `access_level` in the respective hash.
+
+To delete:
+
+- You must pass `_destroy` set to `true`. See the following examples.
+
+### Example: create a `push_access_level` record
+
+```shell
+curl --header 'Content-Type: application/json' --request PATCH \
+     --data '{"allowed_to_push": [{"access_level": 40}]}' \
+     --header "PRIVATE-TOKEN: <your_access_token>" \
+     "https://gitlab.example.com/api/v4/projects/22034114/protected_branches/master"
+```
+
+Example response:
+
+```json
+{
+   "name": "master",
+   "push_access_levels": [
+      {
+         "id": 12,
+         "access_level": 40,
+         "access_level_description": "Maintainers",
+         "user_id": null,
+         "group_id": null
+      }
+   ]
+}
+```
+
+### Example: update a `push_access_level` record
+
+```shell
+curl --header 'Content-Type: application/json' --request PATCH \
+     --data '{"allowed_to_push": [{"id": 12, "access_level": 0}]' \
+     --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/22034114/protected_branches/master"
+```
+
+Example response:
+
+```json
+{
+   "name": "master",
+   "push_access_levels": [
+      {
+         "id": 12,
+         "access_level": 0,
+         "access_level_description": "No One",
+         "user_id": null,
+         "group_id": null
+      }
+   ]
+}
+```
+
+### Example: delete a `push_access_level` record
+
+```shell
+curl --header 'Content-Type: application/json' --request PATCH \
+     --data '{"allowed_to_push": [{"id": 12, "_destroy": true}]}' \
+     --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/22034114/protected_branches/master"
+```
+
+Example response:
+
+```json
+{
+   "name": "master",
+   "push_access_levels": []
+}
+```
+
+## Related topics
+
+- [Protected branches](../user/project/protected_branches.md)
+- [Branches](../user/project/repository/branches/index.md)
+- [Branches API](branches.md)

@@ -29,7 +29,8 @@ func main() {
 				"You can provide some configuration options as environment variables.",
 		),
 		kong.Vars{
-			"version": fmt.Sprintf("version %s (build on %s, git revision %s)", version, buildTimestamp, revision),
+			"version":        fmt.Sprintf("version %s (build on %s, git revision %s)", version, buildTimestamp, revision),
+			"defaultDocsRef": config.DefaultDocsRef,
 		},
 		kong.UsageOnError(),
 		kong.Writers(

@@ -20,6 +20,7 @@ func TestParseVariablesDocumentation(t *testing.T) {
 		"key":               "The key of a variable; must have no more than 255 characters; only A-Z, a-z, 0-9, and _ are allowed. Type: string",
 		"masked":            "Whether the variable is masked. Default: false. Type: boolean",
 		"protected":         "Whether the variable is protected. Default: false. Type: boolean",
+		"raw":               "Whether the variable is treated as a raw string. Default: false. When true, variables in the value are not expanded. Type: boolean",
 		"value":             "The value of a variable. Type: string",
 		"variable_type":     "The type of a variable. Available types are: env_var (default) and file. Type: string",
 	}, data)
