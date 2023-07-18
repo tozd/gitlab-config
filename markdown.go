@@ -182,7 +182,7 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 				return "", errors.Errorf("invalid row: %+v", row)
 			}
 			// We skip deprecated fields.
-			if strings.Contains(row[3], "(Deprecated") {
+			if strings.Contains(row[3], "(Deprecated") || strings.Contains(row[3], "Deprecated in") {
 				return "", nil
 			}
 			key := row[0]
