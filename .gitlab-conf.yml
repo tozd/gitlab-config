@@ -232,16 +232,20 @@ protected_branches:
       # Maintainers
       - access_level: 40
         group_id: null
+        id: 78048532
         user_id: null
     allowed_to_push:
       # Maintainers
       - access_level: 40
+        deploy_key_id: null
         group_id: null
+        id: 80074106
         user_id: null
     allowed_to_unprotect:
       # Maintainers
       - access_level: 40
         group_id: null
+        id: 30115172
         user_id: null
     code_owner_approval_required: false
     name: main
