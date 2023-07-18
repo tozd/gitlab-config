@@ -26,8 +26,10 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 
 	u := fmt.Sprintf("projects/%s/protected_branches", gitlab.PathEscape(c.Project))
 	options := &gitlab.ListProtectedBranchesOptions{
-		PerPage: maxGitLabPageSize,
-		Page:    1,
+		ListOptions: gitlab.ListOptions{
+			PerPage: maxGitLabPageSize,
+			Page:    1,
+		},
 	}
 
 	for {
@@ -53,6 +55,9 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 			protectedBranch["allowed_to_merge"] = protectedBranch["merge_access_levels"]
 			protectedBranch["allowed_to_unprotect"] = protectedBranch["unprotect_access_levels"]
 
+			// Making sure id is an integer.
+			castFloatsToInts(protectedBranch)
+
 			// Only retain those keys which can be edited through the API
 			// (which are those available in descriptions).
 			for key := range protectedBranch {
@@ -75,9 +80,9 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 		options.Page = response.NextPage
 	}
 
-	// We sort by protected branch's name so that we have deterministic order.
+	// We sort by protected branch's id so that we have deterministic order.
 	sort.Slice(configuration.ProtectedBranches, func(i, j int) bool {
-		return configuration.ProtectedBranches[i]["name"].(string) < configuration.ProtectedBranches[j]["name"].(string)
+		return configuration.ProtectedBranches[i]["id"].(int) < configuration.ProtectedBranches[j]["id"].(int)
 	})
 
 	return false, nil
@@ -102,11 +107,6 @@ func getProtectedBranchesDescriptions(gitRef string) (map[string]string, errors.
 
 // updateProtectedBranches updates GitLab project's protected branches using GitLab
 // protected branches API endpoint based on the configuration struct.
-//
-// It first unprotects all protected branches which the project does not have anymore
-// configured as protected, and then updates or adds protection for configured
-// protected branches. When updating an existing protected branch it briefly umprotects
-// the branch and reprotects it with new configuration.
 func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.ProtectedBranches == nil {
 		return nil
@@ -115,8 +115,10 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 	fmt.Fprintf(os.Stderr, "Updating protected branches...\n")
 
 	options := &gitlab.ListProtectedBranchesOptions{
-		PerPage: maxGitLabPageSize,
-		Page:    1,
+		ListOptions: gitlab.ListOptions{
+			PerPage: maxGitLabPageSize,
+			Page:    1,
+		},
 	}
 
 	protectedBranches := []*gitlab.ProtectedBranch{}
@@ -136,11 +138,14 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 		options.Page = response.NextPage
 	}
 
-	existingProtectedBranches := mapset.NewThreadUnsafeSet()
+	existingProtectedBranches := map[string]*gitlab.ProtectedBranch{}
+	existingProtectedBranchesSet := mapset.NewThreadUnsafeSet()
 	for _, protectedBranch := range protectedBranches {
-		existingProtectedBranches.Add(protectedBranch.Name)
+		existingProtectedBranchesSet.Add(protectedBranch.Name)
+		existingProtectedBranches[protectedBranch.Name] = protectedBranch
 	}
-	wantedProtectedBranches := mapset.NewThreadUnsafeSet()
+
+	wantedProtectedBranchesSet := mapset.NewThreadUnsafeSet()
 	for i, protectedBranch := range configuration.ProtectedBranches {
 		name, ok := protectedBranch["name"]
 		if !ok {
@@ -150,11 +155,11 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 		if !ok {
 			return errors.Errorf(`invalid "name" in "protected_branches" at index %d`, i)
 		}
-		wantedProtectedBranches.Add(n)
+		wantedProtectedBranchesSet.Add(n)
 	}
 
-	extraProtectedBranches := existingProtectedBranches.Difference(wantedProtectedBranches)
-	for _, extraProtectedBranch := range extraProtectedBranches.ToSlice() {
+	extraProtectedBranchesSet := existingProtectedBranchesSet.Difference(wantedProtectedBranchesSet)
+	for _, extraProtectedBranch := range extraProtectedBranchesSet.ToSlice() {
 		protectedBranchName := extraProtectedBranch.(string) //nolint:errcheck
 		_, err := client.ProtectedBranches.UnprotectRepositoryBranches(c.Project, protectedBranchName)
 		if err != nil {
@@ -168,22 +173,61 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 		// We made sure above that all protected branches in configuration have a string name.
 		name := protectedBranch["name"].(string) //nolint:errcheck
 
-		// If project already have this protected branch, we have to
-		// first unprotect it to be able to update the protected branch.
-		if existingProtectedBranches.Contains(name) {
-			_, err := client.ProtectedBranches.UnprotectRepositoryBranches(c.Project, name)
-			if err != nil {
-				return errors.Wrapf(err, `failed to unprotect group "%s" before reprotecting`, name)
-			}
-		}
+		// If project already have this protected branch, we update it.
+		// Others are updated if they contain an ID or created new if they do not contain an ID.
+		if existingProtectedBranchesSet.Contains(name) {
+			// We know it exists.
+			existingProtectedBranch := existingProtectedBranches[name]
 
-		req, err := client.NewRequest(http.MethodPost, u, protectedBranch, nil)
-		if err != nil {
-			return errors.Wrapf(err, `failed to protect branch "%s"`, name)
-		}
-		_, err = client.Do(req, nil)
-		if err != nil {
-			return errors.Wrapf(err, `failed to protect branch "%s"`, name)
+			// We have to mark any access level which does not exist anymore for deletion.
+			for _, ii := range []struct {
+				Name         string
+				AccessLevels []*gitlab.BranchAccessDescription
+			}{
+				{"push_access_levels", existingProtectedBranch.PushAccessLevels},
+				{"allowed_to_merge", existingProtectedBranch.MergeAccessLevels},
+				{"unprotect_access_levels", existingProtectedBranch.UnprotectAccessLevels},
+			} {
+				existingAccessLevelsSet := mapset.NewThreadUnsafeSet()
+				for _, accessLevel := range ii.AccessLevels {
+					existingAccessLevelsSet.Add(accessLevel.ID)
+				}
+
+				wantedAccessLevels, ok := protectedBranch[ii.Name]
+				if ok {
+					levels, ok := wantedAccessLevels.([]map[string]interface{})
+					if !ok {
+						return errors.Errorf(`invalid access level in "%s" for protected branch "%s"`, ii.Name, name)
+					}
+					for _, level := range levels {
+						id, ok := level["id"]
+						if ok && !existingAccessLevelsSet.Contains(id.(int)) {
+							// We mark any access level with ID which does not exist among
+							// existing access levels for deletion (destroy).
+							level["_destroy"] = true
+						}
+					}
+				}
+			}
+
+			req, err := client.NewRequest(http.MethodPatch, u, protectedBranch, nil)
+			if err != nil {
+				return errors.Wrapf(err, `failed to update protected branch "%s"`, name)
+			}
+			_, err = client.Do(req, nil)
+			if err != nil {
+				return errors.Wrapf(err, `failed to update protected branch "%s"`, name)
+			}
+		} else {
+			// We create a new protected branch.
+			req, err := client.NewRequest(http.MethodPost, u, protectedBranch, nil)
+			if err != nil {
+				return errors.Wrapf(err, `failed to protect branch "%s"`, name)
+			}
+			_, err = client.Do(req, nil)
+			if err != nil {
+				return errors.Wrapf(err, `failed to protect branch "%s"`, name)
+			}
 		}
 	}
 

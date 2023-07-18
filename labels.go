@@ -146,11 +146,11 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		options.Page = response.NextPage
 	}
 
-	existingLabels := mapset.NewThreadUnsafeSet()
+	existingLabelsSet := mapset.NewThreadUnsafeSet()
 	namesToIDs := map[string]int{}
 	for _, label := range labels {
 		namesToIDs[label.Name] = label.ID
-		existingLabels.Add(label.ID)
+		existingLabelsSet.Add(label.ID)
 	}
 
 	// Set label IDs if a matching existing label can be found.
@@ -163,7 +163,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 			if !ok {
 				return errors.Errorf(`invalid "id" in "labels" at index %d`, i)
 			}
-			if existingLabels.Contains(id) {
+			if existingLabelsSet.Contains(id) {
 				continue
 			}
 			// Label does not exist with that ID. We remove the ID and leave to name matching to
@@ -181,16 +181,16 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		}
 	}
 
-	wantedLabels := mapset.NewThreadUnsafeSet()
+	wantedLabelsSet := mapset.NewThreadUnsafeSet()
 	for _, label := range configuration.Labels {
 		id, ok := label["id"]
 		if ok {
-			wantedLabels.Add(id.(int))
+			wantedLabelsSet.Add(id.(int))
 		}
 	}
 
-	extraLabels := existingLabels.Difference(wantedLabels)
-	for _, extraLabel := range extraLabels.ToSlice() {
+	extraLabelsSet := existingLabelsSet.Difference(wantedLabelsSet)
+	for _, extraLabel := range extraLabelsSet.ToSlice() {
 		labelID := extraLabel.(int) //nolint:errcheck
 		// TODO: Use go-gitlab's function once it is updated to new API.
 		//       See: https://github.com/xanzy/go-gitlab/issues/1321

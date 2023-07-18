@@ -6,11 +6,11 @@ require (
 	github.com/alecthomas/kong v0.2.23-0.20220105075837-a7d3850e8012
 	github.com/deckarep/golang-set v1.7.1
 	github.com/google/go-querystring v1.1.0
-	github.com/hashicorp/go-retryablehttp v0.7.1
+	github.com/hashicorp/go-retryablehttp v0.7.2
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/stretchr/testify v1.8.4
 	github.com/tozd/sops/v3 v3.7.2-0.20230718000303-d0b3d7cb6d70
-	github.com/xanzy/go-gitlab v0.54.1
+	github.com/xanzy/go-gitlab v0.86.0
 	github.com/yuin/goldmark v1.4.13
 	gitlab.com/tozd/go/errors v0.3.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -122,7 +122,7 @@ require (
 	golang.org/x/sys v0.9.0 // indirect
 	golang.org/x/term v0.9.0 // indirect
 	golang.org/x/text v0.10.0 // indirect
-	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
+	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230629202037-9506855d4529 // indirect
 	google.golang.org/grpc v1.56.1 // indirect

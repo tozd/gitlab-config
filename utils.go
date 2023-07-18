@@ -96,3 +96,32 @@ func removeFieldSuffix(input interface{}, suffix string) {
 		}
 	}
 }
+
+// castFloatsToInts casts all floats to ints anywhere in the arbitrary
+// input structure, even if it is nested inside other maps or slices.
+func castFloatsToInts(input interface{}) {
+	switch in := input.(type) {
+	case []interface{}:
+		for i, v := range in {
+			switch n := v.(type) {
+			case float64:
+				in[i] = int(n)
+			default:
+				castFloatsToInts(v)
+			}
+		}
+	case []map[string]interface{}:
+		for _, v := range in {
+			castFloatsToInts(v)
+		}
+	case map[string]interface{}:
+		for key, value := range in {
+			switch n := value.(type) {
+			case float64:
+				in[key] = int(n)
+			default:
+				castFloatsToInts(value)
+			}
+		}
+	}
+}

@@ -153,14 +153,14 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		EnvironmentScope string
 	}
 
-	existingVariables := mapset.NewThreadUnsafeSet()
+	existingVariablesSet := mapset.NewThreadUnsafeSet()
 	for _, variable := range variables {
-		existingVariables.Add(Variable{
+		existingVariablesSet.Add(Variable{
 			Key:              variable.Key,
 			EnvironmentScope: variable.EnvironmentScope,
 		})
 	}
-	wantedVariables := mapset.NewThreadUnsafeSet()
+	wantedVariablesSet := mapset.NewThreadUnsafeSet()
 	for i, variable := range configuration.Variables {
 		key, ok := variable["key"]
 		if !ok {
@@ -178,14 +178,14 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		if !ok {
 			return errors.Errorf(`invalid "environment_scope" in "variables" at index %d`, i)
 		}
-		wantedVariables.Add(Variable{
+		wantedVariablesSet.Add(Variable{
 			Key:              k,
 			EnvironmentScope: e,
 		})
 	}
 
-	extraVariables := existingVariables.Difference(wantedVariables)
-	for _, extraVariable := range extraVariables.ToSlice() {
+	extraVariablesSet := existingVariablesSet.Difference(wantedVariablesSet)
+	for _, extraVariable := range extraVariablesSet.ToSlice() {
 		variable := extraVariable.(Variable) //nolint:errcheck
 		// TODO: Use go-gitlab's function once it is updated to new API.
 		//       See: https://github.com/xanzy/go-gitlab/issues/1328
@@ -205,7 +205,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		key := variable["key"].(string)                            //nolint:errcheck
 		environmentScope := variable["environment_scope"].(string) //nolint:errcheck
 
-		if existingVariables.Contains(Variable{
+		if existingVariablesSet.Contains(Variable{
 			Key:              key,
 			EnvironmentScope: environmentScope,
 		}) {

@@ -99,17 +99,17 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 		return errors.Wrap(err, `failed to get project`)
 	}
 
-	existingGroups := mapset.NewThreadUnsafeSet()
+	existingGroupsSet := mapset.NewThreadUnsafeSet()
 	for _, group := range project.SharedWithGroups {
-		existingGroups.Add(group.GroupID)
+		existingGroupsSet.Add(group.GroupID)
 	}
-	wantedGroups := mapset.NewThreadUnsafeSet()
+	wantedGroupsSet := mapset.NewThreadUnsafeSet()
 	for _, group := range configuration.SharedWithGroups {
-		wantedGroups.Add(group["group_id"].(int))
+		wantedGroupsSet.Add(group["group_id"].(int))
 	}
 
-	extraGroups := existingGroups.Difference(wantedGroups)
-	for _, extraGroup := range extraGroups.ToSlice() {
+	extraGroupsSet := existingGroupsSet.Difference(wantedGroupsSet)
+	for _, extraGroup := range extraGroupsSet.ToSlice() {
 		groupID := extraGroup.(int) //nolint:errcheck
 		_, err := client.Projects.DeleteSharedProjectFromGroup(c.Project, groupID)
 		if err != nil {
@@ -128,7 +128,7 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 
 		// If project is already shared with this group, we have to
 		// first unshare to be able to update the share.
-		if existingGroups.Contains(groupID) {
+		if existingGroupsSet.Contains(groupID) {
 			_, err := client.Projects.DeleteSharedProjectFromGroup(c.Project, groupID)
 			if err != nil {
 				return errors.Wrapf(err, `failed to unshare group %d before resharing`, groupID)
