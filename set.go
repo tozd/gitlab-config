@@ -21,8 +21,8 @@ import (
 type SetCommand struct {
 	GitLab
 
-	Input     string `short:"i" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to load the configuration from. Can be \"-\" for stdin. Default is \"${default}\"."` //nolint:lll
-	EncSuffix string `short:"S" help:"Remove the suffix from field names before calling APIs. Disabled by default."`                                                           //nolint:lll
+	Input     string `default:".gitlab-conf.yml"                                                          help:"Where to load the configuration from. Can be \"-\" for stdin. Default is \"${default}\"." placeholder:"PATH" short:"i"` //nolint:lll
+	EncSuffix string `help:"Remove the suffix from field names before calling APIs. Disabled by default." short:"S"`                                                                                                                    //nolint:lll
 	NoDecrypt bool   `help:"Do not attempt to decrypt the configuration."`
 }
 

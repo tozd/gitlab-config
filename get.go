@@ -22,10 +22,10 @@ const (
 type GetCommand struct {
 	GitLab
 
-	Output     string `short:"o" placeholder:"PATH" default:".gitlab-conf.yml" help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."`                                                    //nolint:lll
-	Avatar     string `short:"a" placeholder:"PATH" default:".gitlab-avatar.img" help:"Where to save the avatar to. File extension is set automatically. Default is \"${default}\"."`                                             //nolint:lll
-	EncComment string `short:"E" placeholder:"STRING" default:"sops:enc" help:"Annotate sensitive values with the comment, marking them for encryption with SOPS. Set to an empty string to disable. Default is \"${default}\"."` //nolint:lll
-	EncSuffix  string `short:"S" help:"Add the suffix to field names of sensitive values, marking them for encryption with SOPS. Disabled by default."`                                                                           //nolint:lll
+	Output     string `default:".gitlab-conf.yml"                                                                                            help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."                                                          placeholder:"PATH"   short:"o"` //nolint:lll
+	Avatar     string `default:".gitlab-avatar.img"                                                                                          help:"Where to save the avatar to. File extension is set automatically. Default is \"${default}\"."                                                     placeholder:"PATH"   short:"a"` //nolint:lll
+	EncComment string `default:"sops:enc"                                                                                                    help:"Annotate sensitive values with the comment, marking them for encryption with SOPS. Set to an empty string to disable. Default is \"${default}\"." placeholder:"STRING" short:"E"` //nolint:lll
+	EncSuffix  string `help:"Add the suffix to field names of sensitive values, marking them for encryption with SOPS. Disabled by default." short:"S"`                                                                                                                                                                              //nolint:lll
 }
 
 // Run runs the get command.

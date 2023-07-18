@@ -10,16 +10,16 @@ package config
 // written out. Similarly, fields which have "Comment" suffix are moved into
 // YAML comments and are not used for project configuration.
 type Configuration struct {
-	Project                  map[string]interface{}   `json:"project" yaml:"project"`
-	Avatar                   *string                  `json:"avatar" yaml:"avatar"`
-	SharedWithGroups         []map[string]interface{} `json:"shared_with_groups" yaml:"shared_with_groups"`
-	SharedWithGroupsComment  string                   `json:"comment:shared_with_groups,omitempty" yaml:"comment:shared_with_groups,omitempty"`
-	ForkedFromProject        *int                     `json:"forked_from_project" yaml:"forked_from_project"`
+	Project                  map[string]interface{}   `json:"project"                               yaml:"project"`
+	Avatar                   *string                  `json:"avatar"                                yaml:"avatar"`
+	SharedWithGroups         []map[string]interface{} `json:"shared_with_groups"                    yaml:"shared_with_groups"`
+	SharedWithGroupsComment  string                   `json:"comment:shared_with_groups,omitempty"  yaml:"comment:shared_with_groups,omitempty"`
+	ForkedFromProject        *int                     `json:"forked_from_project"                   yaml:"forked_from_project"`
 	ForkedFromProjectComment string                   `json:"comment:forked_from_project,omitempty" yaml:"comment:forked_from_project,omitempty"`
-	Labels                   []map[string]interface{} `json:"labels" yaml:"labels"`
-	LabelsComment            string                   `json:"comment:labels,omitempty" yaml:"comment:labels,omitempty"`
-	ProtectedBranches        []map[string]interface{} `json:"protected_branches" yaml:"protected_branches"`
-	ProtectedBranchesComment string                   `json:"comment:protected_branches,omitempty" yaml:"comment:protected_branches,omitempty"`
-	Variables                []map[string]interface{} `json:"variables" yaml:"variables"`
-	VariablesComment         string                   `json:"comment:variables,omitempty" yaml:"comment:variables,omitempty"`
+	Labels                   []map[string]interface{} `json:"labels"                                yaml:"labels"`
+	LabelsComment            string                   `json:"comment:labels,omitempty"              yaml:"comment:labels,omitempty"`
+	ProtectedBranches        []map[string]interface{} `json:"protected_branches"                    yaml:"protected_branches"`
+	ProtectedBranchesComment string                   `json:"comment:protected_branches,omitempty"  yaml:"comment:protected_branches,omitempty"`
+	Variables                []map[string]interface{} `json:"variables"                             yaml:"variables"`
+	VariablesComment         string                   `json:"comment:variables,omitempty"           yaml:"comment:variables,omitempty"`
 }
