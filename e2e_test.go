@@ -22,11 +22,16 @@ func TestE2E(t *testing.T) {
 	for _, cmd := range []string{"get", "set"} {
 		t.Run(fmt.Sprintf("case=%s", cmd), func(t *testing.T) {
 			var commands Commands
-			parser, err := kong.New(&commands, kong.Exit(func(code int) {
-				if code != 0 {
-					t.Errorf("Kong exited with code %d", code)
-				}
-			}))
+			parser, err := kong.New(&commands,
+				kong.Vars{
+					"defaultDocsRef": DefaultDocsRef,
+				},
+				kong.Exit(func(code int) {
+					if code != 0 {
+						t.Errorf("Kong exited with code %d", code)
+					}
+				}),
+			)
 			require.NoError(t, err)
 
 			ctx, err := parser.Parse([]string{"-C", tempDir, cmd, "-p", projectID})
