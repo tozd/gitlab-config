@@ -6,7 +6,7 @@ import (
 
 // GitLab describes parameters needed to connect to GitLab API.
 type GitLab struct {
-	Project string `short:"p" env:"CI_PROJECT_ID" help:"GitLab project to release to. It can be project ID or <namespace/project_path>. By default it infers it from the repository. Environment variable: ${env}"`
+	Project string `short:"p" env:"CI_PROJECT_ID" help:"GitLab project to manage config for. It can be project ID or <namespace/project_path>. By default it infers it from the repository. Environment variable: ${env}"`
 	BaseURL string `short:"B" name:"base" placeholder:"URL" default:"https://gitlab.com" env:"CI_SERVER_URL" help:"Base URL for GitLab API to use. Default is \"${default}\". Environment variable: ${env}"`
 	Token   string `short:"t" required:"" env:"GITLAB_API_TOKEN" help:"GitLab API token to use. Environment variable: ${env}"`
 	DocsRef string `short:"D" name:"docs" placeholder:"REF" default:"master" env:"DOCS_GIT_REF" help:"Git reference at which to extract API attributes from GitLab's documentation. Default is \"${default}\". Environment variable: ${env}"`
