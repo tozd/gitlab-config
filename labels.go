@@ -51,8 +51,8 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 		}
 
 		for _, label := range labels {
-			// Making sure it is an integer.
-			label["id"] = int(label["id"].(float64))
+			// Making sure id and priority are an integer.
+			castFloatsToInts(label)
 
 			// Only retain those keys which can be edited through the API
 			// (which are those available in descriptions).
@@ -163,10 +163,12 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 			if !ok {
 				return errors.Errorf(`invalid "id" in "labels" at index %d`, i)
 			}
-			if !existingLabels.Contains(id) {
-				return errors.Errorf(`label in configuration with ID %d does not exist`, id)
+			if existingLabels.Contains(id) {
+				continue
 			}
-			continue
+			// Label does not exist with that ID. We remove the ID and leave to name matching to
+			// find the correct ID, if it exists. Otherwise we will just create a new lable.
+			delete(label, "id")
 		}
 
 		name, ok := label["name"]
