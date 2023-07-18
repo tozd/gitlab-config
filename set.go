@@ -118,6 +118,11 @@ func (c *SetCommand) Run(_ *Globals) errors.E {
 		return errE
 	}
 
+	errE = c.updateProtectedTags(client, &configuration)
+	if errE != nil {
+		return errE
+	}
+
 	errE = c.updateVariables(client, &configuration)
 	if errE != nil {
 		return errE

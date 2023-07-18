@@ -23,6 +23,8 @@ type Configuration struct {
 	LabelsComment            string                   `json:"comment:labels,omitempty"              yaml:"comment:labels,omitempty"`
 	ProtectedBranches        []map[string]interface{} `json:"protected_branches"                    yaml:"protected_branches"`
 	ProtectedBranchesComment string                   `json:"comment:protected_branches,omitempty"  yaml:"comment:protected_branches,omitempty"`
+	ProtectedTags            []map[string]interface{} `json:"protected_tags"                        yaml:"protected_tags"`
+	ProtectedTagsComment     string                   `json:"comment:protected_tags,omitempty"      yaml:"comment:protected_tags,omitempty"`
 	Variables                []map[string]interface{} `json:"variables"                             yaml:"variables"`
 	VariablesComment         string                   `json:"comment:variables,omitempty"           yaml:"comment:variables,omitempty"`
 }
