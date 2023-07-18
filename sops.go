@@ -11,7 +11,7 @@ type SopsCommand struct {
 }
 
 // Run runs the sops command.
-func (c *SopsCommand) Run(globals *Globals) errors.E {
+func (c *SopsCommand) Run(_ *Globals) errors.E {
 	args := append([]string{"sops"}, c.Arg...)
 	mainimpl.Main(args)
 

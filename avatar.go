@@ -37,7 +37,7 @@ func checkAvatarExtension(ext string) error {
 // getAvatar populates configuration struct with GitLab's project avatar available
 // from GitLab projects API endpoint.
 func (c *GetCommand) getAvatar(
-	client *gitlab.Client, project map[string]interface{}, configuration *Configuration,
+	_ *gitlab.Client, project map[string]interface{}, configuration *Configuration,
 ) (bool, errors.E) {
 	fmt.Fprintf(os.Stderr, "Getting avatar...\n")
 

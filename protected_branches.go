@@ -241,7 +241,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 
 					accessLevel, ok := l["access_level"]
 					if ok {
-						a, ok := accessLevel.(int)
+						a, ok := accessLevel.(int) //nolint:govet
 						if ok {
 							id, ok = accessLevelToIDs[a]
 							if ok {
@@ -251,7 +251,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 					}
 					userID, ok := l["user_id"]
 					if ok {
-						u, ok := userID.(int)
+						u, ok := userID.(int) //nolint:govet
 						if ok {
 							id, ok = userIDtoIDs[u]
 							if ok {

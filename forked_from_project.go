@@ -11,7 +11,7 @@ import (
 // getForkedFromProject populates configuration struct with GitLab's project fork relation
 // available from GitLab projects API endpoint.
 func (c *GetCommand) getForkedFromProject(
-	client *gitlab.Client, project map[string]interface{}, configuration *Configuration,
+	_ *gitlab.Client, project map[string]interface{}, configuration *Configuration,
 ) (bool, errors.E) {
 	fmt.Fprintf(os.Stderr, "Getting project fork relation...\n")
 

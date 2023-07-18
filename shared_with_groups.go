@@ -13,7 +13,7 @@ import (
 // getSharedWithGroups populates configuration struct with GitLab's project's sharing
 // with groups available from GitLab projects API endpoint.
 func (c *GetCommand) getSharedWithGroups(
-	client *gitlab.Client, project map[string]interface{}, configuration *Configuration,
+	_ *gitlab.Client, project map[string]interface{}, configuration *Configuration,
 ) (bool, errors.E) {
 	fmt.Fprintf(os.Stderr, "Getting sharing with groups...\n")
 

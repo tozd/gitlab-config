@@ -27,7 +27,7 @@ type SetCommand struct {
 }
 
 // Run runs the set command.
-func (c *SetCommand) Run(globals *Globals) errors.E {
+func (c *SetCommand) Run(_ *Globals) errors.E {
 	if c.Project == "" {
 		projectID, errE := x.InferGitLabProjectID(".")
 		if errE != nil {
@@ -52,8 +52,9 @@ func (c *SetCommand) Run(globals *Globals) errors.E {
 		if err == nil {
 			input = decryptedInput
 		} else if !errors.Is(err, sops.MetadataNotFound) {
-			if userErr, ok := err.(sops.UserError); ok {
-				err = fmt.Errorf("%s\n\n%s", err, userErr.UserError())
+			var userErr sops.UserError
+			if errors.As(err, &userErr) {
+				err = errors.Errorf("%w\n\n%s", err, userErr.UserError())
 			}
 			return errors.Wrapf(err, `cannot decrypt configuration from "%s"`, c.Input)
 		}

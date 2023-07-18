@@ -33,6 +33,11 @@ linters-settings:
       - all
   unused:
     go: "1.20"
+  tagliatelle:
+    case:
+      rules:
+        json: snake
+        yaml: snake
 
 linters:
   disable-all: true
