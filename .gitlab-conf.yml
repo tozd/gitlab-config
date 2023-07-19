@@ -161,6 +161,22 @@ avatar: .gitlab-avatar.png
 # group_access: The role (access_level) to grant the group. Type: integer
 # group_id: The ID of the group to share with. Type: integer
 shared_with_groups: []
+approvals:
+  # Allow or prevent overriding approvers per merge request. Type: boolean
+  disable_overriding_approvers_per_merge_request: false
+  # Allow or prevent authors from self approving merge requests; true means authors
+  # can self approve. Type: boolean
+  merge_requests_author_approval: false
+  # Allow or prevent committers from self approving merge requests. Type: boolean
+  merge_requests_disable_committers_approval: false
+  # Require approver to enter a password to authenticate before adding the approval.
+  # Type: boolean
+  require_password_to_approve: false
+  # Reset approvals on a new push. Type: boolean
+  reset_approvals_on_push: true
+  # Reset approvals from Code Owners if their files changed. Can be enabled only if
+  # reset_approvals_on_push is disabled. Type: boolean
+  selective_code_owner_removals: false
 forked_from_project: 0
 # color: The color of the label given in 6-digit hex notation with leading '#'
 # sign (for example, #FFAABB) or one of the CSS color names. Type: string

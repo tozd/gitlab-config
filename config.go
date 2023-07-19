@@ -14,6 +14,7 @@ type Configuration struct {
 	Avatar                   *string                  `json:"avatar"                                yaml:"avatar"`
 	SharedWithGroups         []map[string]interface{} `json:"shared_with_groups"                    yaml:"shared_with_groups"`
 	SharedWithGroupsComment  string                   `json:"comment:shared_with_groups,omitempty"  yaml:"comment:shared_with_groups,omitempty"`
+	Approvals                map[string]interface{}   `json:"approvals"                             yaml:"approvals"`
 	ForkedFromProject        *int                     `json:"forked_from_project"                   yaml:"forked_from_project"`
 	ForkedFromProjectComment string                   `json:"comment:forked_from_project,omitempty" yaml:"comment:forked_from_project,omitempty"`
 	Labels                   []map[string]interface{} `json:"labels"                                yaml:"labels"`

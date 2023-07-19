@@ -89,9 +89,7 @@ func (c *GetCommand) getProject(client *gitlab.Client, configuration *Configurat
 	}
 
 	// Add comments for keys. We process these keys before writing YAML out.
-	for key := range project {
-		project["comment:"+key] = descriptions[key]
-	}
+	describeKeys(project, descriptions)
 
 	configuration.Project = project
 

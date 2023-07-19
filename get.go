@@ -52,6 +52,12 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 	}
 	hasSensitive = hasSensitive || s
 
+	s, errE = c.getApprovals(client, &configuration)
+	if errE != nil {
+		return errE
+	}
+	hasSensitive = hasSensitive || s
+
 	s, errE = c.getLabels(client, &configuration)
 	if errE != nil {
 		return errE

@@ -125,3 +125,20 @@ func castFloatsToInts(input interface{}) {
 		}
 	}
 }
+
+// describeKeys adds comments for all keys in obj found in descriptions.
+func describeKeys(obj map[string]interface{}, descriptions map[string]string) {
+	// We first make a copy of all existing keys and then add descriptions.
+	// This prevents us from trying to add descriptions for the (comment) keys
+	// we just added.
+	keys := []string{}
+	for key := range obj {
+		keys = append(keys, key)
+	}
+	for _, key := range keys {
+		d, ok := descriptions[key]
+		if ok {
+			obj["comment:"+key] = d
+		}
+	}
+}
