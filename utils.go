@@ -142,3 +142,43 @@ func describeKeys(obj map[string]interface{}, descriptions map[string]string) {
 		}
 	}
 }
+
+// convertNestedObjectsToIds converts a slice of objects to a slice of
+// IDs from their "id" fields. If objects have "name" field, the value
+// is set as a comment before the ID.
+func convertNestedObjectsToIds(input interface{}) ([]interface{}, error) {
+	ids := []interface{}{}
+
+	if input == nil {
+		return ids, nil
+	}
+
+	list, ok := input.([]interface{})
+	if !ok {
+		return nil, errors.Errorf("not a list")
+	}
+
+	for i, element := range list {
+		el, ok := element.(map[string]interface{})
+		if !ok {
+			return nil, errors.Errorf("not an object at index %d", i)
+		}
+
+		name, ok := el["name"]
+		if ok {
+			n, ok := name.(string)
+			if !ok {
+				return nil, errors.Errorf("name not a string at index %d", i)
+			}
+			ids = append(ids, "comment:"+n)
+		}
+
+		id, ok := el["id"]
+		if !ok {
+			return nil, errors.Errorf("ID is missing at index %d", i)
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}

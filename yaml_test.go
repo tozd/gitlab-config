@@ -44,6 +44,8 @@ func TestToConfigurationYAML(t *testing.T) {
 			&Configuration{}, "project: {}\n" +
 				"avatar: null\n" +
 				"shared_with_groups: []\n" +
+				"approvals: {}\n" +
+				"approval_rules: []\n" +
 				"forked_from_project: null\n" +
 				"labels: []\n" +
 				"protected_branches: []\n" +
@@ -71,6 +73,14 @@ func TestToConfigurationYAML(t *testing.T) {
 					},
 				},
 				SharedWithGroupsComment: loremIpsum,
+				ApprovalRules: []map[string]interface{}{
+					{
+						"user_ids": []interface{}{
+							"comment:array",
+							1,
+						},
+					},
+				},
 			},
 			"project:\n" +
 				"  # top\n" +
@@ -95,6 +105,11 @@ func TestToConfigurationYAML(t *testing.T) {
 				"  # innert top\n" +
 				"  - # comment\n" +
 				"    x: \"y\"\n" +
+				"approvals: {}\n" +
+				"approval_rules:\n" +
+				"  - user_ids:\n" +
+				"      # array\n" +
+				"      - 1\n" +
 				"forked_from_project: null\n" +
 				"labels: []\n" +
 				"protected_branches: []\n" +

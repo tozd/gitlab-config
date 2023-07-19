@@ -47,49 +47,81 @@ func toConfigurationYAML(configuration *Configuration) ([]byte, errors.E) {
 // setYAMLComments modifies YAML node by moving comments in children nodes which have
 // "comment:" prefix in object field names to corresponding data fields (and their nodes).
 func setYAMLComments(node *yaml.Node) {
-	if node.Kind != yaml.MappingNode {
+	if node.Kind == yaml.SequenceNode {
+		// We first extract all comments.
+		comments := map[int]string{}
+		contentsToDelete := []int{}
+		for i := 0; i < len(node.Content); i++ {
+			key := node.Content[i].Value
+			if strings.HasPrefix(key, "comment:") {
+				contentsToDelete = append(contentsToDelete, i)
+				// We set it at the index it will be after we delete comments from Content.
+				// If there are multiple comments one immediately after the other,
+				// then only the last one is kept.
+				comments[i+1-len(contentsToDelete)] = strings.TrimPrefix(key, "comment:")
+			}
+		}
+
+		// We iterate in the reverse order.
+		for i := len(contentsToDelete) - 1; i >= 0; i-- {
+			k := contentsToDelete[i]
+			// Remove one content node after the other.
+			node.Content = append(node.Content[:k], node.Content[k+1:]...)
+		}
+
+		// Finally set comments.
+		for i := 0; i < len(node.Content); i++ {
+			comment, ok := comments[i]
+			// Only if there is a comment and another comment is not already set.
+			if ok && comment != "" && node.Content[i].HeadComment == "" {
+				node.Content[i].HeadComment = wordwrap.WrapString(comment, maxCommentWidth)
+			}
+
+			// And recurse at the same time.
+			setYAMLComments(node.Content[i])
+		}
+	} else if node.Kind == yaml.MappingNode {
+		// We first extract all comments.
+		comments := map[string]string{}
+		contentsToDelete := []int{}
+		for i := 0; i < len(node.Content); i += 2 {
+			key := node.Content[i].Value
+			if strings.HasPrefix(key, "comment:") {
+				contentsToDelete = append(contentsToDelete, i, i+1)
+				comments[strings.TrimPrefix(key, "comment:")] = node.Content[i+1].Value
+			}
+		}
+
+		// We iterate in the reverse order.
+		for i := len(contentsToDelete) - 1; i >= 0; i-- {
+			k := contentsToDelete[i]
+			// Remove one content node after the other.
+			node.Content = append(node.Content[:k], node.Content[k+1:]...)
+		}
+
+		// Finally set comments.
+		for i := 0; i < len(node.Content); i += 2 {
+			key := node.Content[i].Value
+			comment, ok := comments[key]
+			// Only if there is a comment and another comment is not already set.
+			if ok && comment != "" && node.Content[i].HeadComment == "" {
+				node.Content[i].HeadComment = wordwrap.WrapString(comment, maxCommentWidth)
+			}
+
+			// And recurse at the same time.
+			setYAMLComments(node.Content[i+1])
+		}
+
+		// Set comment for the node itself.
+		comment, ok := comments[""]
+		// Only if there is a comment and another comment is not already set.
+		if ok && comment != "" && node.HeadComment == "" {
+			node.HeadComment = wordwrap.WrapString(comment, maxCommentWidth)
+		}
+	} else {
 		for _, content := range node.Content {
 			setYAMLComments(content)
 		}
-		return
-	}
-
-	// We first extract all comments.
-	comments := map[string]string{}
-	contentsToDelete := []int{}
-	for i := 0; i < len(node.Content); i += 2 {
-		key := node.Content[i].Value
-		if strings.HasPrefix(key, "comment:") {
-			comments[strings.TrimPrefix(key, "comment:")] = node.Content[i+1].Value
-			contentsToDelete = append(contentsToDelete, i, i+1)
-		}
-	}
-
-	// We iterate in the reverse order.
-	for i := len(contentsToDelete) - 1; i >= 0; i-- {
-		k := contentsToDelete[i]
-		// Remove one content node after the other.
-		node.Content = append(node.Content[:k], node.Content[k+1:]...)
-	}
-
-	// Finally set comments.
-	for i := 0; i < len(node.Content); i += 2 {
-		key := node.Content[i].Value
-		comment, ok := comments[key]
-		// Only if there is a comment and another comment is not already set.
-		if ok && comment != "" && node.Content[i].HeadComment == "" {
-			node.Content[i].HeadComment = wordwrap.WrapString(comment, maxCommentWidth)
-		}
-
-		// And recurse at the same time.
-		setYAMLComments(node.Content[i+1])
-	}
-
-	// Set comment for the node itself.
-	comment, ok := comments[""]
-	// Only if there is a comment and another comment is not already set.
-	if ok && comment != "" && node.HeadComment == "" {
-		node.HeadComment = wordwrap.WrapString(comment, maxCommentWidth)
 	}
 }
 

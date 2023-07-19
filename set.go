@@ -103,6 +103,11 @@ func (c *SetCommand) Run(_ *Globals) errors.E {
 		return errE
 	}
 
+	errE = c.updateApprovalRules(client, &configuration)
+	if errE != nil {
+		return errE
+	}
+
 	errE = c.updateLabels(client, &configuration)
 	if errE != nil {
 		return errE
