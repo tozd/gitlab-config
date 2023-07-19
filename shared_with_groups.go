@@ -39,8 +39,9 @@ func (c *GetCommand) getSharedWithGroups(
 			groupFullPath := sharedWithGroup["group_full_path"]
 			// Rename because share API has a different key than get project API.
 			sharedWithGroup["group_access"] = sharedWithGroup["group_access_level"]
-			// Making sure it is an integer.
-			sharedWithGroup["group_id"] = int(sharedWithGroup["group_id"].(float64))
+
+			// Making sure ids and levels are an integer.
+			castFloatsToInts(sharedWithGroup)
 
 			// Only retain those keys which can be edited through the API
 			// (which are those available in descriptions).
