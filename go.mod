@@ -10,7 +10,7 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/stretchr/testify v1.8.4
 	github.com/tozd/sops/v3 v3.7.2-0.20230718000303-d0b3d7cb6d70
-	github.com/xanzy/go-gitlab v0.86.0
+	github.com/xanzy/go-gitlab v0.87.0
 	github.com/yuin/goldmark v1.4.13
 	gitlab.com/tozd/go/errors v0.3.0
 	gopkg.in/yaml.v3 v3.0.1
