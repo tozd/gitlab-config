@@ -187,14 +187,12 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 	extraVariablesSet := existingVariablesSet.Difference(wantedVariablesSet)
 	for _, extraVariable := range extraVariablesSet.ToSlice() {
 		variable := extraVariable.(Variable) //nolint:errcheck
-		// TODO: Use go-gitlab's function once it is updated to new API.
-		//       See: https://github.com/xanzy/go-gitlab/issues/1328
-		u := fmt.Sprintf("projects/%s/variables/%s", gitlab.PathEscape(c.Project), gitlab.PathEscape(variable.Key))
-		req, err := client.NewRequest(http.MethodDelete, u, opts{filter{variable.EnvironmentScope}}, nil)
-		if err != nil {
-			return errors.Wrapf(err, `failed to remove variable "%s"/"%s"`, variable.Key, variable.EnvironmentScope)
-		}
-		_, err = client.Do(req, nil)
+		_, err := client.ProjectVariables.RemoveVariable(
+			c.Project,
+			variable.Key,
+			&gitlab.RemoveProjectVariableOptions{Filter: &gitlab.VariableFilter{EnvironmentScope: variable.EnvironmentScope}},
+			nil,
+		)
 		if err != nil {
 			return errors.Wrapf(err, `failed to remove variable "%s"/"%s"`, variable.Key, variable.EnvironmentScope)
 		}
