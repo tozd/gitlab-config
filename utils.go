@@ -166,7 +166,7 @@ func convertNestedObjectsToIds(input interface{}) ([]interface{}, error) {
 
 		name, ok := el["name"]
 		if ok {
-			n, ok := name.(string)
+			n, ok := name.(string) //nolint:govet
 			if !ok {
 				return nil, errors.Errorf("name not a string at index %d", i)
 			}
