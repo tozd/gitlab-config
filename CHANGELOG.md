@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix integrated SOPS.
 
+### Added
+
+- Support for merge request approvals and approval rules.
+
 ### Changed
 
 - Update used GitLab API version to v16.1.2.
