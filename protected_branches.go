@@ -22,9 +22,9 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 	if errE != nil {
 		return false, errE
 	}
-	// We need "id" later on.
-	if _, ok := descriptions["id"]; !ok {
-		return false, errors.New(`"id" missing in protected branches descriptions`)
+	// We need "name" later on.
+	if _, ok := descriptions["name"]; !ok {
+		return false, errors.New(`"name" missing in protected branches descriptions`)
 	}
 	configuration.ProtectedBranchesComment = formatDescriptions(descriptions)
 
@@ -74,13 +74,13 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 			// Make the description be a comment for the sequence item.
 			renameMapField(protectedBranch, "access_level_description", "comment:")
 
-			id, ok := protectedBranch["id"]
+			name, ok := protectedBranch["name"]
 			if !ok {
-				return false, errors.Errorf(`protected branch is missing "id"`)
+				return false, errors.Errorf(`protected branch is missing "name"`)
 			}
-			_, ok = id.(int)
+			_, ok = name.(string)
 			if !ok {
-				return false, errors.Errorf(`protected branch "id" is not an integer, but %T: %s`, id, id)
+				return false, errors.Errorf(`protected branch "name" is not an string, but %T: %s`, name, name)
 			}
 
 			configuration.ProtectedBranches = append(configuration.ProtectedBranches, protectedBranch)
@@ -93,10 +93,10 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 		options.Page = response.NextPage
 	}
 
-	// We sort by protected branch's id so that we have deterministic order.
+	// We sort by protected branch's name so that we have deterministic order.
 	sort.Slice(configuration.ProtectedBranches, func(i, j int) bool {
-		// We checked that id is int above.
-		return configuration.ProtectedBranches[i]["id"].(int) < configuration.ProtectedBranches[j]["id"].(int) //nolint:forcetypeassert
+		// We checked that name is string above.
+		return configuration.ProtectedBranches[i]["name"].(string) < configuration.ProtectedBranches[j]["name"].(string) //nolint:forcetypeassert
 	})
 
 	return false, nil
