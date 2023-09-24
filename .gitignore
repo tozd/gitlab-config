@@ -3,3 +3,4 @@ coverage.*
 codeclimate.json
 /gitlab-config
 /keys.txt
+/logo/
