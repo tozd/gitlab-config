@@ -8,6 +8,8 @@ import (
 )
 
 func TestParseApprovalRulesDocumentation(t *testing.T) {
+	t.Parallel()
+
 	data, err := parseApprovalRulesDocumentation(testMergeRequestApprovals)
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{

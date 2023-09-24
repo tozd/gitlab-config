@@ -13,7 +13,7 @@ import (
 
 // getProtectedTags populates configuration struct with configuration available
 // from GitLab protected tags API endpoint.
-func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
+func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Configuration) (bool, errors.E) { //nolint:unparam
 	fmt.Fprintf(os.Stderr, "Getting protected tags...\n")
 
 	configuration.ProtectedTags = []map[string]interface{}{}
@@ -21,6 +21,10 @@ func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Conf
 	descriptions, errE := getProtectedTagsDescriptions(c.DocsRef)
 	if errE != nil {
 		return false, errE
+	}
+	// We need "name" later on.
+	if _, ok := descriptions["name"]; !ok {
+		return false, errors.New(`"name" missing in protected tags descriptions`)
 	}
 	configuration.ProtectedTagsComment = formatDescriptions(descriptions)
 
@@ -71,6 +75,15 @@ func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Conf
 			// Make the description be a comment for the sequence item.
 			renameMapField(protectedTag, "access_level_description", "comment:")
 
+			name, ok := protectedTag["name"]
+			if !ok {
+				return false, errors.Errorf(`protected tag is missing "name"`)
+			}
+			_, ok = name.(string)
+			if !ok {
+				return false, errors.Errorf(`protected tag "name" is not a string, but %T: %s`, name, name)
+			}
+
 			configuration.ProtectedTags = append(configuration.ProtectedTags, protectedTag)
 		}
 
@@ -83,7 +96,8 @@ func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Conf
 
 	// We sort by protected tag's name so that we have deterministic order.
 	sort.Slice(configuration.ProtectedTags, func(i, j int) bool {
-		return configuration.ProtectedTags[i]["name"].(string) < configuration.ProtectedTags[j]["name"].(string)
+		// We checked that id is int above.
+		return configuration.ProtectedTags[i]["name"].(string) < configuration.ProtectedTags[j]["name"].(string) //nolint:forcetypeassert
 	})
 
 	return false, nil
@@ -163,7 +177,7 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 		}
 		n, ok := name.(string)
 		if !ok {
-			return errors.Errorf(`invalid "name" in "protected_tags" at index %d`, i)
+			return errors.Errorf(`protected tags "name" at index %d is not a string, but %T: %s`, i, name, name)
 		}
 		wantedProtectedTagsSet.Add(n)
 	}
@@ -180,7 +194,7 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 
 	for _, protectedTag := range configuration.ProtectedTags {
 		// We made sure above that all protected tags in configuration have a string name.
-		name := protectedTag["name"].(string) //nolint:errcheck
+		name := protectedTag["name"].(string) //nolint:errcheck,forcetypeassert
 
 		// If project already have this protected tag, we have to
 		// first unprotect it to be able to update the protected tag.

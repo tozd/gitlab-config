@@ -13,6 +13,8 @@ import (
 var testProtectedTags []byte
 
 func TestParseProtectedTagsDocumentation(t *testing.T) {
+	t.Parallel()
+
 	data, err := parseProtectedTagsDocumentation(testProtectedTags)
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{

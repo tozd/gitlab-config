@@ -12,7 +12,7 @@ import (
 // available from GitLab projects API endpoint.
 func (c *GetCommand) getForkedFromProject(
 	_ *gitlab.Client, project map[string]interface{}, configuration *Configuration,
-) (bool, errors.E) {
+) (bool, errors.E) { //nolint:unparam
 	fmt.Fprintf(os.Stderr, "Getting project fork relation...\n")
 
 	forkedFromProject, ok := project["forked_from_project"]
@@ -21,12 +21,16 @@ func (c *GetCommand) getForkedFromProject(
 		if !ok {
 			return false, errors.New(`invalid "forked_from_project"`)
 		}
-		forkIDFloat, ok := forkedFromProject["id"]
+		forkIDAny, ok := forkedFromProject["id"]
+		if !ok {
+			return false, errors.New(`invalid "forked_from_project"`)
+		}
+		forkIDFloat, ok := forkIDAny.(float64)
 		if !ok {
 			return false, errors.New(`invalid "forked_from_project"`)
 		}
 		// Making sure it is an integer.
-		forkID := int(forkIDFloat.(float64))
+		forkID := int(forkIDFloat)
 		configuration.ForkedFromProject = &forkID
 		forkPathWithNamespace := forkedFromProject["path_with_namespace"]
 		if forkPathWithNamespace != nil {

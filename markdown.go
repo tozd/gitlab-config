@@ -38,7 +38,7 @@ func (v *chainVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus, error)
 	w := v.Moves[0]
 	status, err := w.Walker(n, entering)
 	if err != nil {
-		return status, err
+		return status, err //nolint:wrapcheck
 	} else if status == ast.WalkStop {
 		v.Moves = v.Moves[1:]
 		return v.Walker(n, entering)
@@ -110,7 +110,7 @@ func (v *extractTableVisitor) Walker(n ast.Node, entering bool) (ast.WalkStatus,
 		return ast.WalkStop, errors.New("not starting at a table")
 	}
 	err := ast.Walk(n, v.tableWalker)
-	return ast.WalkStop, err
+	return ast.WalkStop, err //nolint:wrapcheck
 }
 
 // tableWalker is a sub-walker which walks an individual table node only (and its children nodes).

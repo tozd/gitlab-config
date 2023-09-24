@@ -17,8 +17,8 @@ const exitCode = 2
 // These variables should be set during build time using "-X" ldflags.
 var (
 	version        = ""
-	buildTimestamp = ""
-	revision       = ""
+	buildTimestamp = "" //nolint:gochecknoglobals
+	revision       = "" //nolint:gochecknoglobals
 )
 
 func main() {

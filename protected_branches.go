@@ -13,7 +13,7 @@ import (
 
 // getProtectedBranches populates configuration struct with configuration available
 // from GitLab protected branches API endpoint.
-func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
+func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *Configuration) (bool, errors.E) { //nolint:unparam
 	fmt.Fprintf(os.Stderr, "Getting protected branches...\n")
 
 	configuration.ProtectedBranches = []map[string]interface{}{}
@@ -22,10 +22,14 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 	if errE != nil {
 		return false, errE
 	}
+	// We need "id" later on.
+	if _, ok := descriptions["id"]; !ok {
+		return false, errors.New(`"id" missing in protected branches descriptions`)
+	}
 	configuration.ProtectedBranchesComment = formatDescriptions(descriptions)
 
 	u := fmt.Sprintf("projects/%s/protected_branches", gitlab.PathEscape(c.Project))
-	options := &gitlab.ListProtectedBranchesOptions{
+	options := &gitlab.ListProtectedBranchesOptions{ //nolint:exhaustruct
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,
 			Page:    1,
@@ -70,6 +74,15 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 			// Make the description be a comment for the sequence item.
 			renameMapField(protectedBranch, "access_level_description", "comment:")
 
+			id, ok := protectedBranch["id"]
+			if !ok {
+				return false, errors.Errorf(`protected branch is missing "id"`)
+			}
+			_, ok = id.(int)
+			if !ok {
+				return false, errors.Errorf(`protected branch "id" is not an integer, but %T: %s`, id, id)
+			}
+
 			configuration.ProtectedBranches = append(configuration.ProtectedBranches, protectedBranch)
 		}
 
@@ -82,7 +95,8 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 
 	// We sort by protected branch's id so that we have deterministic order.
 	sort.Slice(configuration.ProtectedBranches, func(i, j int) bool {
-		return configuration.ProtectedBranches[i]["id"].(int) < configuration.ProtectedBranches[j]["id"].(int)
+		// We checked that id is int above.
+		return configuration.ProtectedBranches[i]["id"].(int) < configuration.ProtectedBranches[j]["id"].(int) //nolint:forcetypeassert
 	})
 
 	return false, nil
@@ -110,14 +124,14 @@ func getProtectedBranchesDescriptions(gitRef string) (map[string]string, errors.
 //
 // Access levels without the ID field are matched to existing access labels based on
 // their fields. Unmatched access levels are created as new.
-func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuration *Configuration) errors.E {
+func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuration *Configuration) errors.E { //nolint:maintidx
 	if configuration.ProtectedBranches == nil {
 		return nil
 	}
 
 	fmt.Fprintf(os.Stderr, "Updating protected branches...\n")
 
-	options := &gitlab.ListProtectedBranchesOptions{
+	options := &gitlab.ListProtectedBranchesOptions{ //nolint:exhaustruct
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,
 			Page:    1,
@@ -156,7 +170,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 		}
 		n, ok := name.(string)
 		if !ok {
-			return errors.Errorf(`invalid "name" in "protected_branches" at index %d`, i)
+			return errors.Errorf(`protected branch "name" at index %d is not a string, but %T: %s`, i, name, name)
 		}
 		wantedProtectedBranchesSet.Add(n)
 	}
@@ -171,11 +185,11 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 
 	for _, protectedBranch := range configuration.ProtectedBranches {
 		// We made sure above that all protected branches in configuration have a string name.
-		name := protectedBranch["name"].(string) //nolint:errcheck
+		name := protectedBranch["name"].(string) //nolint:errcheck,forcetypeassert
 
 		// If project already have this protected branch, we update it.
 		// Others are updated if they contain an ID or created new if they do not contain an ID.
-		if existingProtectedBranchesSet.Contains(name) {
+		if existingProtectedBranchesSet.Contains(name) { //nolint:nestif
 			// We know it exists.
 			existingProtectedBranch := existingProtectedBranches[name]
 
@@ -226,11 +240,11 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 					id, ok := l["id"]
 					if ok {
 						// If ID is provided, the access level should exist.
-						id, ok := id.(int) //nolint:govet
+						iid, ok := id.(int) //nolint:govet
 						if !ok {
-							return errors.Errorf(`invalid "id" for access level "%s" at index %d for protected branch "%s"`, ii.Name, i, name)
+							return errors.Errorf(`access level "%s" "id" at index %d for protected branch "%s" is not an integer, but %T: %s`, ii.Name, i, name, id, id)
 						}
-						if existingAccessLevelsSet.Contains(id) {
+						if existingAccessLevelsSet.Contains(iid) {
 							continue
 						}
 						// Access level does not exist with that ID. We remove the ID and leave to matching to
@@ -275,7 +289,8 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 					// We know it has to be a map.
 					id, ok := level.(map[string]interface{})["id"]
 					if ok {
-						wantedAccessLevelsSet.Add(id.(int))
+						// We checked that id is int above.
+						wantedAccessLevelsSet.Add(id.(int)) //nolint:forcetypeassert
 					}
 				}
 

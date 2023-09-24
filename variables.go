@@ -82,6 +82,15 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 				delete(variable, "value")
 			}
 
+			key, ok := variable["key"]
+			if !ok {
+				return false, errors.Errorf(`variable is missing "key"`)
+			}
+			_, ok = key.(string)
+			if !ok {
+				return false, errors.Errorf(`variable "key" is not an string, but %T: %s`, key, key)
+			}
+
 			configuration.Variables = append(configuration.Variables, variable)
 		}
 
@@ -94,7 +103,8 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 
 	// We sort by variable key so that we have deterministic order.
 	sort.Slice(configuration.Variables, func(i, j int) bool {
-		return configuration.Variables[i]["key"].(string) < configuration.Variables[j]["key"].(string)
+		// We checked that id is int above.
+		return configuration.Variables[i]["key"].(string) < configuration.Variables[j]["key"].(string) //nolint:forcetypeassert
 	})
 
 	return len(configuration.Variables) > 0, nil
@@ -168,7 +178,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		}
 		k, ok := key.(string)
 		if !ok {
-			return errors.Errorf(`invalid "key" in "variables" at index %d`, i)
+			return errors.Errorf(`variables "key" at index %d is not a string, but %T: %s`, i, key, key)
 		}
 		environmentScope, ok := variable["environment_scope"]
 		if !ok {
@@ -176,7 +186,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		}
 		e, ok := environmentScope.(string)
 		if !ok {
-			return errors.Errorf(`invalid "environment_scope" in "variables" at index %d`, i)
+			return errors.Errorf(`variables "environment_scope" at index %d is not a string, but %T: %s`, i, environmentScope, environmentScope)
 		}
 		wantedVariablesSet.Add(Variable{
 			Key:              k,
@@ -199,8 +209,8 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 
 	for _, variable := range configuration.Variables {
 		// We made sure above that all variables in configuration have a string key and environment scope.
-		key := variable["key"].(string)                            //nolint:errcheck
-		environmentScope := variable["environment_scope"].(string) //nolint:errcheck
+		key := variable["key"].(string)                            //nolint:errcheck,forcetypeassert
+		environmentScope := variable["environment_scope"].(string) //nolint:errcheck,forcetypeassert
 
 		if existingVariablesSet.Contains(Variable{
 			Key:              key,

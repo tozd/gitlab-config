@@ -13,6 +13,8 @@ import (
 var testLabels []byte
 
 func TestParseLabelsDocumentation(t *testing.T) {
+	t.Parallel()
+
 	data, err := parseLabelsDocumentation(testLabels)
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{

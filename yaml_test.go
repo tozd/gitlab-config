@@ -18,6 +18,8 @@ const (
 )
 
 func TestFormatDescriptions(t *testing.T) {
+	t.Parallel()
+
 	formatted := formatDescriptions(map[string]string{
 		"foo": "bar",
 		"zoo": "something",
@@ -36,6 +38,8 @@ func TestFormatDescriptions(t *testing.T) {
 }
 
 func TestToConfigurationYAML(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		config *Configuration
 		output string
@@ -120,7 +124,11 @@ func TestToConfigurationYAML(t *testing.T) {
 	}
 
 	for k, tt := range tests {
+		tt := tt
+
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			t.Parallel()
+
 			data, errE := toConfigurationYAML(tt.config)
 			assert.NoError(t, errE)
 			assert.Equal(t, tt.output, string(data))

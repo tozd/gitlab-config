@@ -13,6 +13,8 @@ import (
 var testProjects []byte
 
 func TestParseProjectDocumentation(t *testing.T) {
+	t.Parallel()
+
 	data, err := parseProjectDocumentation(testProjects)
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{

@@ -11,6 +11,8 @@ import (
 )
 
 func TestE2E(t *testing.T) {
+	t.Parallel()
+
 	if os.Getenv("GITLAB_API_TOKEN") == "" {
 		t.Skip("GITLAB_API_TOKEN is not available")
 	}
@@ -20,7 +22,11 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, errE)
 
 	for _, cmd := range []string{"get", "set"} {
+		cmd := cmd
+
 		t.Run(fmt.Sprintf("case=%s", cmd), func(t *testing.T) {
+			t.Parallel()
+
 			var commands Commands
 			parser, err := kong.New(&commands,
 				kong.Vars{

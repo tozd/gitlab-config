@@ -11,7 +11,7 @@ import (
 
 // getApprovals populates configuration struct with GitLab's project's merge requests
 // approvals available from GitLab approvals API endpoint.
-func (c *GetCommand) getApprovals(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
+func (c *GetCommand) getApprovals(client *gitlab.Client, configuration *Configuration) (bool, errors.E) { //nolint:unparam
 	fmt.Fprintf(os.Stderr, "Getting approvals...\n")
 
 	configuration.Approvals = map[string]interface{}{}

@@ -13,6 +13,8 @@ import (
 var testMergeRequestApprovals []byte
 
 func TestParseApprovalsDocumentation(t *testing.T) {
+	t.Parallel()
+
 	data, err := parseApprovalsDocumentation(testMergeRequestApprovals)
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{

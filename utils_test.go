@@ -8,6 +8,8 @@ import (
 )
 
 func TestRenameMapField(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		input map[string]interface{}
 		from  string
@@ -95,7 +97,11 @@ func TestRenameMapField(t *testing.T) {
 	}
 
 	for k, tt := range tests {
+		tt := tt
+
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			t.Parallel()
+
 			renameMapField(tt.input, tt.from, tt.to)
 			assert.Equal(t, tt.want, tt.input)
 		})
@@ -103,6 +109,8 @@ func TestRenameMapField(t *testing.T) {
 }
 
 func TestRemoveFieldSuffix(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		input map[string]interface{}
 		want  map[string]interface{}
@@ -180,7 +188,11 @@ func TestRemoveFieldSuffix(t *testing.T) {
 	}
 
 	for k, tt := range tests {
+		tt := tt
+
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			t.Parallel()
+
 			removeFieldSuffix(tt.input, "_suffix")
 			assert.Equal(t, tt.want, tt.input)
 		})
@@ -188,6 +200,8 @@ func TestRemoveFieldSuffix(t *testing.T) {
 }
 
 func TestRemoveField(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		input interface{}
 		want  interface{}
@@ -225,7 +239,11 @@ func TestRemoveField(t *testing.T) {
 	}
 
 	for k, tt := range tests {
+		tt := tt
+
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			t.Parallel()
+
 			removeField(tt.input, "id")
 			assert.Equal(t, tt.want, tt.input)
 		})

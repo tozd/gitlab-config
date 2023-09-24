@@ -13,6 +13,8 @@ import (
 var testVariables []byte
 
 func TestParseVariablesDocumentation(t *testing.T) {
+	t.Parallel()
+
 	data, err := parseVariablesDocumentation(testVariables)
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{

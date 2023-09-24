@@ -15,7 +15,7 @@ import (
 // A reasonable subset of supported file extensions for avatar image.
 // See: https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/uploaders/avatar_uploader.rb
 // See: https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/file_type_detection.rb#L22
-var avatarFileExtensions = []string{
+var avatarFileExtensions = []string{ //nolint:gochecknoglobals
 	".png",
 	".jpg",
 	".jpeg",
@@ -38,7 +38,7 @@ func checkAvatarExtension(ext string) error {
 // from GitLab projects API endpoint.
 func (c *GetCommand) getAvatar(
 	_ *gitlab.Client, project map[string]interface{}, configuration *Configuration,
-) (bool, errors.E) {
+) (bool, errors.E) { //nolint:unparam
 	fmt.Fprintf(os.Stderr, "Getting avatar...\n")
 
 	avatarURL, ok := project["avatar_url"]

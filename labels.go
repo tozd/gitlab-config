@@ -13,7 +13,7 @@ import (
 
 // getLabels populates configuration struct with configuration available
 // from GitLab labels API endpoint.
-func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
+func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configuration) (bool, errors.E) { //nolint:unparam
 	fmt.Fprintf(os.Stderr, "Getting labels...\n")
 
 	configuration.Labels = []map[string]interface{}{}
@@ -22,10 +22,14 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 	if errE != nil {
 		return false, errE
 	}
+	// We need "id" later on.
+	if _, ok := descriptions["id"]; !ok {
+		return false, errors.New(`"id" missing in labels descriptions`)
+	}
 	configuration.LabelsComment = formatDescriptions(descriptions)
 
 	u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(c.Project))
-	options := &gitlab.ListLabelsOptions{
+	options := &gitlab.ListLabelsOptions{ //nolint:exhaustruct
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,
 			Page:    1,
@@ -63,6 +67,15 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 				}
 			}
 
+			id, ok := label["id"]
+			if !ok {
+				return false, errors.Errorf(`label is missing "id"`)
+			}
+			_, ok = id.(int)
+			if !ok {
+				return false, errors.Errorf(`label "id" is not an integer, but %T: %s`, id, id)
+			}
+
 			configuration.Labels = append(configuration.Labels, label)
 		}
 
@@ -75,7 +88,8 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 
 	// We sort by label ID so that we have deterministic order.
 	sort.Slice(configuration.Labels, func(i, j int) bool {
-		return configuration.Labels[i]["id"].(int) < configuration.Labels[j]["id"].(int)
+		// We checked that id is int above.
+		return configuration.Labels[i]["id"].(int) < configuration.Labels[j]["id"].(int) //nolint:forcetypeassert
 	})
 
 	return false, nil
@@ -121,7 +135,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 
 	fmt.Fprintf(os.Stderr, "Updating labels...\n")
 
-	options := &gitlab.ListLabelsOptions{
+	options := &gitlab.ListLabelsOptions{ //nolint:exhaustruct
 		ListOptions: gitlab.ListOptions{
 			PerPage: maxGitLabPageSize,
 			Page:    1,
@@ -159,11 +173,11 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		id, ok := label["id"]
 		if ok {
 			// If ID is provided, the label should exist.
-			id, ok := id.(int) //nolint:govet
+			iid, ok := id.(int) //nolint:govet
 			if !ok {
-				return errors.Errorf(`invalid "id" in "labels" at index %d`, i)
+				return errors.Errorf(`label "id" at index %d is not an integer, but %T: %s`, i, id, id)
 			}
-			if existingLabelsSet.Contains(id) {
+			if existingLabelsSet.Contains(iid) {
 				continue
 			}
 			// Label does not exist with that ID. We remove the ID and leave to matching to
@@ -188,7 +202,8 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 	for _, label := range configuration.Labels {
 		id, ok := label["id"]
 		if ok {
-			wantedLabelsSet.Add(id.(int))
+			// We checked that id is int above.
+			wantedLabelsSet.Add(id.(int)) //nolint:forcetypeassert
 		}
 	}
 
@@ -214,17 +229,17 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 			req, err := client.NewRequest(http.MethodPost, u, label, nil)
 			if err != nil {
 				// We made sure above that all labels in configuration without label ID have name.
-				return errors.Wrapf(err, `failed to create label "%s"`, label["name"].(string))
+				return errors.Wrapf(err, `failed to create label "%s"`, label["name"])
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
 				// We made sure above that all labels in configuration without label ID have name.
-				return errors.Wrapf(err, `failed to create label "%s"`, label["name"].(string))
+				return errors.Wrapf(err, `failed to create label "%s"`, label["name"])
 			}
 		} else {
 			// We made sure above that all labels in configuration with label ID exist
 			// and that they are ints.
-			id := id.(int) //nolint:errcheck
+			id := id.(int) //nolint:errcheck,forcetypeassert
 			u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(c.Project), id)
 			req, err := client.NewRequest(http.MethodPut, u, label, nil)
 			if err != nil {

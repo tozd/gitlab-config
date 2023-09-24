@@ -13,7 +13,7 @@ import (
 
 // getApprovalRules populates configuration struct with GitLab's project's merge requests
 // approval rules available from GitLab approvals API endpoint.
-func (c *GetCommand) getApprovalRules(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
+func (c *GetCommand) getApprovalRules(client *gitlab.Client, configuration *Configuration) (bool, errors.E) { //nolint:unparam
 	fmt.Fprintf(os.Stderr, "Getting approval rules...\n")
 
 	configuration.ApprovalRules = []map[string]interface{}{}
@@ -21,6 +21,10 @@ func (c *GetCommand) getApprovalRules(client *gitlab.Client, configuration *Conf
 	descriptions, errE := getApprovalRulesDescriptions(c.DocsRef)
 	if errE != nil {
 		return false, errE
+	}
+	// We need "id" later on.
+	if _, ok := descriptions["id"]; !ok {
+		return false, errors.New(`"id" missing in approval rules descriptions`)
 	}
 	configuration.ApprovalRulesComment = formatDescriptions(descriptions)
 
@@ -69,7 +73,7 @@ func (c *GetCommand) getApprovalRules(client *gitlab.Client, configuration *Conf
 			// is set to true, but they are ignored. So we remove them here as well.
 			appliesToAllProtectedBranches, ok := approvalRule["applies_to_all_protected_branches"]
 			if ok {
-				a, ok := appliesToAllProtectedBranches.(bool)
+				a, ok := appliesToAllProtectedBranches.(bool) //nolint:govet
 				if ok && a {
 					approvalRule["protected_branch_ids"] = []interface{}{}
 				}
@@ -78,10 +82,19 @@ func (c *GetCommand) getApprovalRules(client *gitlab.Client, configuration *Conf
 			// Only retain those keys which can be edited through the API
 			// (which are those available in descriptions).
 			for key := range approvalRule {
-				_, ok := descriptions[key]
+				_, ok = descriptions[key]
 				if !ok {
 					delete(approvalRule, key)
 				}
+			}
+
+			id, ok := approvalRule["id"]
+			if !ok {
+				return false, errors.Errorf(`approval rule is missing "id"`)
+			}
+			_, ok = id.(int)
+			if !ok {
+				return false, errors.Errorf(`approval rule "id" is not an integer, but %T: %s`, id, id)
 			}
 
 			configuration.ApprovalRules = append(configuration.ApprovalRules, approvalRule)
@@ -96,7 +109,8 @@ func (c *GetCommand) getApprovalRules(client *gitlab.Client, configuration *Conf
 
 	// We sort by protected branch's id so that we have deterministic order.
 	sort.Slice(configuration.ApprovalRules, func(i, j int) bool {
-		return configuration.ApprovalRules[i]["id"].(int) < configuration.ApprovalRules[j]["id"].(int)
+		// We checked that id is int above.
+		return configuration.ApprovalRules[i]["id"].(int) < configuration.ApprovalRules[j]["id"].(int) //nolint:forcetypeassert
 	})
 
 	return false, nil
@@ -187,11 +201,11 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 		id, ok := approvalRule["id"]
 		if ok {
 			// If ID is provided, the approval rule should exist.
-			id, ok := id.(int) //nolint:govet
+			iid, ok := id.(int) //nolint:govet
 			if !ok {
-				return errors.Errorf(`invalid "id" in "approval_rules" at index %d`, i)
+				return errors.Errorf(`approval rule "id" at index %d is not an integer, but %T: %s`, i, id, id)
 			}
-			if existingApprovalRulesSet.Contains(id) {
+			if existingApprovalRulesSet.Contains(iid) {
 				continue
 			}
 			// Approval rule does not exist with that ID. We remove the ID and leave to matching to
@@ -216,7 +230,8 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 	for _, approvalRule := range configuration.ApprovalRules {
 		id, ok := approvalRule["id"]
 		if ok {
-			wantedApprovalRulesSet.Add(id.(int))
+			// We checked that id is int above.
+			wantedApprovalRulesSet.Add(id.(int)) //nolint:forcetypeassert
 		}
 	}
 
@@ -243,25 +258,25 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 			req, err := client.NewRequest(http.MethodPost, u, approvalRule, nil)
 			if err != nil {
 				// We made sure above that all approval rules in configuration without approval rule ID have name.
-				return errors.Wrapf(err, `failed to create approval rule "%s"`, approvalRule["name"].(string))
+				return errors.Wrapf(err, `failed to create approval rule "%s"`, approvalRule["name"].(string)) //nolint:forcetypeassert
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
 				// We made sure above that all approval rules in configuration without approval rule ID have name.
-				return errors.Wrapf(err, `failed to create approval rule "%s"`, approvalRule["name"].(string))
+				return errors.Wrapf(err, `failed to create approval rule "%s"`, approvalRule["name"].(string)) //nolint:forcetypeassert
 			}
 		} else {
 			// We made sure above that all approval rules in configuration with approval rule
 			// ID exist and that they are ints.
-			id := id.(int) //nolint:errcheck
-			u := fmt.Sprintf("projects/%s/approval_rules/%d", gitlab.PathEscape(c.Project), id)
+			iid := id.(int) //nolint:errcheck,forcetypeassert
+			u := fmt.Sprintf("projects/%s/approval_rules/%d", gitlab.PathEscape(c.Project), iid)
 			req, err := client.NewRequest(http.MethodPut, u, approvalRule, nil)
 			if err != nil {
-				return errors.Wrapf(err, `failed to update approval rules %d`, id)
+				return errors.Wrapf(err, `failed to update approval rules %d`, iid)
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
-				return errors.Wrapf(err, `failed to update approval rules "%d`, id)
+				return errors.Wrapf(err, `failed to update approval rules "%d`, iid)
 			}
 		}
 	}

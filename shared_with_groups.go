@@ -14,7 +14,7 @@ import (
 // with groups available from GitLab projects API endpoint.
 func (c *GetCommand) getSharedWithGroups(
 	_ *gitlab.Client, project map[string]interface{}, configuration *Configuration,
-) (bool, errors.E) {
+) (bool, errors.E) { //nolint:unparam
 	fmt.Fprintf(os.Stderr, "Getting sharing with groups...\n")
 
 	configuration.SharedWithGroups = []map[string]interface{}{}
@@ -105,8 +105,16 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 		existingGroupsSet.Add(group.GroupID)
 	}
 	wantedGroupsSet := mapset.NewThreadUnsafeSet[int]()
-	for _, group := range configuration.SharedWithGroups {
-		wantedGroupsSet.Add(group["group_id"].(int))
+	for i, group := range configuration.SharedWithGroups {
+		id, ok := group["group_id"]
+		if !ok {
+			return errors.Errorf(`shared with groups in configuration at index %d does not have "group_id"`, i)
+		}
+		iid, ok := id.(int)
+		if !ok {
+			return errors.Errorf(`shared with groups "group_id" at index %d is not an integer, but %T: %s`, i, id, id)
+		}
+		wantedGroupsSet.Add(iid)
 	}
 
 	extraGroupsSet := existingGroupsSet.Difference(wantedGroupsSet)
@@ -119,12 +127,9 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 
 	u := fmt.Sprintf("projects/%s/share", gitlab.PathEscape(c.Project))
 
-	for i, group := range configuration.SharedWithGroups {
-		groupID, ok := group["group_id"].(int)
-		if !ok {
-			return errors.Errorf(`invalid "id" in "shared_with_groups" at index %d`, i)
-		}
-		group["group_id"] = groupID
+	for _, group := range configuration.SharedWithGroups {
+		// We checked that group id is int above.
+		groupID := group["group_id"].(int) //nolint:errcheck,forcetypeassert
 
 		// If project is already shared with this group, we have to
 		// first unshare to be able to update the share.

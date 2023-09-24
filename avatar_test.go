@@ -8,6 +8,8 @@ import (
 )
 
 func TestCheckAvatarExtension(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		ext  string
 		want bool
@@ -23,7 +25,11 @@ func TestCheckAvatarExtension(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(fmt.Sprintf("case=%s", tt.ext), func(t *testing.T) {
+			t.Parallel()
+
 			err := checkAvatarExtension(tt.ext)
 			if tt.want {
 				assert.Error(t, err)

@@ -8,6 +8,8 @@ import (
 )
 
 func TestParseSharedWithGroupsDocumentation(t *testing.T) {
+	t.Parallel()
+
 	data, err := parseSharedWithGroupsDocumentation(testProjects)
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{

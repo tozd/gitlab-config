@@ -13,6 +13,8 @@ import (
 var testProtectedBranches []byte
 
 func TestParseProtectedBranchesDocumentation(t *testing.T) {
+	t.Parallel()
+
 	data, err := parseProtectedBranchesDocumentation(testProtectedBranches)
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{
