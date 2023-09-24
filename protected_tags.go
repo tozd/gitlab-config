@@ -6,7 +6,7 @@ import (
 	"os"
 	"sort"
 
-	mapset "github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
 )
@@ -144,13 +144,13 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 	}
 
 	existingProtectedTags := map[string]*gitlab.ProtectedTag{}
-	existingProtectedTagsSet := mapset.NewThreadUnsafeSet()
+	existingProtectedTagsSet := mapset.NewThreadUnsafeSet[string]()
 	for _, protectedTag := range protectedTags {
 		existingProtectedTagsSet.Add(protectedTag.Name)
 		existingProtectedTags[protectedTag.Name] = protectedTag
 	}
 
-	wantedProtectedTagsSet := mapset.NewThreadUnsafeSet()
+	wantedProtectedTagsSet := mapset.NewThreadUnsafeSet[string]()
 	for i, protectedTag := range configuration.ProtectedTags {
 		name, ok := protectedTag["name"]
 		if !ok {
@@ -164,8 +164,7 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 	}
 
 	extraProtectedTagsSet := existingProtectedTagsSet.Difference(wantedProtectedTagsSet)
-	for _, extraProtectedTag := range extraProtectedTagsSet.ToSlice() {
-		protectedTagName := extraProtectedTag.(string) //nolint:errcheck
+	for _, protectedTagName := range extraProtectedTagsSet.ToSlice() {
 		_, err := client.ProtectedTags.UnprotectRepositoryTags(c.Project, protectedTagName)
 		if err != nil {
 			return errors.Wrapf(err, `failed to unprotect tag "%s"`, protectedTagName)
@@ -189,7 +188,7 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 			}{
 				{"allowed_to_create", existingProtectedTag.CreateAccessLevels},
 			} {
-				existingAccessLevelsSet := mapset.NewThreadUnsafeSet()
+				existingAccessLevelsSet := mapset.NewThreadUnsafeSet[int]()
 				accessLevelToIDs := map[int]int{}
 				userIDtoIDs := map[int]int{}
 				groupIDtoIDs := map[int]int{}
@@ -271,7 +270,7 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 					}
 				}
 
-				wantedAccessLevelsSet := mapset.NewThreadUnsafeSet()
+				wantedAccessLevelsSet := mapset.NewThreadUnsafeSet[int]()
 				for _, level := range levels {
 					// We know it has to be a map.
 					id, ok := level.(map[string]interface{})["id"]
@@ -281,9 +280,7 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 				}
 
 				extraAccessLevelsSet := existingAccessLevelsSet.Difference(wantedAccessLevelsSet)
-				for _, extraAccessLevel := range extraAccessLevelsSet.ToSlice() {
-					accessLevelID := extraAccessLevel.(int) //nolint:errcheck
-
+				for _, accessLevelID := range extraAccessLevelsSet.ToSlice() {
 					protectedTag[ii.Name] = append(levels, map[string]interface{}{
 						"id":       accessLevelID,
 						"_destroy": true,
