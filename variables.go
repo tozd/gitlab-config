@@ -6,7 +6,7 @@ import (
 	"os"
 	"sort"
 
-	mapset "github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/google/go-querystring/query"
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
@@ -153,14 +153,14 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		EnvironmentScope string
 	}
 
-	existingVariablesSet := mapset.NewThreadUnsafeSet()
+	existingVariablesSet := mapset.NewThreadUnsafeSet[Variable]()
 	for _, variable := range variables {
 		existingVariablesSet.Add(Variable{
 			Key:              variable.Key,
 			EnvironmentScope: variable.EnvironmentScope,
 		})
 	}
-	wantedVariablesSet := mapset.NewThreadUnsafeSet()
+	wantedVariablesSet := mapset.NewThreadUnsafeSet[Variable]()
 	for i, variable := range configuration.Variables {
 		key, ok := variable["key"]
 		if !ok {
@@ -185,8 +185,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 	}
 
 	extraVariablesSet := existingVariablesSet.Difference(wantedVariablesSet)
-	for _, extraVariable := range extraVariablesSet.ToSlice() {
-		variable := extraVariable.(Variable) //nolint:errcheck
+	for _, variable := range extraVariablesSet.ToSlice() {
 		_, err := client.ProjectVariables.RemoveVariable(
 			c.Project,
 			variable.Key,

@@ -6,7 +6,7 @@ import (
 	"os"
 	"sort"
 
-	mapset "github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
 )
@@ -142,13 +142,13 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 	}
 
 	existingProtectedBranches := map[string]*gitlab.ProtectedBranch{}
-	existingProtectedBranchesSet := mapset.NewThreadUnsafeSet()
+	existingProtectedBranchesSet := mapset.NewThreadUnsafeSet[string]()
 	for _, protectedBranch := range protectedBranches {
 		existingProtectedBranchesSet.Add(protectedBranch.Name)
 		existingProtectedBranches[protectedBranch.Name] = protectedBranch
 	}
 
-	wantedProtectedBranchesSet := mapset.NewThreadUnsafeSet()
+	wantedProtectedBranchesSet := mapset.NewThreadUnsafeSet[string]()
 	for i, protectedBranch := range configuration.ProtectedBranches {
 		name, ok := protectedBranch["name"]
 		if !ok {
@@ -162,8 +162,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 	}
 
 	extraProtectedBranchesSet := existingProtectedBranchesSet.Difference(wantedProtectedBranchesSet)
-	for _, extraProtectedBranch := range extraProtectedBranchesSet.ToSlice() {
-		protectedBranchName := extraProtectedBranch.(string) //nolint:errcheck
+	for _, protectedBranchName := range extraProtectedBranchesSet.ToSlice() {
 		_, err := client.ProtectedBranches.UnprotectRepositoryBranches(c.Project, protectedBranchName)
 		if err != nil {
 			return errors.Wrapf(err, `failed to unprotect branch "%s"`, protectedBranchName)
@@ -189,7 +188,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 				{"allowed_to_merge", existingProtectedBranch.MergeAccessLevels},
 				{"allowed_to_unprotect", existingProtectedBranch.UnprotectAccessLevels},
 			} {
-				existingAccessLevelsSet := mapset.NewThreadUnsafeSet()
+				existingAccessLevelsSet := mapset.NewThreadUnsafeSet[int]()
 				accessLevelToIDs := map[int]int{}
 				userIDtoIDs := map[int]int{}
 				groupIDtoIDs := map[int]int{}
@@ -271,7 +270,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 					}
 				}
 
-				wantedAccessLevelsSet := mapset.NewThreadUnsafeSet()
+				wantedAccessLevelsSet := mapset.NewThreadUnsafeSet[int]()
 				for _, level := range levels {
 					// We know it has to be a map.
 					id, ok := level.(map[string]interface{})["id"]
@@ -281,9 +280,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 				}
 
 				extraAccessLevelsSet := existingAccessLevelsSet.Difference(wantedAccessLevelsSet)
-				for _, extraAccessLevel := range extraAccessLevelsSet.ToSlice() {
-					accessLevelID := extraAccessLevel.(int) //nolint:errcheck
-
+				for _, accessLevelID := range extraAccessLevelsSet.ToSlice() {
 					protectedBranch[ii.Name] = append(levels, map[string]interface{}{
 						"id":       accessLevelID,
 						"_destroy": true,
