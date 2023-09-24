@@ -1,18 +1,18 @@
 module gitlab.com/tozd/gitlab/config
 
-go 1.20
+go 1.21
 
 require (
 	github.com/alecthomas/kong v0.2.23-0.20220105075837-a7d3850e8012
 	github.com/deckarep/golang-set v1.7.1
 	github.com/google/go-querystring v1.1.0
-	github.com/hashicorp/go-retryablehttp v0.7.2
+	github.com/hashicorp/go-retryablehttp v0.7.4
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/stretchr/testify v1.8.4
 	github.com/tozd/sops/v3 v3.7.2-0.20230718000303-d0b3d7cb6d70
-	github.com/xanzy/go-gitlab v0.87.0
-	github.com/yuin/goldmark v1.4.13
-	gitlab.com/tozd/go/errors v0.3.0
+	github.com/xanzy/go-gitlab v0.91.1
+	github.com/yuin/goldmark v1.5.6
+	gitlab.com/tozd/go/errors v0.7.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -52,6 +52,7 @@ require (
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/deckarep/golang-set/v2 v2.3.1 // indirect
 	github.com/go-git/go-git/v5 v5.4.2 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect

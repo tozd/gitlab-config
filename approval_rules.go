@@ -6,7 +6,7 @@ import (
 	"os"
 	"sort"
 
-	mapset "github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
 )
@@ -174,7 +174,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 		options.Page = response.NextPage
 	}
 
-	existingApprovalRulesSet := mapset.NewThreadUnsafeSet()
+	existingApprovalRulesSet := mapset.NewThreadUnsafeSet[int]()
 	namesToIDs := map[string]int{}
 	for _, approvalRule := range approvalRules {
 		namesToIDs[approvalRule.Name] = approvalRule.ID
@@ -212,7 +212,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 		}
 	}
 
-	wantedApprovalRulesSet := mapset.NewThreadUnsafeSet()
+	wantedApprovalRulesSet := mapset.NewThreadUnsafeSet[int]()
 	for _, approvalRule := range configuration.ApprovalRules {
 		id, ok := approvalRule["id"]
 		if ok {
@@ -221,8 +221,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 	}
 
 	extraApprovalRulesSet := existingApprovalRulesSet.Difference(wantedApprovalRulesSet)
-	for _, extraApprovalRule := range extraApprovalRulesSet.ToSlice() {
-		approvalRuleID := extraApprovalRule.(int) //nolint:errcheck
+	for _, approvalRuleID := range extraApprovalRulesSet.ToSlice() {
 		_, err := client.Projects.DeleteProjectApprovalRule(c.Project, approvalRuleID, nil)
 		if err != nil {
 			return errors.Wrapf(err, `failed to delete approval rule %d`, approvalRuleID)

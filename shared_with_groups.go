@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	mapset "github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
 )
@@ -100,18 +100,17 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 		return errors.Wrap(err, `failed to get project`)
 	}
 
-	existingGroupsSet := mapset.NewThreadUnsafeSet()
+	existingGroupsSet := mapset.NewThreadUnsafeSet[int]()
 	for _, group := range project.SharedWithGroups {
 		existingGroupsSet.Add(group.GroupID)
 	}
-	wantedGroupsSet := mapset.NewThreadUnsafeSet()
+	wantedGroupsSet := mapset.NewThreadUnsafeSet[int]()
 	for _, group := range configuration.SharedWithGroups {
 		wantedGroupsSet.Add(group["group_id"].(int))
 	}
 
 	extraGroupsSet := existingGroupsSet.Difference(wantedGroupsSet)
-	for _, extraGroup := range extraGroupsSet.ToSlice() {
-		groupID := extraGroup.(int) //nolint:errcheck
+	for _, groupID := range extraGroupsSet.ToSlice() {
 		_, err := client.Projects.DeleteSharedProjectFromGroup(c.Project, groupID)
 		if err != nil {
 			return errors.Wrapf(err, `failed to unshare group %d`, groupID)

@@ -4,7 +4,7 @@ import (
 	"github.com/alecthomas/kong"
 )
 
-const DefaultDocsRef = "v16.1.2-ee"
+const DefaultDocsRef = "v16.4.0-ee"
 
 // GitLab describes parameters needed to connect to GitLab API.
 type GitLab struct {

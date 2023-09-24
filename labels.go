@@ -6,7 +6,7 @@ import (
 	"os"
 	"sort"
 
-	mapset "github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/xanzy/go-gitlab"
 	"gitlab.com/tozd/go/errors"
 )
@@ -146,7 +146,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		options.Page = response.NextPage
 	}
 
-	existingLabelsSet := mapset.NewThreadUnsafeSet()
+	existingLabelsSet := mapset.NewThreadUnsafeSet[int]()
 	namesToIDs := map[string]int{}
 	for _, label := range labels {
 		namesToIDs[label.Name] = label.ID
@@ -184,7 +184,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		}
 	}
 
-	wantedLabelsSet := mapset.NewThreadUnsafeSet()
+	wantedLabelsSet := mapset.NewThreadUnsafeSet[int]()
 	for _, label := range configuration.Labels {
 		id, ok := label["id"]
 		if ok {
@@ -193,8 +193,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 	}
 
 	extraLabelsSet := existingLabelsSet.Difference(wantedLabelsSet)
-	for _, extraLabel := range extraLabelsSet.ToSlice() {
-		labelID := extraLabel.(int) //nolint:errcheck
+	for _, labelID := range extraLabelsSet.ToSlice() {
 		// TODO: Use go-gitlab's function once it is updated to new API.
 		//       See: https://github.com/xanzy/go-gitlab/issues/1321
 		u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(c.Project), labelID)

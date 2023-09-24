@@ -17,6 +17,7 @@ func TestParseVariablesDocumentation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"environment_scope": "The environment_scope of the variable. Default: *. Type: string",
+		"description":       "The description of the variable. Default: null. Introduced in GitLab 16.2. Type: string",
 		"key":               "The key of a variable; must have no more than 255 characters; only A-Z, a-z, 0-9, and _ are allowed. Type: string",
 		"masked":            "Whether the variable is masked. Default: false. Type: boolean",
 		"protected":         "Whether the variable is protected. Default: false. Type: boolean",
