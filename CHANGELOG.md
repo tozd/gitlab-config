@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for protected tags.
+  [#19](https://gitlab.com/tozd/gitlab/config/-/issues/19)
+
 ### Changed
 
 - Update used GitLab API version to v16.4.0.
