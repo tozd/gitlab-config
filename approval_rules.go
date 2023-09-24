@@ -109,11 +109,11 @@ func parseApprovalRulesDocumentation(input []byte) (map[string]string, errors.E)
 	keyMapper := func(key string) string {
 		switch key {
 		case "usernames":
-			// "usernames" is not clear what it is.
+			// We want only "used_ids".
 			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/419051
 			return ""
 		case "report_type":
-			// "report_type" seems not to be used.
+			// "report_type" will be deprecated and is not needed.
 			// See: https://gitlab.com/gitlab-org/gitlab/-/issues/419050
 			return ""
 		default:
@@ -231,6 +231,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 	for _, approvalRule := range configuration.ApprovalRules {
 		// It seems that when rule_type is set to report_approver,
 		// an extra report_type field has to be set to code_coverage.
+		// "report_type" will eventually be deprecated.
 		// See: https://gitlab.com/gitlab-org/gitlab/-/issues/419050
 		if approvalRule["rule_type"] == "report_approver" {
 			approvalRule["report_type"] = "code_coverage"
