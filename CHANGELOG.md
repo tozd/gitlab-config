@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support for protected tags.
+  [#16](https://gitlab.com/tozd/gitlab/config/-/issues/16)
   [#19](https://gitlab.com/tozd/gitlab/config/-/issues/19)
 
 ### Changed
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support for merge request approvals and approval rules.
+  [#16](https://gitlab.com/tozd/gitlab/config/-/issues/16)
 
 ### Changed
 
