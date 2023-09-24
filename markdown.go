@@ -1,6 +1,7 @@
 package config
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/yuin/goldmark/ast"
@@ -11,6 +12,8 @@ import (
 	"github.com/yuin/goldmark/util"
 	"gitlab.com/tozd/go/errors"
 )
+
+var tierRegexp = regexp.MustCompile(` *\((FREE|PREMIUM|ULTIMATE)?( (SELF|SAAS|ALL))?( (EXPERIMENT|BTEA))?\)$`)
 
 // walker is the expected number of columns to find in a table.
 const tableColumns = 4
@@ -186,11 +189,9 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 				return "", nil
 			}
 			key := row[0]
-			// We do not care for which plan the field is.
-			// TODO: Remove other possible plan suffixes, too.
-			//       See: https://gitlab.com/gitlab-org/gitlab/-/blob/master/doc/development/documentation/styleguide/index.md#available-product-tier-badges
-			key = strings.TrimSuffix(key, " (PREMIUM)")
-			key = strings.TrimSuffix(key, " (ULTIMATE)")
+			// We do not care for which tier the field is.
+			// See: https://gitlab.com/gitlab-org/gitlab/-/blob/master/doc/development/documentation/styleguide/index.md#available-product-tier-badges
+			key = tierRegexp.ReplaceAllString(key, "")
 			if key == "id" {
 				// This is a documented parameter for project ID.
 				key = ""
