@@ -69,6 +69,29 @@ func renameMapField(input map[string]interface{}, from, to string) {
 	}
 }
 
+// removeField removes field named "field" anywhere in the arbitrary input
+// structure, even if it is nested inside other maps or slices.
+func removeField(input interface{}, field string) {
+	switch in := input.(type) {
+	case []interface{}:
+		for _, v := range in {
+			removeField(v, field)
+		}
+	case []map[string]interface{}:
+		for _, v := range in {
+			removeField(v, field)
+		}
+	case map[string]interface{}:
+		for key, value := range in {
+			removeField(value, field)
+
+			if key == field {
+				delete(in, key)
+			}
+		}
+	}
+}
+
 // removeFieldSuffix removes suffix from field names anywhere in the arbitrary
 // input structure, even if it is nested inside other maps or slices.
 func removeFieldSuffix(input interface{}, suffix string) {

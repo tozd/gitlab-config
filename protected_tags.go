@@ -51,6 +51,11 @@ func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Conf
 			// We rename to be consistent between getting and updating.
 			protectedTag["allowed_to_create"] = protectedTag["create_access_levels"]
 
+			// We for now remove ID because it is not useful for updating protected tags.
+			// TODO: Use ID to just update protected tags.
+			//       See: https://gitlab.com/tozd/gitlab/config/-/issues/18
+			removeField(protectedTag["allowed_to_create"], "id")
+
 			// Making sure ids and levels are an integer.
 			castFloatsToInts(protectedTag)
 
@@ -76,9 +81,9 @@ func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Conf
 		options.Page = response.NextPage
 	}
 
-	// We sort by protected tag's id so that we have deterministic order.
+	// We sort by protected tag's name so that we have deterministic order.
 	sort.Slice(configuration.ProtectedTags, func(i, j int) bool {
-		return configuration.ProtectedTags[i]["id"].(int) < configuration.ProtectedTags[j]["id"].(int)
+		return configuration.ProtectedTags[i]["name"].(string) < configuration.ProtectedTags[j]["name"].(string)
 	})
 
 	return false, nil
@@ -112,8 +117,10 @@ func getProtectedTagsDescriptions(gitRef string) (map[string]string, errors.E) {
 // updateProtectedTags updates GitLab project's protected tags using GitLab
 // protected tags API endpoint based on the configuration struct.
 //
-// Access levels without the ID field are matched to existing access labels based on
-// their fields. Unmatched access levels are created as new.
+// It first unprotects all protected tags which the project does not have anymore
+// configured as protected, and then updates or adds protection for configured
+// protected tags. When updating an existing protected tag it briefly umprotects
+// the tag and reprotects it with new configuration.
 func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.ProtectedTags == nil {
 		return nil
@@ -143,11 +150,9 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 		options.Page = response.NextPage
 	}
 
-	existingProtectedTags := map[string]*gitlab.ProtectedTag{}
 	existingProtectedTagsSet := mapset.NewThreadUnsafeSet[string]()
 	for _, protectedTag := range protectedTags {
 		existingProtectedTagsSet.Add(protectedTag.Name)
-		existingProtectedTags[protectedTag.Name] = protectedTag
 	}
 
 	wantedProtectedTagsSet := mapset.NewThreadUnsafeSet[string]()
@@ -171,141 +176,28 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 		}
 	}
 
+	u := fmt.Sprintf("projects/%s/protected_tags", gitlab.PathEscape(c.Project))
+
 	for _, protectedTag := range configuration.ProtectedTags {
 		// We made sure above that all protected tags in configuration have a string name.
 		name := protectedTag["name"].(string) //nolint:errcheck
 
-		// If project already have this protected tag, we update it.
-		// Others are updated if they contain an ID or created new if they do not contain an ID.
+		// If project already have this protected tag, we have to
+		// first unprotect it to be able to update the protected tag.
 		if existingProtectedTagsSet.Contains(name) {
-			// We know it exists.
-			existingProtectedTag := existingProtectedTags[name]
-
-			// We have to mark any access level which does not exist anymore for deletion.
-			for _, ii := range []struct {
-				Name         string
-				AccessLevels []*gitlab.TagAccessDescription
-			}{
-				{"allowed_to_create", existingProtectedTag.CreateAccessLevels},
-			} {
-				existingAccessLevelsSet := mapset.NewThreadUnsafeSet[int]()
-				accessLevelToIDs := map[int]int{}
-				userIDtoIDs := map[int]int{}
-				groupIDtoIDs := map[int]int{}
-				for _, accessLevel := range ii.AccessLevels {
-					if accessLevel.AccessLevel != 0 {
-						accessLevelToIDs[int(accessLevel.AccessLevel)] = accessLevel.ID
-					}
-					if accessLevel.UserID != 0 {
-						userIDtoIDs[accessLevel.UserID] = accessLevel.ID
-					}
-					if accessLevel.GroupID != 0 {
-						groupIDtoIDs[accessLevel.GroupID] = accessLevel.ID
-					}
-					existingAccessLevelsSet.Add(accessLevel.ID)
-				}
-
-				wantedAccessLevels, ok := protectedTag[ii.Name]
-				if !ok {
-					wantedAccessLevels = []interface{}{}
-				}
-
-				levels, ok := wantedAccessLevels.([]interface{})
-				if !ok {
-					return errors.Errorf(`invalid access levels "%s" for protected tag "%s"`, ii.Name, name)
-				}
-
-				// Set access level IDs if a matching existing access level can be found.
-				for i, level := range levels {
-					l, ok := level.(map[string]interface{})
-					if !ok {
-						return errors.Errorf(`invalid access level "%s" at index %d for protected tag "%s"`, ii.Name, i, name)
-					}
-
-					// Is access level ID already set?
-					id, ok := l["id"]
-					if ok {
-						// If ID is provided, the access level should exist.
-						id, ok := id.(int) //nolint:govet
-						if !ok {
-							return errors.Errorf(`invalid "id" for access level "%s" at index %d for protected tag "%s"`, ii.Name, i, name)
-						}
-						if existingAccessLevelsSet.Contains(id) {
-							continue
-						}
-						// Access level does not exist with that ID. We remove the ID and leave to matching to
-						// find the correct ID, if it exists. Otherwise we will just create a new access level.
-						delete(l, "id")
-					}
-
-					accessLevel, ok := l["access_level"]
-					if ok {
-						a, ok := accessLevel.(int)
-						if ok {
-							id, ok = accessLevelToIDs[a]
-							if ok {
-								l["id"] = id
-							}
-						}
-					}
-					userID, ok := l["user_id"]
-					if ok {
-						u, ok := userID.(int)
-						if ok {
-							id, ok = userIDtoIDs[u]
-							if ok {
-								l["id"] = id
-							}
-						}
-					}
-					groupID, ok := l["group_id"]
-					if ok {
-						g, ok := groupID.(int)
-						if ok {
-							id, ok = groupIDtoIDs[g]
-							if ok {
-								l["id"] = id
-							}
-						}
-					}
-				}
-
-				wantedAccessLevelsSet := mapset.NewThreadUnsafeSet[int]()
-				for _, level := range levels {
-					// We know it has to be a map.
-					id, ok := level.(map[string]interface{})["id"]
-					if ok {
-						wantedAccessLevelsSet.Add(id.(int))
-					}
-				}
-
-				extraAccessLevelsSet := existingAccessLevelsSet.Difference(wantedAccessLevelsSet)
-				for _, accessLevelID := range extraAccessLevelsSet.ToSlice() {
-					protectedTag[ii.Name] = append(levels, map[string]interface{}{
-						"id":       accessLevelID,
-						"_destroy": true,
-					})
-				}
-			}
-
-			req, err := client.NewRequest(http.MethodPatch, fmt.Sprintf("projects/%s/protected_tags/%s", gitlab.PathEscape(c.Project), name), protectedTag, nil)
+			_, err := client.ProtectedTags.UnprotectRepositoryTags(c.Project, name)
 			if err != nil {
-				return errors.Wrapf(err, `failed to update protected tag "%s"`, name)
+				return errors.Wrapf(err, `failed to unprotect tag "%s" before reprotecting`, name)
 			}
-			_, err = client.Do(req, nil)
-			if err != nil {
-				return errors.Wrapf(err, `failed to update protected tag "%s"`, name)
-			}
-		} else {
-			// We create a new protected tag.
-			req, err := client.NewRequest(http.MethodPost, fmt.Sprintf("projects/%s/protected_tags", gitlab.PathEscape(c.Project)), protectedTag, nil)
-			if err != nil {
-				return errors.Wrapf(err, `failed to protect tag "%s"`, name)
-			}
-			_, err = client.Do(req, nil)
-			if err != nil {
-				return errors.Wrapf(err, `failed to protect tag "%s"`, name)
-			}
+		}
+
+		req, err := client.NewRequest(http.MethodPost, u, protectedTag, nil)
+		if err != nil {
+			return errors.Wrapf(err, `failed to protect tag "%s"`, name)
+		}
+		_, err = client.Do(req, nil)
+		if err != nil {
+			return errors.Wrapf(err, `failed to protect tag "%s"`, name)
 		}
 	}
 

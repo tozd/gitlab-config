@@ -186,3 +186,48 @@ func TestRemoveFieldSuffix(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveField(t *testing.T) {
+	tests := []struct {
+		input interface{}
+		want  interface{}
+	}{
+		{
+			map[string]interface{}{
+				"field": map[string]interface{}{
+					"field": "bar",
+					"id":    "x",
+					"array": []map[string]interface{}{
+						{
+							"id": "x",
+							"f1": "abc",
+						},
+						{
+							"id": "x",
+							"f2": "abc",
+						},
+					},
+				},
+			}, map[string]interface{}{
+				"field": map[string]interface{}{
+					"field": "bar",
+					"array": []map[string]interface{}{
+						{
+							"f1": "abc",
+						},
+						{
+							"f2": "abc",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for k, tt := range tests {
+		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			removeField(tt.input, "id")
+			assert.Equal(t, tt.want, tt.input)
+		})
+	}
+}
