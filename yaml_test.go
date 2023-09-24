@@ -49,6 +49,7 @@ func TestToConfigurationYAML(t *testing.T) {
 				"forked_from_project: null\n" +
 				"labels: []\n" +
 				"protected_branches: []\n" +
+				"protected_tags: []\n" +
 				"variables: []\n",
 		},
 		{
@@ -113,6 +114,7 @@ func TestToConfigurationYAML(t *testing.T) {
 				"forked_from_project: null\n" +
 				"labels: []\n" +
 				"protected_branches: []\n" +
+				"protected_tags: []\n" +
 				"variables: []\n",
 		},
 	}
