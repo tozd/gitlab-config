@@ -134,6 +134,11 @@ func (c *SetCommand) Run(_ *Globals) errors.E {
 		return errE
 	}
 
+	errE = c.updatePipelineSchedules(client, &configuration)
+	if errE != nil {
+		return errE
+	}
+
 	fmt.Fprintf(os.Stderr, "Updated everything.\n")
 
 	return nil

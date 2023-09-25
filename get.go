@@ -88,6 +88,12 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 	}
 	hasSensitive = hasSensitive || s
 
+	s, errE = c.getPipelineSchedules(client, &configuration)
+	if errE != nil {
+		return errE
+	}
+	hasSensitive = hasSensitive || s
+
 	data, errE := toConfigurationYAML(&configuration)
 	if errE != nil {
 		return errE
