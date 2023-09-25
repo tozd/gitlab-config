@@ -34,7 +34,7 @@ func (c *GetCommand) getPipelineSchedules(client *gitlab.Client, configuration *
 		Page:    1,
 	}
 
-	for {
+	for { //nolint:dupl
 		req, err := client.NewRequest(http.MethodGet, u, options, nil)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to get pipeline schedules")

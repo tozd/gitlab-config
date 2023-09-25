@@ -27,6 +27,6 @@ type Configuration struct {
 	ProtectedTagsComment     string                   `json:"comment:protected_tags,omitempty"      yaml:"comment:protected_tags,omitempty"`
 	Variables                []map[string]interface{} `json:"variables"                             yaml:"variables"`
 	VariablesComment         string                   `json:"comment:variables,omitempty"           yaml:"comment:variables,omitempty"`
-	PipelineSchedules        []map[string]interface{} `json:"pipeline_schedules"                             yaml:"pipeline_schedules"`
-	PipelineSchedulesComment string                   `json:"comment:pipeline_schedules,omitempty"           yaml:"comment:pipeline_schedules,omitempty"`
+	PipelineSchedules        []map[string]interface{} `json:"pipeline_schedules"                    yaml:"pipeline_schedules"`
+	PipelineSchedulesComment string                   `json:"comment:pipeline_schedules,omitempty"  yaml:"comment:pipeline_schedules,omitempty"`
 }
