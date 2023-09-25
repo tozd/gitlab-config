@@ -39,7 +39,7 @@ func toConfigurationYAML(configuration *Configuration) ([]byte, errors.E) {
 	var node yaml.Node
 	err := (&node).Encode(configuration)
 	if err != nil {
-		return nil, errors.Wrap(err, `cannot encode configuration`)
+		return nil, errors.WithMessage(err, "cannot encode configuration")
 	}
 	return toYAML(&node)
 }
@@ -137,11 +137,11 @@ func toYAML(node *yaml.Node) ([]byte, errors.E) {
 	encoder.SetIndent(yamlIndent)
 	err := encoder.Encode(node)
 	if err != nil {
-		return nil, errors.Wrap(err, `cannot marshal configuration`)
+		return nil, errors.WithMessage(err, "cannot marshal configuration")
 	}
 	err = encoder.Close()
 	if err != nil {
-		return nil, errors.Wrap(err, `cannot marshal configuration`)
+		return nil, errors.WithMessage(err, "cannot marshal configuration")
 	}
 
 	return buffer.Bytes(), nil

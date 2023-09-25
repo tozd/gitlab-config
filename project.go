@@ -23,14 +23,14 @@ func (c *GetCommand) getProject(client *gitlab.Client, configuration *Configurat
 
 	req, err := client.NewRequest(http.MethodGet, u, nil, nil)
 	if err != nil {
-		return false, errors.Wrap(err, `failed to get project`)
+		return false, errors.WithMessage(err, `failed to get project`)
 	}
 
 	project := map[string]interface{}{}
 
 	_, err = client.Do(req, &project)
 	if err != nil {
-		return false, errors.Wrap(err, `failed to get project`)
+		return false, errors.WithMessage(err, `failed to get project`)
 	}
 
 	hasSensitive := false
@@ -137,7 +137,7 @@ func parseProjectDocumentation(input []byte) (map[string]string, errors.E) {
 func getProjectDescriptions(gitRef string) (map[string]string, errors.E) {
 	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/projects.md", gitRef))
 	if err != nil {
-		return nil, errors.Wrap(err, `failed to get project configuration descriptions`)
+		return nil, errors.WithMessage(err, "failed to get project configuration descriptions")
 	}
 	return parseProjectDocumentation(data)
 }
@@ -179,11 +179,11 @@ func (c *SetCommand) updateProject(client *gitlab.Client, configuration *Configu
 
 	req, err := client.NewRequest(http.MethodPut, u, configuration.Project, nil)
 	if err != nil {
-		return errors.Wrap(err, `failed to update GitLab project`)
+		return errors.WithMessage(err, "failed to update GitLab project")
 	}
 	_, err = client.Do(req, nil)
 	if err != nil {
-		return errors.Wrap(err, `failed to update GitLab project`)
+		return errors.WithMessage(err, "failed to update GitLab project")
 	}
 
 	return nil

@@ -41,7 +41,7 @@ func main() {
 
 	err := ctx.Run(&commands.Globals)
 	if err != nil {
-		fmt.Fprintf(ctx.Stderr, "error: %+v", err)
+		fmt.Fprintf(ctx.Stderr, "error: % -+#.1v", err)
 		ctx.Exit(exitCode)
 	}
 }

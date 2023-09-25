@@ -178,27 +178,33 @@ func convertNestedObjectsToIds(input interface{}) ([]interface{}, error) {
 
 	list, ok := input.([]interface{})
 	if !ok {
-		return nil, errors.Errorf("not a list")
+		return nil, errors.New("not a list")
 	}
 
 	for i, element := range list {
 		el, ok := element.(map[string]interface{})
 		if !ok {
-			return nil, errors.Errorf("not an object at index %d", i)
+			errE := errors.New("not an object")
+			errors.Details(errE)["index"] = i
+			return nil, errE
 		}
 
 		name, ok := el["name"]
 		if ok {
 			n, ok := name.(string) //nolint:govet
 			if !ok {
-				return nil, errors.Errorf("name not a string at index %d", i)
+				errE := errors.New(`"name" not a string`)
+				errors.Details(errE)["index"] = i
+				return nil, errE
 			}
 			ids = append(ids, "comment:"+n)
 		}
 
 		id, ok := el["id"]
 		if !ok {
-			return nil, errors.Errorf("ID is missing at index %d", i)
+			errE := errors.New(`"id" is missing`)
+			errors.Details(errE)["index"] = i
+			return nil, errE
 		}
 		ids = append(ids, id)
 	}

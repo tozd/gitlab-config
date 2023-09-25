@@ -24,14 +24,14 @@ func (c *GetCommand) getApprovals(client *gitlab.Client, configuration *Configur
 	u := fmt.Sprintf("projects/%s/approvals", gitlab.PathEscape(c.Project))
 	req, err := client.NewRequest(http.MethodGet, u, nil, nil)
 	if err != nil {
-		return false, errors.Wrapf(err, `failed to get approvals`)
+		return false, errors.WithMessage(err, "failed to get approvals")
 	}
 
 	approvals := map[string]interface{}{}
 
 	_, err = client.Do(req, &approvals)
 	if err != nil {
-		return false, errors.Wrapf(err, `failed to get approvals`)
+		return false, errors.WithMessage(err, "failed to get approvals")
 	}
 
 	// Only retain those keys which can be edited through the API
@@ -63,7 +63,7 @@ func parseApprovalsDocumentation(input []byte) (map[string]string, errors.E) {
 func getApprovalsDescriptions(gitRef string) (map[string]string, errors.E) {
 	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/merge_request_approvals.md", gitRef))
 	if err != nil {
-		return nil, errors.Wrap(err, `failed to get approvals descriptions`)
+		return nil, errors.WithMessage(err, "failed to get approvals descriptions")
 	}
 	return parseApprovalsDocumentation(data)
 }
@@ -80,11 +80,11 @@ func (c *SetCommand) updateApprovals(client *gitlab.Client, configuration *Confi
 	u := fmt.Sprintf("projects/%s/approvals", gitlab.PathEscape(c.Project))
 	req, err := client.NewRequest(http.MethodPost, u, configuration.Approvals, nil)
 	if err != nil {
-		return errors.Wrapf(err, `failed to update approvals`)
+		return errors.WithMessage(err, "failed to update approvals")
 	}
 	_, err = client.Do(req, nil)
 	if err != nil {
-		return errors.Wrapf(err, `failed to update approvals`)
+		return errors.WithMessage(err, "failed to update approvals")
 	}
 
 	return nil

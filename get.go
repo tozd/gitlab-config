@@ -40,7 +40,7 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 
 	client, err := gitlab.NewClient(c.Token, gitlab.WithBaseURL(c.BaseURL))
 	if err != nil {
-		return errors.Wrap(err, `failed to create GitLab API client instance`)
+		return errors.WithMessage(err, "failed to create GitLab API client instance")
 	}
 
 	var configuration Configuration
@@ -99,7 +99,9 @@ func (c *GetCommand) Run(globals *Globals) errors.E {
 		_, err = os.Stdout.Write(data)
 	}
 	if err != nil {
-		return errors.Wrapf(err, `cannot write configuration to "%s"`, c.Output)
+		errE := errors.WithMessage(err, "cannot write configuration")
+		errors.Details(errE)["path"] = c.Output
+		return errE
 	}
 
 	fmt.Fprintf(os.Stderr, "Got everything.\n")

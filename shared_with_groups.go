@@ -34,7 +34,9 @@ func (c *GetCommand) getSharedWithGroups(
 		for i, sharedWithGroup := range sharedWithGroups {
 			sharedWithGroup, ok := sharedWithGroup.(map[string]interface{})
 			if !ok {
-				return false, errors.Errorf(`invalid "shared_with_groups" at index %d`, i)
+				errE := errors.New(`invalid "shared_with_groups"`)
+				errors.Details(errE)["index"] = i
+				return false, errE
 			}
 			groupFullPath := sharedWithGroup["group_full_path"]
 			// Rename because share API has a different key than get project API.
@@ -76,7 +78,7 @@ func parseSharedWithGroupsDocumentation(input []byte) (map[string]string, errors
 func getSharedWithGroupsDescriptions(gitRef string) (map[string]string, errors.E) {
 	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/projects.md", gitRef))
 	if err != nil {
-		return nil, errors.Wrap(err, `failed to get share project descriptions`)
+		return nil, errors.WithMessage(err, `failed to get share project descriptions`)
 	}
 	return parseSharedWithGroupsDocumentation(data)
 }
@@ -97,7 +99,7 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 
 	project, _, err := client.Projects.GetProject(c.Project, nil)
 	if err != nil {
-		return errors.Wrap(err, `failed to get project`)
+		return errors.WithMessage(err, "failed to get project")
 	}
 
 	existingGroupsSet := mapset.NewThreadUnsafeSet[int]()
@@ -108,11 +110,17 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 	for i, group := range configuration.SharedWithGroups {
 		id, ok := group["group_id"]
 		if !ok {
-			return errors.Errorf(`shared with groups in configuration at index %d does not have "group_id"`, i)
+			errE := errors.New(`shared with groups is missing field "group_id"`)
+			errors.Details(errE)["index"] = i
+			return errE
 		}
 		iid, ok := id.(int)
 		if !ok {
-			return errors.Errorf(`shared with groups "group_id" at index %d is not an integer, but %T: %s`, i, id, id)
+			errE := errors.New(`shared with groups's field "group_id" is not an integer`)
+			errors.Details(errE)["index"] = i
+			errors.Details(errE)["type"] = fmt.Sprintf("%T", id)
+			errors.Details(errE)["value"] = id
+			return errE
 		}
 		wantedGroupsSet.Add(iid)
 	}
@@ -121,7 +129,9 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 	for _, groupID := range extraGroupsSet.ToSlice() {
 		_, err := client.Projects.DeleteSharedProjectFromGroup(c.Project, groupID)
 		if err != nil {
-			return errors.Wrapf(err, `failed to unshare group %d`, groupID)
+			errE := errors.WithMessage(err, "failed to unshare group")
+			errors.Details(errE)["group"] = groupID
+			return errE
 		}
 	}
 
@@ -136,17 +146,23 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 		if existingGroupsSet.Contains(groupID) {
 			_, err := client.Projects.DeleteSharedProjectFromGroup(c.Project, groupID)
 			if err != nil {
-				return errors.Wrapf(err, `failed to unshare group %d before resharing`, groupID)
+				errE := errors.WithMessage(err, "failed to unshare group before resharing")
+				errors.Details(errE)["group"] = groupID
+				return errE
 			}
 		}
 
 		req, err := client.NewRequest(http.MethodPost, u, group, nil)
 		if err != nil {
-			return errors.Wrapf(err, `failed to share group %d`, groupID)
+			errE := errors.WithMessage(err, "failed to share group")
+			errors.Details(errE)["group"] = groupID
+			return errE
 		}
 		_, err = client.Do(req, nil)
 		if err != nil {
-			return errors.Wrapf(err, `failed to share group %d`, groupID)
+			errE := errors.WithMessage(err, "failed to share group")
+			errors.Details(errE)["group"] = groupID
+			return errE
 		}
 	}
 

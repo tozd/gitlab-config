@@ -23,11 +23,14 @@ func (c *GetCommand) getForkedFromProject(
 		}
 		forkIDAny, ok := forkedFromProject["id"]
 		if !ok {
-			return false, errors.New(`invalid "forked_from_project"`)
+			return false, errors.New(`"forked_from_project" is missing field "id"`)
 		}
 		forkIDFloat, ok := forkIDAny.(float64)
 		if !ok {
-			return false, errors.New(`invalid "forked_from_project"`)
+			errE := errors.New(`"forked_from_project"'s field "id" is not a float`)
+			errors.Details(errE)["type"] = fmt.Sprintf("%T", forkIDAny)
+			errors.Details(errE)["value"] = forkIDAny
+			return false, errE
 		}
 		// Making sure it is an integer.
 		forkID := int(forkIDFloat)
@@ -36,7 +39,10 @@ func (c *GetCommand) getForkedFromProject(
 		if forkPathWithNamespace != nil {
 			configuration.ForkedFromProjectComment, ok = forkPathWithNamespace.(string)
 			if !ok {
-				return false, errors.New(`invalid "path_with_namespace" in "forked_from_project"`)
+				errE := errors.New(`"forked_from_project"'s field "path_with_namespace" is not a string`)
+				errors.Details(errE)["type"] = fmt.Sprintf("%T", forkPathWithNamespace)
+				errors.Details(errE)["value"] = forkPathWithNamespace
+				return false, errE
 			}
 		}
 	} else {
@@ -58,29 +64,33 @@ func (c *SetCommand) updateForkedFromProject(client *gitlab.Client, configuratio
 
 	project, _, err := client.Projects.GetProject(c.Project, nil)
 	if err != nil {
-		return errors.Wrap(err, `failed to get project`)
+		return errors.WithMessage(err, "failed to get project")
 	}
 
 	if *configuration.ForkedFromProject == 0 {
 		if project.ForkedFromProject != nil {
 			_, err := client.Projects.DeleteProjectForkRelation(c.Project)
 			if err != nil {
-				return errors.Wrap(err, `failed to delete fork relation`)
+				return errors.WithMessage(err, "failed to delete fork relation")
 			}
 		}
 	} else if project.ForkedFromProject == nil {
 		_, _, err := client.Projects.CreateProjectForkRelation(c.Project, *configuration.ForkedFromProject)
 		if err != nil {
-			return errors.Wrapf(err, `failed to create fork relation to project %d`, *configuration.ForkedFromProject)
+			errE := errors.WithMessage(err, "failed to create fork relation")
+			errors.Details(errE)["to"] = *configuration.ForkedFromProject
+			return errE
 		}
 	} else if project.ForkedFromProject.ID != *configuration.ForkedFromProject {
 		_, err := client.Projects.DeleteProjectForkRelation(c.Project)
 		if err != nil {
-			return errors.Wrap(err, `failed to delete fork relation before creating new`)
+			return errors.WithMessage(err, "failed to delete fork relation before creating new")
 		}
 		_, _, err = client.Projects.CreateProjectForkRelation(c.Project, *configuration.ForkedFromProject)
 		if err != nil {
-			return errors.Wrapf(err, `failed to create fork relation to project %d`, *configuration.ForkedFromProject)
+			errE := errors.WithMessage(err, "failed to create fork relation")
+			errors.Details(errE)["to"] = *configuration.ForkedFromProject
+			return errE
 		}
 	}
 	return nil

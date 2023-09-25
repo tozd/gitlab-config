@@ -24,7 +24,7 @@ func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Conf
 	}
 	// We need "name" later on.
 	if _, ok := descriptions["name"]; !ok {
-		return false, errors.New(`"name" missing in protected tags descriptions`)
+		return false, errors.New(`"name" field is missing in protected tags descriptions`)
 	}
 	configuration.ProtectedTagsComment = formatDescriptions(descriptions)
 
@@ -37,14 +37,18 @@ func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Conf
 	for {
 		req, err := client.NewRequest(http.MethodGet, u, options, nil)
 		if err != nil {
-			return false, errors.Wrapf(err, `failed to get protected tags, page %d`, options.Page)
+			errE := errors.WithMessage(err, "failed to get protected tags")
+			errors.Details(errE)["page"] = options.Page
+			return false, errE
 		}
 
 		protectedTags := []map[string]interface{}{}
 
 		response, err := client.Do(req, &protectedTags)
 		if err != nil {
-			return false, errors.Wrapf(err, `failed to get protected tags, page %d`, options.Page)
+			errE := errors.WithMessage(err, "failed to get protected tags")
+			errors.Details(errE)["page"] = options.Page
+			return false, errE
 		}
 
 		if len(protectedTags) == 0 {
@@ -77,11 +81,14 @@ func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Conf
 
 			name, ok := protectedTag["name"]
 			if !ok {
-				return false, errors.Errorf(`protected tag is missing "name"`)
+				return false, errors.New(`protected tag is missing field "name"`)
 			}
 			_, ok = name.(string)
 			if !ok {
-				return false, errors.Errorf(`protected tag "name" is not a string, but %T: %s`, name, name)
+				errE := errors.New(`protected tag's field "name" is not a string`)
+				errors.Details(errE)["type"] = fmt.Sprintf("%T", name)
+				errors.Details(errE)["value"] = name
+				return false, errE
 			}
 
 			configuration.ProtectedTags = append(configuration.ProtectedTags, protectedTag)
@@ -123,7 +130,7 @@ func parseProtectedTagsDocumentation(input []byte) (map[string]string, errors.E)
 func getProtectedTagsDescriptions(gitRef string) (map[string]string, errors.E) {
 	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/protected_tags.md", gitRef))
 	if err != nil {
-		return nil, errors.Wrap(err, `failed to get protected tags descriptions`)
+		return nil, errors.WithMessage(err, "failed to get protected tags descriptions")
 	}
 	return parseProtectedTagsDocumentation(data)
 }
@@ -152,7 +159,9 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 	for {
 		pt, response, err := client.ProtectedTags.ListProtectedTags(c.Project, options)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get protected tags, page %d`, options.Page)
+			errE := errors.WithMessage(err, "failed to get protected tags")
+			errors.Details(errE)["page"] = options.Page
+			return errE
 		}
 
 		protectedTags = append(protectedTags, pt...)
@@ -173,11 +182,17 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 	for i, protectedTag := range configuration.ProtectedTags {
 		name, ok := protectedTag["name"]
 		if !ok {
-			return errors.Errorf(`protected tag in configuration at index %d does not have "name"`, i)
+			errE := errors.Errorf(`protected tag is missing field "name"`)
+			errors.Details(errE)["index"] = i
+			return errE
 		}
 		n, ok := name.(string)
 		if !ok {
-			return errors.Errorf(`protected tags "name" at index %d is not a string, but %T: %s`, i, name, name)
+			errE := errors.New(`protected tag's field "name" is not a string`)
+			errors.Details(errE)["index"] = i
+			errors.Details(errE)["type"] = fmt.Sprintf("%T", name)
+			errors.Details(errE)["value"] = name
+			return errE
 		}
 		wantedProtectedTagsSet.Add(n)
 	}
@@ -186,7 +201,9 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 	for _, protectedTagName := range extraProtectedTagsSet.ToSlice() {
 		_, err := client.ProtectedTags.UnprotectRepositoryTags(c.Project, protectedTagName)
 		if err != nil {
-			return errors.Wrapf(err, `failed to unprotect tag "%s"`, protectedTagName)
+			errE := errors.WithMessage(err, "failed to unprotect tag")
+			errors.Details(errE)["tag"] = protectedTagName
+			return errE
 		}
 	}
 
@@ -201,17 +218,23 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 		if existingProtectedTagsSet.Contains(name) {
 			_, err := client.ProtectedTags.UnprotectRepositoryTags(c.Project, name)
 			if err != nil {
-				return errors.Wrapf(err, `failed to unprotect tag "%s" before reprotecting`, name)
+				errE := errors.WithMessage(err, "failed to unprotect tag before reprotecting")
+				errors.Details(errE)["tag"] = name
+				return errE
 			}
 		}
 
 		req, err := client.NewRequest(http.MethodPost, u, protectedTag, nil)
 		if err != nil {
-			return errors.Wrapf(err, `failed to protect tag "%s"`, name)
+			errE := errors.WithMessage(err, "failed to protect tag")
+			errors.Details(errE)["tag"] = name
+			return errE
 		}
 		_, err = client.Do(req, nil)
 		if err != nil {
-			return errors.Wrapf(err, `failed to protect tag "%s"`, name)
+			errE := errors.WithMessage(err, "failed to protect tag")
+			errors.Details(errE)["tag"] = name
+			return errE
 		}
 	}
 

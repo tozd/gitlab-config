@@ -141,7 +141,9 @@ func (v *extractTableVisitor) tableWalker(n ast.Node, entering bool) (ast.WalkSt
 		if key != "" {
 			_, ok := v.Result[key]
 			if ok {
-				return ast.WalkStop, errors.Errorf(`duplicate key "%s"`, key)
+				errE := errors.New("duplicate key")
+				errors.Details(errE)["key"] = key
+				return ast.WalkStop, errE
 			}
 			v.Result[key] = value
 		}
@@ -171,18 +173,24 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 		CheckHeader: func(row []string) errors.E {
 			expectedHeader := []string{"Attribute", "Type", "Required", "Description"}
 			if len(row) != len(expectedHeader) {
-				return errors.Errorf("invalid header: %+v", row)
+				errE := errors.New("invalid header")
+				errors.Details(errE)["row"] = row
+				return errE
 			}
 			for i, h := range expectedHeader {
 				if row[i] != h {
-					return errors.Errorf("invalid header: %+v", row)
+					errE := errors.New("invalid header")
+					errors.Details(errE)["row"] = row
+					return errE
 				}
 			}
 			return nil
 		},
 		Key: func(row []string) (string, errors.E) {
 			if len(row) != tableColumns {
-				return "", errors.Errorf("invalid row: %+v", row)
+				errE := errors.New("invalid row")
+				errors.Details(errE)["row"] = row
+				return "", errE
 			}
 			// We skip deprecated fields.
 			if strings.Contains(row[3], "(Deprecated") || strings.Contains(row[3], "Deprecated in") {
@@ -203,7 +211,9 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 		},
 		Value: func(row []string) (string, errors.E) {
 			if len(row) != tableColumns {
-				return "", errors.Errorf("invalid row: %+v", row)
+				errE := errors.New("invalid row")
+				errors.Details(errE)["row"] = row
+				return "", errE
 			}
 			description := row[3]
 			if len(description) > 0 {

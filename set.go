@@ -44,7 +44,9 @@ func (c *SetCommand) Run(_ *Globals) errors.E {
 		input, err = io.ReadAll(os.Stdin)
 	}
 	if err != nil {
-		return errors.Wrapf(err, `cannot read configuration from "%s"`, c.Input)
+		errE := errors.WithMessage(err, "cannot read configuration")
+		errors.Details(errE)["path"] = c.Input
+		return errE
 	}
 
 	if !c.NoDecrypt {
@@ -56,14 +58,18 @@ func (c *SetCommand) Run(_ *Globals) errors.E {
 			if errors.As(err, &userErr) {
 				err = errors.Errorf("%w\n\n%s", err, userErr.UserError())
 			}
-			return errors.Wrapf(err, `cannot decrypt configuration from "%s"`, c.Input)
+			errE := errors.WithMessage(err, "cannot decrypt configuration")
+			errors.Details(errE)["path"] = c.Input
+			return errE
 		}
 	}
 
 	var configuration Configuration
 	err = yaml.Unmarshal(input, &configuration)
 	if err != nil {
-		return errors.Wrapf(err, `cannot unmarshal configuration from "%s"`, c.Input)
+		errE := errors.WithMessage(err, "cannot unmarshal configuration")
+		errors.Details(errE)["path"] = c.Input
+		return errE
 	}
 
 	// We use reflect to go over all struct's fields so we do not have to
@@ -75,7 +81,7 @@ func (c *SetCommand) Run(_ *Globals) errors.E {
 
 	client, err := gitlab.NewClient(c.Token, gitlab.WithBaseURL(c.BaseURL))
 	if err != nil {
-		return errors.Wrap(err, `failed to create GitLab API client instance`)
+		return errors.WithMessage(err, "failed to create GitLab API client instance")
 	}
 
 	errE := c.updateProject(client, &configuration)

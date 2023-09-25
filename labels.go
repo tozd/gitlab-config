@@ -24,7 +24,7 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 	}
 	// We need "id" later on.
 	if _, ok := descriptions["id"]; !ok {
-		return false, errors.New(`"id" missing in labels descriptions`)
+		return false, errors.New(`"id" field is missing in labels descriptions`)
 	}
 	configuration.LabelsComment = formatDescriptions(descriptions)
 
@@ -40,14 +40,18 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 	for {
 		req, err := client.NewRequest(http.MethodGet, u, options, nil)
 		if err != nil {
-			return false, errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
+			errE := errors.WithMessage(err, "failed to get project labels")
+			errors.Details(errE)["page"] = options.Page
+			return false, errE
 		}
 
 		labels := []map[string]interface{}{}
 
 		response, err := client.Do(req, &labels)
 		if err != nil {
-			return false, errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
+			errE := errors.WithMessage(err, "failed to get project labels")
+			errors.Details(errE)["page"] = options.Page
+			return false, errE
 		}
 
 		if len(labels) == 0 {
@@ -69,11 +73,14 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 
 			id, ok := label["id"]
 			if !ok {
-				return false, errors.Errorf(`label is missing "id"`)
+				return false, errors.New(`label is missing field "id"`)
 			}
 			_, ok = id.(int)
 			if !ok {
-				return false, errors.Errorf(`label "id" is not an integer, but %T: %s`, id, id)
+				errE := errors.New(`label's field "id" is not an integer`)
+				errors.Details(errE)["type"] = fmt.Sprintf("%T", id)
+				errors.Details(errE)["value"] = id
+				return false, errE
 			}
 
 			configuration.Labels = append(configuration.Labels, label)
@@ -117,7 +124,7 @@ func parseLabelsDocumentation(input []byte) (map[string]string, errors.E) {
 func getLabelsDescriptions(gitRef string) (map[string]string, errors.E) {
 	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/labels.md", gitRef))
 	if err != nil {
-		return nil, errors.Wrap(err, `failed to get project labels descriptions`)
+		return nil, errors.WithMessage(err, "failed to get project labels descriptions")
 	}
 	return parseLabelsDocumentation(data)
 }
@@ -148,7 +155,9 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 	for {
 		ls, response, err := client.Labels.ListLabels(c.Project, options)
 		if err != nil {
-			return errors.Wrapf(err, `failed to get project labels, page %d`, options.Page)
+			errE := errors.WithMessage(err, "failed to get project labels")
+			errors.Details(errE)["page"] = options.Page
+			return errE
 		}
 
 		labels = append(labels, ls...)
@@ -175,7 +184,11 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 			// If ID is provided, the label should exist.
 			iid, ok := id.(int) //nolint:govet
 			if !ok {
-				return errors.Errorf(`label "id" at index %d is not an integer, but %T: %s`, i, id, id)
+				errE := errors.New(`project label's field "id" is not an integer`)
+				errors.Details(errE)["index"] = i
+				errors.Details(errE)["type"] = fmt.Sprintf("%T", id)
+				errors.Details(errE)["value"] = id
+				return errE
 			}
 			if existingLabelsSet.Contains(iid) {
 				continue
@@ -187,7 +200,9 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 
 		name, ok := label["name"]
 		if !ok {
-			return errors.Errorf(`label in configuration at index %d does not have "name"`, i)
+			errE := errors.Errorf(`project label is missing field "name"`)
+			errors.Details(errE)["index"] = i
+			return errE
 		}
 		n, ok := name.(string)
 		if ok {
@@ -214,40 +229,51 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(c.Project), labelID)
 		req, err := client.NewRequest(http.MethodDelete, u, nil, nil)
 		if err != nil {
-			return errors.Wrapf(err, `failed to delete label %d`, labelID)
+			errE := errors.WithMessage(err, "failed to delete project label")
+			errors.Details(errE)["label"] = labelID
+			return errE
 		}
 		_, err = client.Do(req, nil)
 		if err != nil {
-			return errors.Wrapf(err, `failed to delete label %d`, labelID)
+			errE := errors.WithMessage(err, "failed to delete project label")
+			errors.Details(errE)["label"] = labelID
+			return errE
 		}
 	}
 
 	for _, label := range configuration.Labels {
 		id, ok := label["id"]
-		if !ok {
+		if !ok { //nolint:dupl
 			u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(c.Project))
 			req, err := client.NewRequest(http.MethodPost, u, label, nil)
 			if err != nil {
 				// We made sure above that all labels in configuration without label ID have name.
-				return errors.Wrapf(err, `failed to create label "%s"`, label["name"])
+				errE := errors.WithMessage(err, "failed to create project label")
+				errors.Details(errE)["label"] = label["name"]
+				return errE
 			}
 			_, err = client.Do(req, nil)
-			if err != nil {
-				// We made sure above that all labels in configuration without label ID have name.
-				return errors.Wrapf(err, `failed to create label "%s"`, label["name"])
+			if err != nil { // We made sure above that all labels in configuration without label ID have name.
+				errE := errors.WithMessage(err, "failed to create project label")
+				errors.Details(errE)["label"] = label["name"]
+				return errE
 			}
 		} else {
 			// We made sure above that all labels in configuration with label ID exist
 			// and that they are ints.
-			id := id.(int) //nolint:errcheck,forcetypeassert
-			u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(c.Project), id)
+			iid := id.(int) //nolint:errcheck,forcetypeassert
+			u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(c.Project), iid)
 			req, err := client.NewRequest(http.MethodPut, u, label, nil)
 			if err != nil {
-				return errors.Wrapf(err, `failed to update label %d`, id)
+				errE := errors.WithMessage(err, "failed to update project label")
+				errors.Details(errE)["label"] = iid
+				return errE
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
-				return errors.Wrapf(err, `failed to update label "%d`, id)
+				errE := errors.WithMessage(err, "failed to update project label")
+				errors.Details(errE)["label"] = iid
+				return errE
 			}
 		}
 	}
