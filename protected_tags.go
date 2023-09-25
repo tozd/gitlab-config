@@ -103,7 +103,7 @@ func (c *GetCommand) getProtectedTags(client *gitlab.Client, configuration *Conf
 
 	// We sort by protected tag's name so that we have deterministic order.
 	sort.Slice(configuration.ProtectedTags, func(i, j int) bool {
-		// We checked that id is int above.
+		// We checked that name is string above.
 		return configuration.ProtectedTags[i]["name"].(string) < configuration.ProtectedTags[j]["name"].(string) //nolint:forcetypeassert
 	})
 

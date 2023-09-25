@@ -110,7 +110,7 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 
 	// We sort by variable key so that we have deterministic order.
 	sort.Slice(configuration.Variables, func(i, j int) bool {
-		// We checked that id is int above.
+		// We checked that key is string above.
 		return configuration.Variables[i]["key"].(string) < configuration.Variables[j]["key"].(string) //nolint:forcetypeassert
 	})
 
@@ -224,7 +224,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 			nil,
 		)
 		if err != nil {
-			errE := errors.Wrapf(err, "failed to remove variable")
+			errE := errors.WithMessage(err, "failed to remove variable")
 			errors.Details(errE)["key"] = variable.Key
 			errors.Details(errE)["environmentScope"] = variable.EnvironmentScope
 			return errE
@@ -275,7 +275,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 				errE := errors.WithMessage(err, "failed to create variable")
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
-				return errors.Wrapf(err, `failed to create variable "%s"/"%s"`, key, environmentScope)
+				return errE
 			}
 		}
 	}
