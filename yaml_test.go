@@ -54,7 +54,8 @@ func TestToConfigurationYAML(t *testing.T) {
 				"labels: []\n" +
 				"protected_branches: []\n" +
 				"protected_tags: []\n" +
-				"variables: []\n",
+				"variables: []\n" +
+				"pipeline_schedules: []\n",
 		},
 		{
 			&Configuration{
@@ -119,7 +120,8 @@ func TestToConfigurationYAML(t *testing.T) {
 				"labels: []\n" +
 				"protected_branches: []\n" +
 				"protected_tags: []\n" +
-				"variables: []\n",
+				"variables: []\n" +
+				"pipeline_schedules: []\n",
 		},
 	}
 
