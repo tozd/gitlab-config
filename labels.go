@@ -14,7 +14,7 @@ import (
 // getLabels populates configuration struct with configuration available
 // from GitLab labels API endpoint.
 func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configuration) (bool, errors.E) { //nolint:unparam
-	fmt.Fprintf(os.Stderr, "Getting labels...\n")
+	fmt.Fprintf(os.Stderr, "Getting project labels...\n")
 
 	configuration.Labels = []map[string]interface{}{}
 
@@ -24,7 +24,7 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 	}
 	// We need "id" later on.
 	if _, ok := descriptions["id"]; !ok {
-		return false, errors.New(`"id" field is missing in labels descriptions`)
+		return false, errors.New(`"id" field is missing in project labels descriptions`)
 	}
 	configuration.LabelsComment = formatDescriptions(descriptions)
 
@@ -73,11 +73,11 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 
 			id, ok := label["id"]
 			if !ok {
-				return false, errors.New(`label is missing field "id"`)
+				return false, errors.New(`project label is missing field "id"`)
 			}
 			_, ok = id.(int)
 			if !ok {
-				errE := errors.New(`label's field "id" is not an integer`)
+				errE := errors.New(`project label's field "id" is not an integer`)
 				errors.Details(errE)["type"] = fmt.Sprintf("%T", id)
 				errors.Details(errE)["value"] = id
 				return false, errE
@@ -140,7 +140,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		return nil
 	}
 
-	fmt.Fprintf(os.Stderr, "Updating labels...\n")
+	fmt.Fprintf(os.Stderr, "Updating project labels...\n")
 
 	options := &gitlab.ListLabelsOptions{ //nolint:exhaustruct
 		ListOptions: gitlab.ListOptions{

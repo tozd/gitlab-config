@@ -23,7 +23,7 @@ type opts struct {
 // getVariables populates configuration struct with configuration available
 // from GitLab project level variables API endpoint.
 func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configuration) (bool, errors.E) {
-	fmt.Fprintf(os.Stderr, "Getting variables...\n")
+	fmt.Fprintf(os.Stderr, "Getting project variables...\n")
 
 	configuration.Variables = []map[string]interface{}{}
 
@@ -33,7 +33,7 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 	}
 	// We need "key" later on.
 	if _, ok := descriptions["key"]; !ok {
-		return false, errors.New(`"key" field is missing in variables descriptions`)
+		return false, errors.New(`"key" field is missing in project variables descriptions`)
 	}
 	configuration.VariablesComment = formatDescriptions(descriptions)
 
@@ -46,7 +46,7 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 	for {
 		req, err := client.NewRequest(http.MethodGet, u, options, nil)
 		if err != nil {
-			errE := errors.WithMessage(err, "failed to get variables")
+			errE := errors.WithMessage(err, "failed to get project variables")
 			errors.Details(errE)["page"] = options.Page
 			return false, errE
 		}
@@ -59,7 +59,7 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 			if response.StatusCode == http.StatusForbidden && options.Page == 1 {
 				break
 			}
-			errE := errors.WithMessage(err, "failed to get variables")
+			errE := errors.WithMessage(err, "failed to get project variables")
 			errors.Details(errE)["page"] = options.Page
 			return false, errE
 		}
@@ -88,11 +88,11 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 
 			key, ok := variable["key"]
 			if !ok {
-				return false, errors.New(`variable is missing field "key"`)
+				return false, errors.New(`project variable is missing field "key"`)
 			}
 			_, ok = key.(string)
 			if !ok {
-				errE := errors.New(`variable's field "key" is not a string`)
+				errE := errors.New(`project variable's field "key" is not a string`)
 				errors.Details(errE)["type"] = fmt.Sprintf("%T", key)
 				errors.Details(errE)["value"] = key
 				return false, errE
@@ -129,7 +129,7 @@ func parseVariablesDocumentation(input []byte) (map[string]string, errors.E) {
 func getVariablesDescriptions(gitRef string) (map[string]string, errors.E) {
 	data, err := downloadFile(fmt.Sprintf("https://gitlab.com/gitlab-org/gitlab/-/raw/%s/doc/api/project_level_variables.md", gitRef))
 	if err != nil {
-		return nil, errors.WithMessage(err, "failed to get variables descriptions")
+		return nil, errors.WithMessage(err, "failed to get project variables descriptions")
 	}
 	return parseVariablesDocumentation(data)
 }
@@ -141,7 +141,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		return nil
 	}
 
-	fmt.Fprintf(os.Stderr, "Updating variables...\n")
+	fmt.Fprintf(os.Stderr, "Updating project variables...\n")
 
 	options := &gitlab.ListProjectVariablesOptions{
 		PerPage: maxGitLabPageSize,
@@ -153,7 +153,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 	for {
 		vs, response, err := client.ProjectVariables.ListVariables(c.Project, options)
 		if err != nil {
-			errE := errors.WithMessage(err, "failed to get variables")
+			errE := errors.WithMessage(err, "failed to get project variables")
 			errors.Details(errE)["page"] = options.Page
 			return errE
 		}
@@ -184,13 +184,13 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 	for i, variable := range configuration.Variables {
 		key, ok := variable["key"]
 		if !ok {
-			errE := errors.Errorf(`variable is missing field "key"`)
+			errE := errors.Errorf(`project variable is missing field "key"`)
 			errors.Details(errE)["index"] = i
 			return errE
 		}
 		k, ok := key.(string)
 		if !ok {
-			errE := errors.New(`variable's field "key" is not a string`)
+			errE := errors.New(`project variable's field "key" is not a string`)
 			errors.Details(errE)["index"] = i
 			errors.Details(errE)["type"] = fmt.Sprintf("%T", key)
 			errors.Details(errE)["value"] = key
@@ -198,13 +198,13 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		}
 		environmentScope, ok := variable["environment_scope"]
 		if !ok {
-			errE := errors.Errorf(`variable is missing field "environment_scope"`)
+			errE := errors.Errorf(`project variable is missing field "environment_scope"`)
 			errors.Details(errE)["index"] = i
 			return errE
 		}
 		e, ok := environmentScope.(string)
 		if !ok {
-			errE := errors.New(`variable's field "environment_scope" is not a string`)
+			errE := errors.New(`project variable's field "environment_scope" is not a string`)
 			errors.Details(errE)["index"] = i
 			errors.Details(errE)["type"] = fmt.Sprintf("%T", environmentScope)
 			errors.Details(errE)["value"] = environmentScope
@@ -225,7 +225,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 			nil,
 		)
 		if err != nil {
-			errE := errors.WithMessage(err, "failed to remove variable")
+			errE := errors.WithMessage(err, "failed to remove project variable")
 			errors.Details(errE)["key"] = variable.Key
 			errors.Details(errE)["environmentScope"] = variable.EnvironmentScope
 			return errE
@@ -245,20 +245,20 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 			u := fmt.Sprintf("projects/%s/variables/%s", gitlab.PathEscape(c.Project), gitlab.PathEscape(key))
 			req, err := client.NewRequest(http.MethodPut, u, variable, nil)
 			if err != nil {
-				errE := errors.WithMessage(err, "failed to update variable")
+				errE := errors.WithMessage(err, "failed to update project variable")
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
 			}
 			q, err := query.Values(opts{filter{environmentScope}})
 			if err != nil {
-				errE := errors.WithMessage(err, "failed to update variable")
+				errE := errors.WithMessage(err, "failed to update project variable")
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
 			}
 			req.URL.RawQuery = q.Encode()
 			_, err = client.Do(req, nil)
 			if err != nil {
-				errE := errors.WithMessage(err, "failed to update variable")
+				errE := errors.WithMessage(err, "failed to update project variable")
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
 			}
@@ -267,13 +267,13 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 			u := fmt.Sprintf("projects/%s/variables", gitlab.PathEscape(c.Project))
 			req, err := client.NewRequest(http.MethodPost, u, variable, nil)
 			if err != nil {
-				errE := errors.WithMessage(err, "failed to create variable")
+				errE := errors.WithMessage(err, "failed to create project variable")
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
-				errE := errors.WithMessage(err, "failed to create variable")
+				errE := errors.WithMessage(err, "failed to create project variable")
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
 				return errE
