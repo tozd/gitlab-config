@@ -106,6 +106,7 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 	for _, group := range project.SharedWithGroups {
 		existingGroupsSet.Add(group.GroupID)
 	}
+
 	wantedGroupsSet := mapset.NewThreadUnsafeSet[int]()
 	for i, group := range configuration.SharedWithGroups {
 		id, ok := group["group_id"]

@@ -179,6 +179,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 			EnvironmentScope: variable.EnvironmentScope,
 		})
 	}
+
 	wantedVariablesSet := mapset.NewThreadUnsafeSet[Variable]()
 	for i, variable := range configuration.Variables {
 		key, ok := variable["key"]
