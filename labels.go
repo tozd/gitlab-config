@@ -205,11 +205,16 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 			return errE
 		}
 		n, ok := name.(string)
+		if !ok {
+			errE := errors.New(`project label's field "name" is not a string`)
+			errors.Details(errE)["index"] = i
+			errors.Details(errE)["type"] = fmt.Sprintf("%T", name)
+			errors.Details(errE)["value"] = name
+			return errE
+		}
+		id, ok = namesToIDs[n]
 		if ok {
-			id, ok = namesToIDs[n]
-			if ok {
-				label["id"] = id
-			}
+			label["id"] = id
 		}
 	}
 
