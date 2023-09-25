@@ -207,7 +207,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 	}
 
 	// Set approval rule IDs if a matching existing approval rule can be found.
-	for i, approvalRule := range configuration.ApprovalRules {
+	for i, approvalRule := range configuration.ApprovalRules { //nolint:dupl
 		// Is approval rule ID already set?
 		id, ok := approvalRule["id"]
 		if ok {

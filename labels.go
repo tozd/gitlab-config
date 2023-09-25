@@ -177,7 +177,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 	}
 
 	// Set label IDs if a matching existing label can be found.
-	for i, label := range configuration.Labels {
+	for i, label := range configuration.Labels { //nolint:dupl
 		// Is label ID already set?
 		id, ok := label["id"]
 		if ok {
