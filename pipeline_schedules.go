@@ -139,14 +139,14 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 	pipelineSchedules := []*gitlab.PipelineSchedule{}
 
 	for {
-		pt, response, err := client.PipelineSchedules.ListPipelineSchedules(c.Project, options)
+		ps, response, err := client.PipelineSchedules.ListPipelineSchedules(c.Project, options)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to get pipeline schedules")
 			errors.Details(errE)["page"] = options.Page
 			return errE
 		}
 
-		pipelineSchedules = append(pipelineSchedules, pt...)
+		pipelineSchedules = append(pipelineSchedules, ps...)
 
 		if response.NextPage == 0 {
 			break
@@ -163,20 +163,24 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 	wantedPipelineSchedulesSet := mapset.NewThreadUnsafeSet[int]()
 	for i, pipelineSchedule := range configuration.PipelineSchedules {
 		id, ok := pipelineSchedule["id"]
-		if !ok {
-			errE := errors.Errorf(`pipeline schedule is missing field "id"`)
-			errors.Details(errE)["index"] = i
-			return errE
+		if ok {
+			// If ID is provided, the pipeline schedule should exist.
+			iid, ok := id.(int)
+			if !ok {
+				errE := errors.New(`pipeline schedule's field "id" is not an integer`)
+				errors.Details(errE)["index"] = i
+				errors.Details(errE)["type"] = fmt.Sprintf("%T", id)
+				errors.Details(errE)["value"] = id
+				return errE
+			}
+			wantedPipelineSchedulesSet.Add(iid)
+			if existingPipelineSchedulesSet.Contains(iid) {
+				continue
+			}
+			// Pipeline schedule does not exist with that ID.
+			// We remove the ID and create a new pipeline schedule.
+			delete(pipelineSchedule, "id")
 		}
-		iid, ok := id.(int)
-		if !ok {
-			errE := errors.New(`pipeline schedule's field "id" is not an integer`)
-			errors.Details(errE)["index"] = i
-			errors.Details(errE)["type"] = fmt.Sprintf("%T", id)
-			errors.Details(errE)["value"] = id
-			return errE
-		}
-		wantedPipelineSchedulesSet.Add(iid)
 	}
 
 	extraPipelineSchedulesSet := existingPipelineSchedulesSet.Difference(wantedPipelineSchedulesSet)
@@ -190,24 +194,8 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 	}
 
 	for _, pipelineSchedule := range configuration.PipelineSchedules {
-		// We made sure above that all pipeline schedules in configuration have an integer ID.
-		id := pipelineSchedule["id"].(int) //nolint:errcheck,forcetypeassert
-
-		if existingPipelineSchedulesSet.Contains(id) {
-			// Update existing pipeline schedule.
-			u := fmt.Sprintf("projects/%s/pipeline_schedules/%d", gitlab.PathEscape(c.Project), id)
-			req, err := client.NewRequest(http.MethodPut, u, pipelineSchedule, nil)
-			if err != nil {
-				errE := errors.WithMessage(err, "failed to update pipeline schedule")
-				errors.Details(errE)["pipelineSchedule"] = id
-			}
-			_, err = client.Do(req, nil)
-			if err != nil {
-				errE := errors.WithMessage(err, "failed to update pipeline schedule")
-				errors.Details(errE)["pipelineSchedule"] = id
-			}
-		} else {
-			// Create new pipeline schedule.
+		id, ok := pipelineSchedule["id"]
+		if !ok {
 			u := fmt.Sprintf("projects/%s/pipeline_schedules", gitlab.PathEscape(c.Project))
 			req, err := client.NewRequest(http.MethodPost, u, pipelineSchedule, nil)
 			if err != nil {
@@ -217,6 +205,22 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 			_, err = client.Do(req, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to create pipeline schedule")
+				errors.Details(errE)["pipelineSchedule"] = id
+				return errE
+			}
+		} else {
+			// We made sure above that all pipeline schedules in configuration with pipeline schedule
+			// ID exist and that they are ints.
+			iid := id.(int) //nolint:errcheck,forcetypeassert
+			u := fmt.Sprintf("projects/%s/pipeline_schedules/%d", gitlab.PathEscape(c.Project), iid)
+			req, err := client.NewRequest(http.MethodPut, u, pipelineSchedule, nil)
+			if err != nil {
+				errE := errors.WithMessage(err, "failed to update pipeline schedule")
+				errors.Details(errE)["pipelineSchedule"] = id
+			}
+			_, err = client.Do(req, nil)
+			if err != nil {
+				errE := errors.WithMessage(err, "failed to update pipeline schedule")
 				errors.Details(errE)["pipelineSchedule"] = id
 				return errE
 			}
