@@ -250,15 +250,20 @@ _Feel free to make a merge-request adding yours to the list._
 ## Related projects
 
 - [GitLabForm](https://github.com/gdubicki/gitlabform) – A similar tool written in Python.
-  It supports configuring many projects and not just an individual one like gitlab-config.
-  On the other hand gitlab-config tries to be just a simple
-  translator between a configuration file and API endpoints and do that well,
-  making sure you can safely commit your configuration file into a public git
-  repository, if you want.
+  It targets configuring many projects and not just an individual one like gitlab-config.
+  On the other hand gitlab-config's design is to have 1:1 mapping between configuration
+  file and API endpoints and do that well. E.g.,
+  gitlab-config makes sure you can safely commit your configuration file into a public git
+  repository, if you want (secrets are encrypted).
+  gitlab-config is great for open source projects or any project where
+  you want transparency about how the project is configured and to allow contributors to
+  contribute to project configuration as well.
+  gitlab-config allows you to version full project configuration and manage changes to it.
 - [GitLab provider for Terraform](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs) –
   Supports configuring GitLab projects using Terraform.
   A big hammer if you just want to use it for one project. Moreover, it
-  uses a custom language to define configuration.
+  uses a custom language to define configuration. gitlab-config's configuration file
+  directly matches GitLab API.
 
 ## GitHub mirror
 
