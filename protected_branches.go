@@ -256,7 +256,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 				for j, level := range levels {
 					l, ok := level.(map[string]interface{})
 					if !ok {
-						errE := errors.New("invalid access levels for protected branch")
+						errE := errors.New("invalid access level for protected branch")
 						errors.Details(errE)["index"] = i
 						errors.Details(errE)["levelIndex"] = j
 						errors.Details(errE)["accessLevels"] = ii.Name
