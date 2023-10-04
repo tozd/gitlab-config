@@ -103,6 +103,10 @@ func (c *GetCommand) getPipelineSchedules(client *gitlab.Client, configuration *
 				}
 			}
 
+			// TODO: This field is returned, but it cannot be changed. It is not documented.
+			//       See: https://gitlab.com/gitlab-org/gitlab/-/issues/427328
+			removeField(ps, "raw")
+
 			configuration.PipelineSchedules = append(configuration.PipelineSchedules, ps)
 		}
 
