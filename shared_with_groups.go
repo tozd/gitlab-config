@@ -83,8 +83,8 @@ func getSharedWithGroupsDescriptions(gitRef string) (map[string]string, errors.E
 	return parseSharedWithGroupsDocumentation(data)
 }
 
-// updateSharedWithGroups updates GitLab project's sharing with groups using GitLab projects API endpoint
-// based on the configuration struct.
+// updateSharedWithGroups updates GitLab project's sharing with groups using GitLab project's
+// share API endpoint based on the configuration struct.
 //
 // It first removes all groups for which the project should not be shared anymore with,
 // and then updates or adds groups for which the project should be shared with.

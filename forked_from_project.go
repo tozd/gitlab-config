@@ -53,8 +53,8 @@ func (c *GetCommand) getForkedFromProject(
 	return false, nil
 }
 
-// updateForkedFromProject updates GitLab project's fork relation using GitLab projects API endpoint
-// based on the configuration struct.
+// updateForkedFromProject updates GitLab project's fork relation using GitLab project's
+// fork relation API endpoint based on the configuration struct.
 func (c *SetCommand) updateForkedFromProject(client *gitlab.Client, configuration *Configuration) errors.E {
 	if configuration.ForkedFromProject == nil {
 		return nil
