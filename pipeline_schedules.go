@@ -247,6 +247,15 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 			// We made sure above that all pipeline schedules in configuration with pipeline schedule
 			// ID exist and that they are ints.
 			iid := id.(int) //nolint:errcheck,forcetypeassert
+
+			_, _, err := client.PipelineSchedules.TakeOwnershipOfPipelineSchedule(c.Project, iid)
+			if err != nil {
+				errE := errors.WithMessage(err, "failed to take ownership of pipeline schedule")
+				errors.Details(errE)["index"] = i
+				errors.Details(errE)["pipelineSchedule"] = iid
+				return errE
+			}
+
 			u := fmt.Sprintf("projects/%s/pipeline_schedules/%d", gitlab.PathEscape(c.Project), iid)
 			req, err := client.NewRequest(http.MethodPut, u, pipelineSchedule, nil)
 			if err != nil {
