@@ -24,5 +24,6 @@ func TestParsePipelineSchedulesDocumentation(t *testing.T) {
 		"description":   "The description of the pipeline schedule. Type: string",
 		"id":            "The pipeline schedule ID. Type: integer",
 		"ref":           "The branch or tag name that is triggered. Type: string",
+		"variables":     "Array of variables, with each described by a hash of the form {key: string, value: string, variable_type: string}. Type: array",
 	}, data)
 }
