@@ -202,7 +202,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 
 	// We do not add branch index to errors because we use
 	// index in errors for various access level types.
-	for _, protectedBranch := range configuration.ProtectedBranches {
+	for i, protectedBranch := range configuration.ProtectedBranches {
 		// We made sure above that all protected branches in configuration have a string name.
 		name := protectedBranch["name"].(string) //nolint:errcheck,forcetypeassert
 
@@ -246,17 +246,19 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 				levels, ok := wantedAccessLevels.([]interface{})
 				if !ok {
 					errE := errors.New("invalid access levels for protected branch")
+					errors.Details(errE)["index"] = i
 					errors.Details(errE)["accessLevels"] = ii.Name
 					errors.Details(errE)["branch"] = name
 					return errE
 				}
 
 				// Set access level IDs if a matching existing access level can be found.
-				for i, level := range levels {
+				for j, level := range levels {
 					l, ok := level.(map[string]interface{})
 					if !ok {
 						errE := errors.New("invalid access levels for protected branch")
 						errors.Details(errE)["index"] = i
+						errors.Details(errE)["levelIndex"] = j
 						errors.Details(errE)["accessLevels"] = ii.Name
 						errors.Details(errE)["branch"] = name
 						return errE
@@ -270,6 +272,7 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 						if !ok {
 							errE := errors.New(`access level's field "id" for protected branch is not an integer`)
 							errors.Details(errE)["index"] = i
+							errors.Details(errE)["levelIndex"] = j
 							errors.Details(errE)["accessLevels"] = ii.Name
 							errors.Details(errE)["branch"] = name
 							errors.Details(errE)["type"] = fmt.Sprintf("%T", id)
@@ -338,12 +341,14 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 			req, err := client.NewRequest(http.MethodPatch, fmt.Sprintf("projects/%s/protected_branches/%s", gitlab.PathEscape(c.Project), name), protectedBranch, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update protected branch")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["branch"] = name
 				return errE
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update protected branch")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["branch"] = name
 				return errE
 			}
@@ -352,12 +357,14 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 			req, err := client.NewRequest(http.MethodPost, fmt.Sprintf("projects/%s/protected_branches", gitlab.PathEscape(c.Project)), protectedBranch, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to protect branch")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["branch"] = name
 				return errE
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to protect branch")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["branch"] = name
 				return errE
 			}

@@ -209,9 +209,7 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 
 	u := fmt.Sprintf("projects/%s/protected_tags", gitlab.PathEscape(c.Project))
 
-	// We do not add tag index to errors to be similar to protected
-	// branches where we do not do it either.
-	for _, protectedTag := range configuration.ProtectedTags {
+	for i, protectedTag := range configuration.ProtectedTags {
 		// We made sure above that all protected tags in configuration have a string name.
 		name := protectedTag["name"].(string) //nolint:errcheck,forcetypeassert
 
@@ -221,6 +219,7 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 			_, err := client.ProtectedTags.UnprotectRepositoryTags(c.Project, name)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to unprotect tag before reprotecting")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["tag"] = name
 				return errE
 			}
@@ -229,12 +228,14 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 		req, err := client.NewRequest(http.MethodPost, u, protectedTag, nil)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to protect tag")
+			errors.Details(errE)["index"] = i
 			errors.Details(errE)["tag"] = name
 			return errE
 		}
 		_, err = client.Do(req, nil)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to protect tag")
+			errors.Details(errE)["index"] = i
 			errors.Details(errE)["tag"] = name
 			return errE
 		}
