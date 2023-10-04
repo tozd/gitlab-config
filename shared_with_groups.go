@@ -138,7 +138,7 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 
 	u := fmt.Sprintf("projects/%s/share", gitlab.PathEscape(c.Project))
 
-	for _, group := range configuration.SharedWithGroups {
+	for i, group := range configuration.SharedWithGroups {
 		// We checked that group id is int above.
 		groupID := group["group_id"].(int) //nolint:errcheck,forcetypeassert
 
@@ -148,6 +148,7 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 			_, err := client.Projects.DeleteSharedProjectFromGroup(c.Project, groupID)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to unshare group before resharing")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["group"] = groupID
 				return errE
 			}
@@ -156,12 +157,14 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 		req, err := client.NewRequest(http.MethodPost, u, group, nil)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to share group")
+			errors.Details(errE)["index"] = i
 			errors.Details(errE)["group"] = groupID
 			return errE
 		}
 		_, err = client.Do(req, nil)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to share group")
+			errors.Details(errE)["index"] = i
 			errors.Details(errE)["group"] = groupID
 			return errE
 		}

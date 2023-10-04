@@ -267,7 +267,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 		}
 	}
 
-	for _, approvalRule := range configuration.ApprovalRules {
+	for i, approvalRule := range configuration.ApprovalRules {
 		// It seems that when rule_type is set to report_approver,
 		// an extra report_type field has to be set to code_coverage.
 		// "report_type" will eventually be deprecated.
@@ -283,6 +283,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 			if err != nil {
 				// We made sure above that all approval rules in configuration without approval rule ID have name.
 				errE := errors.WithMessage(err, "failed to create approval rule")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["approvalRule"] = approvalRule["name"]
 				return errE
 			}
@@ -290,6 +291,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 			if err != nil {
 				// We made sure above that all approval rules in configuration without approval rule ID have name.
 				errE := errors.WithMessage(err, "failed to create approval rule")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["approvalRule"] = approvalRule["name"]
 				return errE
 			}
@@ -301,12 +303,14 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 			req, err := client.NewRequest(http.MethodPut, u, approvalRule, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update approval rule")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["approvalRule"] = iid
 				return errE
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update approval rule")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["approvalRule"] = iid
 				return errE
 			}

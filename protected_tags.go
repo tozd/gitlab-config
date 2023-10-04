@@ -209,6 +209,8 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 
 	u := fmt.Sprintf("projects/%s/protected_tags", gitlab.PathEscape(c.Project))
 
+	// We do not add tag index to errors to be similar to protected
+	// branches where we do not do it either.
 	for _, protectedTag := range configuration.ProtectedTags {
 		// We made sure above that all protected tags in configuration have a string name.
 		name := protectedTag["name"].(string) //nolint:errcheck,forcetypeassert

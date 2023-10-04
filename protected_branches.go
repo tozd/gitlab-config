@@ -200,6 +200,8 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 		}
 	}
 
+	// We do not add branch index to errors because we use
+	// index in errors for various access level types.
 	for _, protectedBranch := range configuration.ProtectedBranches {
 		// We made sure above that all protected branches in configuration have a string name.
 		name := protectedBranch["name"].(string) //nolint:errcheck,forcetypeassert

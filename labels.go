@@ -246,7 +246,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		}
 	}
 
-	for _, label := range configuration.Labels {
+	for i, label := range configuration.Labels {
 		id, ok := label["id"]
 		if !ok { //nolint:dupl
 			u := fmt.Sprintf("projects/%s/labels", gitlab.PathEscape(c.Project))
@@ -254,12 +254,14 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 			if err != nil {
 				// We made sure above that all labels in configuration without label ID have name.
 				errE := errors.WithMessage(err, "failed to create project label")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["label"] = label["name"]
 				return errE
 			}
 			_, err = client.Do(req, nil)
 			if err != nil { // We made sure above that all labels in configuration without label ID have name.
 				errE := errors.WithMessage(err, "failed to create project label")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["label"] = label["name"]
 				return errE
 			}
@@ -271,12 +273,14 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 			req, err := client.NewRequest(http.MethodPut, u, label, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update project label")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["label"] = iid
 				return errE
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update project label")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["label"] = iid
 				return errE
 			}

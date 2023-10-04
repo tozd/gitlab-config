@@ -84,7 +84,9 @@ func (c *SetCommand) updateForkedFromProject(client *gitlab.Client, configuratio
 	} else if project.ForkedFromProject.ID != *configuration.ForkedFromProject {
 		_, err := client.Projects.DeleteProjectForkRelation(c.Project)
 		if err != nil {
-			return errors.WithMessage(err, "failed to delete fork relation before creating new")
+			errE := errors.WithMessage(err, "failed to delete fork relation before creating new")
+			errors.Details(errE)["to"] = *configuration.ForkedFromProject
+			return errE
 		}
 		_, _, err = client.Projects.CreateProjectForkRelation(c.Project, *configuration.ForkedFromProject)
 		if err != nil {

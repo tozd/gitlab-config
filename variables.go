@@ -232,7 +232,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		}
 	}
 
-	for _, variable := range configuration.Variables {
+	for i, variable := range configuration.Variables {
 		// We made sure above that all variables in configuration have a string key and environment scope.
 		key := variable["key"].(string)                            //nolint:errcheck,forcetypeassert
 		environmentScope := variable["environment_scope"].(string) //nolint:errcheck,forcetypeassert
@@ -246,12 +246,14 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 			req, err := client.NewRequest(http.MethodPut, u, variable, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update project variable")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
 			}
 			q, err := query.Values(opts{filter{environmentScope}})
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update project variable")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
 			}
@@ -259,6 +261,7 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 			_, err = client.Do(req, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update project variable")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
 			}
@@ -268,12 +271,14 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 			req, err := client.NewRequest(http.MethodPost, u, variable, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to create project variable")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to create project variable")
+				errors.Details(errE)["index"] = i
 				errors.Details(errE)["key"] = key
 				errors.Details(errE)["environmentScope"] = environmentScope
 				return errE
