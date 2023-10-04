@@ -34,7 +34,7 @@ func (c *GetCommand) getPipelineSchedules(client *gitlab.Client, configuration *
 		Page:    1,
 	}
 
-	for { //nolint:dupl
+	for {
 		req, err := client.NewRequest(http.MethodGet, u, options, nil)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to get pipeline schedules")
@@ -59,20 +59,11 @@ func (c *GetCommand) getPipelineSchedules(client *gitlab.Client, configuration *
 			// Making sure ids are an integer.
 			castFloatsToInts(pipelineSchedule)
 
-			// Only retain those keys which can be edited through the API
-			// (which are those available in descriptions).
-			for key := range pipelineSchedule {
-				_, ok := descriptions[key]
-				if !ok {
-					delete(pipelineSchedule, key)
-				}
-			}
-
 			id, ok := pipelineSchedule["id"]
 			if !ok {
 				return false, errors.New(`pipeline schedule is missing field "id"`)
 			}
-			_, ok = id.(int)
+			iid, ok := id.(int)
 			if !ok {
 				errE := errors.New(`pipeline schedule's field "id" is not an integer`)
 				errors.Details(errE)["type"] = fmt.Sprintf("%T", id)
@@ -80,7 +71,39 @@ func (c *GetCommand) getPipelineSchedules(client *gitlab.Client, configuration *
 				return false, errE
 			}
 
-			configuration.PipelineSchedules = append(configuration.PipelineSchedules, pipelineSchedule)
+			// We have to fetch each pipeline schedule individually to get variables.
+			req, err := client.NewRequest(http.MethodGet, fmt.Sprintf("projects/%s/pipeline_schedules/%d", gitlab.PathEscape(c.Project), iid), nil, nil)
+			if err != nil {
+				errE := errors.WithMessage(err, "failed to get pipeline schedule")
+				errors.Details(errE)["id"] = iid
+				return false, errE
+			}
+
+			ps := map[string]interface{}{}
+
+			_, err = client.Do(req, &ps)
+			if err != nil {
+				errE := errors.WithMessage(err, "failed to get pipeline schedule")
+				errors.Details(errE)["id"] = iid
+				return false, errE
+			}
+
+			// Making sure ids are an integer.
+			castFloatsToInts(ps)
+
+			// We already extracted ID, so we just set it to not have to validate it again.
+			ps["id"] = iid
+
+			// Only retain those keys which can be edited through the API
+			// (which are those available in descriptions).
+			for key := range ps {
+				_, ok := descriptions[key]
+				if !ok {
+					delete(ps, key)
+				}
+			}
+
+			configuration.PipelineSchedules = append(configuration.PipelineSchedules, ps)
 		}
 
 		if response.NextPage == 0 {
@@ -96,6 +119,9 @@ func (c *GetCommand) getPipelineSchedules(client *gitlab.Client, configuration *
 		return configuration.PipelineSchedules[i]["id"].(int) < configuration.PipelineSchedules[j]["id"].(int) //nolint:forcetypeassert
 	})
 
+	// For now pipeline schedule variables cannot contain secrets as they cannot be masked,
+	// so we return false here.
+	// See: https://gitlab.com/gitlab-org/gitlab/-/issues/35439
 	return false, nil
 }
 
@@ -109,6 +135,7 @@ func parsePipelineSchedulesDocumentation(input []byte) (map[string]string, error
 	}
 	descriptions["id"] = descriptions["pipeline_schedule_id"]
 	delete(descriptions, "pipeline_schedule_id")
+	descriptions["variables"] = `Array of variables, with each described by a hash of the form {key: string, value: string, variable_type: string}. Type: array`
 	return descriptions, nil
 }
 
@@ -124,7 +151,7 @@ func getPipelineSchedulesDescriptions(gitRef string) (map[string]string, errors.
 
 // updatePipelineSchedules updates GitLab project's pipeline schedules using GitLab
 // pipeline schedules API endpoint based on the configuration struct.
-func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuration *Configuration) errors.E {
+func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuration *Configuration) errors.E { //nolint:maintidx
 	if configuration.PipelineSchedules == nil {
 		return nil
 	}
@@ -193,19 +220,22 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 		}
 	}
 
-	for _, pipelineSchedule := range configuration.PipelineSchedules {
+	for i, pipelineSchedule := range configuration.PipelineSchedules {
+		var ps *gitlab.PipelineSchedule
+
 		id, ok := pipelineSchedule["id"]
 		if !ok {
 			u := fmt.Sprintf("projects/%s/pipeline_schedules", gitlab.PathEscape(c.Project))
 			req, err := client.NewRequest(http.MethodPost, u, pipelineSchedule, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to create pipeline schedule")
-				errors.Details(errE)["pipelineSchedule"] = id
+				errors.Details(errE)["index"] = i
 			}
-			_, err = client.Do(req, nil)
+			ps = new(gitlab.PipelineSchedule)
+			_, err = client.Do(req, ps)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to create pipeline schedule")
-				errors.Details(errE)["pipelineSchedule"] = id
+				errors.Details(errE)["index"] = i
 				return errE
 			}
 		} else {
@@ -216,13 +246,136 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 			req, err := client.NewRequest(http.MethodPut, u, pipelineSchedule, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update pipeline schedule")
-				errors.Details(errE)["pipelineSchedule"] = id
+				errors.Details(errE)["index"] = i
+				errors.Details(errE)["pipelineSchedule"] = iid
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to update pipeline schedule")
-				errors.Details(errE)["pipelineSchedule"] = id
+				errors.Details(errE)["index"] = i
+				errors.Details(errE)["pipelineSchedule"] = iid
 				return errE
+			}
+
+			ps, _, err = client.PipelineSchedules.GetPipelineSchedule(c.Project, iid)
+			if err != nil {
+				errE := errors.WithMessage(err, "failed to get pipeline schedule")
+				errors.Details(errE)["index"] = i
+				errors.Details(errE)["pipelineSchedule"] = iid
+				return errE
+			}
+		}
+
+		existingVariablesSet := mapset.NewThreadUnsafeSet[string]()
+		for _, variable := range ps.Variables {
+			existingVariablesSet.Add(variable.Key)
+		}
+
+		wantedVariables, ok := pipelineSchedule["variables"]
+		if !ok {
+			wantedVariables = []interface{}{}
+		}
+
+		variables, ok := wantedVariables.([]interface{})
+		if !ok {
+			errE := errors.New("invalid variables for pipeline schedule")
+			errors.Details(errE)["index"] = i
+			errors.Details(errE)["pipelineSchedule"] = ps.ID
+			return errE
+		}
+
+		wantedVariablesSet := mapset.NewThreadUnsafeSet[string]()
+		for j, variable := range variables {
+			v, ok := variable.(map[string]interface{})
+			if !ok {
+				errE := errors.New("invalid variable for pipeline schedule")
+				errors.Details(errE)["index"] = i
+				errors.Details(errE)["variableIndex"] = j
+				errors.Details(errE)["pipelineSchedule"] = ps.ID
+				return errE
+			}
+			key, ok := v["key"]
+			if !ok {
+				errE := errors.Errorf(`variable for pipeline schedule is missing field "key"`)
+				errors.Details(errE)["index"] = i
+				errors.Details(errE)["variableIndex"] = j
+				errors.Details(errE)["pipelineSchedule"] = ps.ID
+				return errE
+			}
+			k, ok := key.(string)
+			if !ok {
+				errE := errors.New(`variable's field "key" for pipeline schedule is not a string`)
+				errors.Details(errE)["index"] = i
+				errors.Details(errE)["variableIndex"] = j
+				errors.Details(errE)["pipelineSchedule"] = ps.ID
+				errors.Details(errE)["type"] = fmt.Sprintf("%T", key)
+				errors.Details(errE)["value"] = key
+				return errE
+			}
+			wantedVariablesSet.Add(k)
+		}
+
+		extraVariablesSet := existingVariablesSet.Difference(wantedVariablesSet)
+		for _, variable := range extraVariablesSet.ToSlice() {
+			_, _, err := client.PipelineSchedules.DeletePipelineScheduleVariable(
+				c.Project,
+				ps.ID,
+				variable,
+			)
+			if err != nil {
+				errE := errors.WithMessage(err, "failed to remove variable for pipeline schedule")
+				errors.Details(errE)["index"] = i
+				errors.Details(errE)["pipelineSchedule"] = ps.ID
+				errors.Details(errE)["key"] = variable
+				return errE
+			}
+		}
+
+		for j, variable := range variables {
+			// We made sure above that all variables in configuration have a string key.
+			v := variable.(map[string]interface{}) //nolint:errcheck,forcetypeassert
+			key := v["key"].(string)               //nolint:errcheck,forcetypeassert
+
+			if existingVariablesSet.Contains(key) {
+				// Update existing variable.
+				u := fmt.Sprintf("projects/%s/pipeline_schedules/%d/variables/%s", gitlab.PathEscape(c.Project), ps.ID, gitlab.PathEscape(key))
+				req, err := client.NewRequest(http.MethodPut, u, variable, nil)
+				if err != nil {
+					errE := errors.WithMessage(err, "failed to update variable for pipeline schedule")
+					errors.Details(errE)["index"] = i
+					errors.Details(errE)["variableIndex"] = j
+					errors.Details(errE)["pipelineSchedule"] = ps.ID
+					errors.Details(errE)["key"] = key
+				}
+				_, err = client.Do(req, nil)
+				if err != nil {
+					errE := errors.WithMessage(err, "failed to update variable for pipeline schedule")
+					errors.Details(errE)["index"] = i
+					errors.Details(errE)["variableIndex"] = j
+					errors.Details(errE)["pipelineSchedule"] = ps.ID
+					errors.Details(errE)["key"] = key
+					return errE
+				}
+			} else {
+				// Create new variable.
+				u := fmt.Sprintf("projects/%s/pipeline_schedules/%d/variables", gitlab.PathEscape(c.Project), ps.ID)
+				req, err := client.NewRequest(http.MethodPost, u, variable, nil)
+				if err != nil {
+					errE := errors.WithMessage(err, "failed to create variable for pipeline schedule")
+					errors.Details(errE)["index"] = i
+					errors.Details(errE)["variableIndex"] = j
+					errors.Details(errE)["pipelineSchedule"] = ps.ID
+					errors.Details(errE)["key"] = key
+				}
+				_, err = client.Do(req, nil)
+				if err != nil {
+					errE := errors.WithMessage(err, "failed to create variable for pipeline schedule")
+					errors.Details(errE)["index"] = i
+					errors.Details(errE)["variableIndex"] = j
+					errors.Details(errE)["pipelineSchedule"] = ps.ID
+					errors.Details(errE)["key"] = key
+					return errE
+				}
 			}
 		}
 	}
