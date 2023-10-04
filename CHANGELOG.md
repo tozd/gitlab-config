@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [#19](https://gitlab.com/tozd/gitlab/config/-/issues/19)
 - Support for scheduled pipelines.
   [#16](https://gitlab.com/tozd/gitlab/config/-/issues/16)
+- Support for push rules.
+  [#16](https://gitlab.com/tozd/gitlab/config/-/issues/16)
 
 ### Changed
 

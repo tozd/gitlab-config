@@ -50,6 +50,7 @@ func TestToConfigurationYAML(t *testing.T) {
 				"shared_with_groups: []\n" +
 				"approvals: {}\n" +
 				"approval_rules: []\n" +
+				"push_rules: {}\n" +
 				"forked_from_project: null\n" +
 				"labels: []\n" +
 				"protected_branches: []\n" +
@@ -116,6 +117,7 @@ func TestToConfigurationYAML(t *testing.T) {
 				"  - user_ids:\n" +
 				"      # array\n" +
 				"      - 1\n" +
+				"push_rules: {}\n" +
 				"forked_from_project: null\n" +
 				"labels: []\n" +
 				"protected_branches: []\n" +

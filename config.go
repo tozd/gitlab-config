@@ -17,6 +17,8 @@ type Configuration struct {
 	Approvals                map[string]interface{}   `json:"approvals"                             yaml:"approvals"`
 	ApprovalRules            []map[string]interface{} `json:"approval_rules"                        yaml:"approval_rules"`
 	ApprovalRulesComment     string                   `json:"comment:approval_rules,omitempty"      yaml:"comment:approval_rules,omitempty"`
+	PushRules                map[string]interface{}   `json:"push_rules"                            yaml:"push_rules"`
+	PushRulesComment         string                   `json:"comment:push_rules,omitempty"          yaml:"comment:push_rules,omitempty"`
 	ForkedFromProject        *int                     `json:"forked_from_project"                   yaml:"forked_from_project"`
 	ForkedFromProjectComment string                   `json:"comment:forked_from_project,omitempty" yaml:"comment:forked_from_project,omitempty"`
 	Labels                   []map[string]interface{} `json:"labels"                                yaml:"labels"`
