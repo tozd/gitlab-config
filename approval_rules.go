@@ -259,7 +259,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 
 	extraApprovalRulesSet := existingApprovalRulesSet.Difference(wantedApprovalRulesSet)
 	for _, approvalRuleID := range extraApprovalRulesSet.ToSlice() {
-		_, err := client.Projects.DeleteProjectApprovalRule(c.Project, approvalRuleID, nil)
+		_, err := client.Projects.DeleteProjectApprovalRule(c.Project, approvalRuleID)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to delete approval rule")
 			errors.Details(errE)["approvalRule"] = approvalRuleID
