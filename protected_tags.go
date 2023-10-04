@@ -209,7 +209,7 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 
 	u := fmt.Sprintf("projects/%s/protected_tags", gitlab.PathEscape(c.Project))
 
-	for i, protectedTag := range configuration.ProtectedTags {
+	for i, protectedTag := range configuration.ProtectedTags { //nolint:dupl
 		// We made sure above that all protected tags in configuration have a string name.
 		name := protectedTag["name"].(string) //nolint:errcheck,forcetypeassert
 

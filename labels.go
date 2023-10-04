@@ -37,7 +37,7 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 		IncludeAncestorGroups: gitlab.Bool(false),
 	}
 
-	for { //nolint:dupl
+	for {
 		req, err := client.NewRequest(http.MethodGet, u, options, nil)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to get project labels")

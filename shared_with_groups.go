@@ -138,7 +138,7 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 
 	u := fmt.Sprintf("projects/%s/share", gitlab.PathEscape(c.Project))
 
-	for i, group := range configuration.SharedWithGroups {
+	for i, group := range configuration.SharedWithGroups { //nolint:dupl
 		// We checked that group id is int above.
 		groupID := group["group_id"].(int) //nolint:errcheck,forcetypeassert
 
