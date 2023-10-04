@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2023-10-04
+
 ### Added
 
 - Support for protected tags.
@@ -122,7 +124,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First public release.
 
-[unreleased]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.4.0...main
+[unreleased]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.5.0...main
+[0.5.0]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.4.0...v0.5.0
 [0.4.0]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.3.4...v0.4.0
 [0.3.4]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.3.3...v0.3.4
 [0.3.3]: https://gitlab.com/tozd/gitlab/config/-/compare/v0.3.2...v0.3.3
