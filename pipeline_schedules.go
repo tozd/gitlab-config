@@ -234,6 +234,7 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 			if err != nil {
 				errE := errors.WithMessage(err, "failed to create pipeline schedule")
 				errors.Details(errE)["index"] = i
+				return errE
 			}
 			ps = new(gitlab.PipelineSchedule)
 			_, err = client.Do(req, ps)
@@ -252,6 +253,7 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 				errE := errors.WithMessage(err, "failed to update pipeline schedule")
 				errors.Details(errE)["index"] = i
 				errors.Details(errE)["pipelineSchedule"] = iid
+				return errE
 			}
 			_, err = client.Do(req, nil)
 			if err != nil {
@@ -350,6 +352,7 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 					errors.Details(errE)["variableIndex"] = j
 					errors.Details(errE)["pipelineSchedule"] = ps.ID
 					errors.Details(errE)["key"] = key
+					return errE
 				}
 				_, err = client.Do(req, nil)
 				if err != nil {
@@ -370,6 +373,7 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 					errors.Details(errE)["variableIndex"] = j
 					errors.Details(errE)["pipelineSchedule"] = ps.ID
 					errors.Details(errE)["key"] = key
+					return errE
 				}
 				_, err = client.Do(req, nil)
 				if err != nil {
