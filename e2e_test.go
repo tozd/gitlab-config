@@ -19,7 +19,7 @@ func TestE2E(t *testing.T) {
 
 	tempDir := t.TempDir()
 	projectID, errE := x.InferGitLabProjectID(".")
-	require.NoError(t, errE)
+	require.NoError(t, errE, "% -+#.1v", errE)
 
 	for _, cmd := range []string{"get", "set"} {
 		cmd := cmd
@@ -44,7 +44,7 @@ func TestE2E(t *testing.T) {
 			require.NoError(t, err)
 
 			err = ctx.Run(&commands.Globals)
-			require.NoError(t, err)
+			require.NoError(t, err, "% -+#.1v", err)
 		})
 	}
 }

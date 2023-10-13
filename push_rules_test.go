@@ -10,8 +10,8 @@ import (
 func TestParsePushRulesDocumentation(t *testing.T) {
 	t.Parallel()
 
-	data, err := parsePushRulesDocumentation(testProjects)
-	assert.NoError(t, err)
+	data, errE := parsePushRulesDocumentation(testProjects)
+	assert.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"author_email_regex":            "All commit author emails must match this, for example @my-company.com$. Type: string",
 		"branch_name_regex":             "All branch names must match this, for example `(feature. Type: string",

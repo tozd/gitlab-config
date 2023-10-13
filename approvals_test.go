@@ -15,8 +15,8 @@ var testMergeRequestApprovals []byte
 func TestParseApprovalsDocumentation(t *testing.T) {
 	t.Parallel()
 
-	data, err := parseApprovalsDocumentation(testMergeRequestApprovals)
-	assert.NoError(t, err)
+	data, errE := parseApprovalsDocumentation(testMergeRequestApprovals)
+	assert.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"disable_overriding_approvers_per_merge_request": "Allow or prevent overriding approvers per merge request. Type: boolean",
 		"merge_requests_author_approval":                 "Allow or prevent authors from self approving merge requests; true means authors can self approve. Type: boolean",

@@ -15,8 +15,8 @@ var testVariables []byte
 func TestParseVariablesDocumentation(t *testing.T) {
 	t.Parallel()
 
-	data, err := parseVariablesDocumentation(testVariables)
-	assert.NoError(t, err)
+	data, errE := parseVariablesDocumentation(testVariables)
+	assert.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"environment_scope": "The environment_scope of the variable. Default: *. Type: string",
 		"description":       "The description of the variable. Default: null. Introduced in GitLab 16.2. Type: string",

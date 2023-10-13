@@ -15,8 +15,8 @@ var testProtectedBranches []byte
 func TestParseProtectedBranchesDocumentation(t *testing.T) {
 	t.Parallel()
 
-	data, err := parseProtectedBranchesDocumentation(testProtectedBranches)
-	assert.NoError(t, err)
+	data, errE := parseProtectedBranchesDocumentation(testProtectedBranches)
+	assert.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"allow_force_push":             "When enabled, members who can push to this branch can also force push. Type: boolean",
 		"allowed_to_merge":             "Array of merge access levels, with each described by a hash of the form {user_id: integer}, {group_id: integer}, or {access_level: integer}. Type: array",

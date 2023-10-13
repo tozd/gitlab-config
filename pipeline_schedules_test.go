@@ -15,8 +15,8 @@ var testPipelineSchedules []byte
 func TestParsePipelineSchedulesDocumentation(t *testing.T) {
 	t.Parallel()
 
-	data, err := parsePipelineSchedulesDocumentation(testPipelineSchedules)
-	assert.NoError(t, err)
+	data, errE := parsePipelineSchedulesDocumentation(testPipelineSchedules)
+	assert.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"active":        "The activation of pipeline schedule. If false is set, the pipeline schedule is initially deactivated. Type: boolean",
 		"cron":          "The cron schedule, for example: 0 1 * * *. Type: string",

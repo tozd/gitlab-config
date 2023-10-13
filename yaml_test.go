@@ -134,7 +134,7 @@ func TestToConfigurationYAML(t *testing.T) {
 			t.Parallel()
 
 			data, errE := toConfigurationYAML(tt.config)
-			assert.NoError(t, errE)
+			assert.NoError(t, errE, "% -+#.1v", errE)
 			assert.Equal(t, tt.output, string(data))
 		})
 	}

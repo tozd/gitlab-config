@@ -15,8 +15,8 @@ var testLabels []byte
 func TestParseLabelsDocumentation(t *testing.T) {
 	t.Parallel()
 
-	data, err := parseLabelsDocumentation(testLabels)
-	assert.NoError(t, err)
+	data, errE := parseLabelsDocumentation(testLabels)
+	assert.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"color":       "The color of the label given in 6-digit hex notation with leading '#' sign (for example, #FFAABB) or one of the CSS color names. Type: string",
 		"description": "The description of the label. Type: string",

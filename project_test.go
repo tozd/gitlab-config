@@ -15,8 +15,8 @@ var testProjects []byte
 func TestParseProjectDocumentation(t *testing.T) {
 	t.Parallel()
 
-	data, err := parseProjectDocumentation(testProjects)
-	assert.NoError(t, err)
+	data, errE := parseProjectDocumentation(testProjects)
+	assert.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"allow_merge_on_skipped_pipeline":                  "Set whether or not merge requests can be merged with skipped jobs. Type: boolean",
 		"allow_pipeline_trigger_approve_deployment":        "Set whether or not a pipeline triggerer is allowed to approve deployments. Type: boolean",

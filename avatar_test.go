@@ -30,11 +30,11 @@ func TestCheckAvatarExtension(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%s", tt.ext), func(t *testing.T) {
 			t.Parallel()
 
-			err := checkAvatarExtension(tt.ext)
+			errE := checkAvatarExtension(tt.ext)
 			if tt.want {
-				assert.Error(t, err)
+				assert.Error(t, errE)
 			} else {
-				assert.NoError(t, err)
+				assert.NoError(t, errE, "% -+#.1v", errE)
 			}
 		})
 	}
