@@ -7,12 +7,12 @@ import (
 
 // SopsCommand describes parameters for the sops command.
 type SopsCommand struct {
-	Arg []string `arg:"" help:"Arguments passed on to SOPS." optional:""`
+	Args []string `arg:"" help:"Arguments passed on to SOPS." name:"arg" optional:""`
 }
 
 // Run runs the sops command.
 func (c *SopsCommand) Run(_ *Globals) errors.E {
-	args := append([]string{"sops"}, c.Arg...)
+	args := append([]string{"sops"}, c.Args...)
 	mainimpl.Main(args)
 
 	return nil
