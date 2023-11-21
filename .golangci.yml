@@ -33,13 +33,15 @@ linters-settings:
     go: "1.21"
     checks:
       - all
-  unused:
-    go: "1.21"
+  tagalign:
+    strict: true
   tagliatelle:
     case:
       rules:
         json: snake
         yaml: snake
+  unused:
+    go: "1.21"
 
 linters:
   disable-all: true

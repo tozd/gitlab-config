@@ -19,13 +19,15 @@ const (
 // We do not use type=path for Output because we want a relative path.
 
 // GetCommand describes parameters for the get command.
+//
+//nolint:lll
 type GetCommand struct {
 	GitLab
 
-	Output     string `default:".gitlab-conf.yml"                                                                                            help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."                                                          placeholder:"PATH"   short:"o"` //nolint:lll
-	Avatar     string `default:".gitlab-avatar.img"                                                                                          help:"Where to save the avatar to. File extension is set automatically. Default is \"${default}\"."                                                     placeholder:"PATH"   short:"a"` //nolint:lll
-	EncComment string `default:"sops:enc"                                                                                                    help:"Annotate sensitive values with the comment, marking them for encryption with SOPS. Set to an empty string to disable. Default is \"${default}\"." placeholder:"STRING" short:"E"` //nolint:lll
-	EncSuffix  string `help:"Add the suffix to field names of sensitive values, marking them for encryption with SOPS. Disabled by default." short:"S"`                                                                                                                                                                              //nolint:lll
+	Output     string `default:".gitlab-conf.yml"   help:"Where to save the configuration to. Can be \"-\" for stdout. Default is \"${default}\"."                                                          placeholder:"PATH"   short:"o"`
+	Avatar     string `default:".gitlab-avatar.img" help:"Where to save the avatar to. File extension is set automatically. Default is \"${default}\"."                                                     placeholder:"PATH"   short:"a"`
+	EncComment string `default:"sops:enc"           help:"Annotate sensitive values with the comment, marking them for encryption with SOPS. Set to an empty string to disable. Default is \"${default}\"." placeholder:"STRING" short:"E"`
+	EncSuffix  string `                             help:"Add the suffix to field names of sensitive values, marking them for encryption with SOPS. Disabled by default."                                                        short:"S"`
 }
 
 // Run runs the get command.
