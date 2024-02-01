@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -227,8 +228,9 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		}
 	}
 
-	extraLabelsSet := existingLabelsSet.Difference(wantedLabelsSet)
-	for _, labelID := range extraLabelsSet.ToSlice() {
+	extraLabels := existingLabelsSet.Difference(wantedLabelsSet).ToSlice()
+	slices.Sort(extraLabels)
+	for _, labelID := range extraLabels {
 		// TODO: Use go-gitlab's function once it is updated to new API.
 		//       See: https://github.com/xanzy/go-gitlab/issues/1321
 		u := fmt.Sprintf("projects/%s/labels/%d", gitlab.PathEscape(c.Project), labelID)

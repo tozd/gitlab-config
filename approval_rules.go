@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -257,8 +258,9 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 		}
 	}
 
-	extraApprovalRulesSet := existingApprovalRulesSet.Difference(wantedApprovalRulesSet)
-	for _, approvalRuleID := range extraApprovalRulesSet.ToSlice() {
+	extraApprovalRules := existingApprovalRulesSet.Difference(wantedApprovalRulesSet).ToSlice()
+	slices.Sort(extraApprovalRules)
+	for _, approvalRuleID := range extraApprovalRules {
 		_, err := client.Projects.DeleteProjectApprovalRule(c.Project, approvalRuleID)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to delete approval rule")

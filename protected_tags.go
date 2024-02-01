@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -197,8 +198,9 @@ func (c *SetCommand) updateProtectedTags(client *gitlab.Client, configuration *C
 		wantedProtectedTagsSet.Add(n)
 	}
 
-	extraProtectedTagsSet := existingProtectedTagsSet.Difference(wantedProtectedTagsSet)
-	for _, protectedTagName := range extraProtectedTagsSet.ToSlice() {
+	extraProtectedTags := existingProtectedTagsSet.Difference(wantedProtectedTagsSet).ToSlice()
+	slices.Sort(extraProtectedTags)
+	for _, protectedTagName := range extraProtectedTags {
 		_, err := client.ProtectedTags.UnprotectRepositoryTags(c.Project, protectedTagName)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to unprotect tag")

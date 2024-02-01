@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/xanzy/go-gitlab"
@@ -126,8 +127,9 @@ func (c *SetCommand) updateSharedWithGroups(client *gitlab.Client, configuration
 		wantedGroupsSet.Add(iid)
 	}
 
-	extraGroupsSet := existingGroupsSet.Difference(wantedGroupsSet)
-	for _, groupID := range extraGroupsSet.ToSlice() {
+	extraGroups := existingGroupsSet.Difference(wantedGroupsSet).ToSlice()
+	slices.Sort(extraGroups)
+	for _, groupID := range extraGroups {
 		_, err := client.Projects.DeleteSharedProjectFromGroup(c.Project, groupID)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to unshare group")

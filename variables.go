@@ -1,9 +1,11 @@
 package config
 
 import (
+	"cmp"
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -216,8 +218,16 @@ func (c *SetCommand) updateVariables(client *gitlab.Client, configuration *Confi
 		})
 	}
 
-	extraVariablesSet := existingVariablesSet.Difference(wantedVariablesSet)
-	for _, variable := range extraVariablesSet.ToSlice() {
+	extraVariables := existingVariablesSet.Difference(wantedVariablesSet).ToSlice()
+	slices.SortFunc(extraVariables, func(a Variable, b Variable) int {
+		res := cmp.Compare(a.Key, b.Key)
+		if res != 0 {
+			return res
+		}
+
+		return cmp.Compare(a.EnvironmentScope, b.EnvironmentScope)
+	})
+	for _, variable := range extraVariables {
 		_, err := client.ProjectVariables.RemoveVariable(
 			c.Project,
 			variable.Key,

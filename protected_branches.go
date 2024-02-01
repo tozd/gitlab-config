@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -190,8 +191,9 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 		wantedProtectedBranchesSet.Add(n)
 	}
 
-	extraProtectedBranchesSet := existingProtectedBranchesSet.Difference(wantedProtectedBranchesSet)
-	for _, protectedBranchName := range extraProtectedBranchesSet.ToSlice() {
+	extraProtectedBranchesSlice := existingProtectedBranchesSet.Difference(wantedProtectedBranchesSet).ToSlice()
+	slices.Sort(extraProtectedBranchesSlice)
+	for _, protectedBranchName := range extraProtectedBranchesSlice {
 		_, err := client.ProtectedBranches.UnprotectRepositoryBranches(c.Project, protectedBranchName)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to unprotect branch")
@@ -329,8 +331,9 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 					}
 				}
 
-				extraAccessLevelsSet := existingAccessLevelsSet.Difference(wantedAccessLevelsSet)
-				for _, accessLevelID := range extraAccessLevelsSet.ToSlice() {
+				extraAccessLevels := existingAccessLevelsSet.Difference(wantedAccessLevelsSet).ToSlice()
+				slices.Sort(extraAccessLevels)
+				for _, accessLevelID := range extraAccessLevels {
 					protectedBranch[ii.Name] = append(levels, map[string]interface{}{
 						"id":       accessLevelID,
 						"_destroy": true,

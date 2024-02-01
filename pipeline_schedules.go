@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -214,8 +215,9 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 		}
 	}
 
-	extraPipelineSchedulesSet := existingPipelineSchedulesSet.Difference(wantedPipelineSchedulesSet)
-	for _, pipelineScheduleID := range extraPipelineSchedulesSet.ToSlice() {
+	extraPipelineSchedules := existingPipelineSchedulesSet.Difference(wantedPipelineSchedulesSet).ToSlice()
+	slices.Sort(extraPipelineSchedules)
+	for _, pipelineScheduleID := range extraPipelineSchedules {
 		_, err := client.PipelineSchedules.DeletePipelineSchedule(c.Project, pipelineScheduleID)
 		if err != nil {
 			errE := errors.WithMessage(err, "failed to delete pipeline schedule")
@@ -330,8 +332,9 @@ func (c *SetCommand) updatePipelineSchedules(client *gitlab.Client, configuratio
 			wantedVariablesSet.Add(k)
 		}
 
-		extraVariablesSet := existingVariablesSet.Difference(wantedVariablesSet)
-		for _, variable := range extraVariablesSet.ToSlice() {
+		extraVariables := existingVariablesSet.Difference(wantedVariablesSet).ToSlice()
+		slices.Sort(extraVariables)
+		for _, variable := range extraVariables {
 			_, _, err := client.PipelineSchedules.DeletePipelineScheduleVariable(
 				c.Project,
 				ps.ID,
