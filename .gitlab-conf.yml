@@ -141,7 +141,7 @@ project:
   # private, or enabled. Type: string
   security_and_compliance_access_level: disabled
   # Enable or disable Service Desk feature. Type: boolean
-  service_desk_enabled: true
+  service_desk_enabled: false
   # Enable shared runners for this project. Type: boolean
   shared_runners_enabled: true
   # One of disabled, private, or enabled. Type: string
@@ -345,7 +345,7 @@ variables:
     protected: true
     raw: false
     # sops:enc
-    value: ENC[AES256_GCM,data:Dia4qlpRr+M7Mf375Gq5PK4CSFIBYWeieUQ=,iv:IUtPwCIJbCTSb6wVH3Q6I4MHXWYrJ27zFOt5PbKguEc=,tag:upiOoTtIa6LPCPOoELzO8w==,type:str]
+    value: ENC[AES256_GCM,data:fTr1iKjLEHcqZb7Rr8Z9kBgfRwgIVi3i5K8=,iv:TYEq2OZXQ4kH1jVXDS4F0vFRtHhmk64xQ9PzYSFRLzo=,tag:oDK/0A9aTd5xWBZy/6eFOw==,type:str]
     variable_type: env_var
   - description: null
     environment_scope: '*'
@@ -354,7 +354,7 @@ variables:
     protected: true
     raw: false
     # sops:enc
-    value: ENC[AES256_GCM,data:G7N2RjihIHaIDh6Dkq9N/M1Td1nbE8Nov0xgL0xNtjNxtvpFYZXPYftfxV4f62zXvfrgsEYA4dwG21e3jJBI0rD89JeOpdH/j++fjXi4CUk2xBguw1K1XxVBK/OviMnJpX1aBTEQUstonl4ZaOUaY0p2ZMXJsi0/f2T29foPfCPA894M3RCefaezODh3ZoLsq4un0AjRjcnd2eMwQ67Alwb4UDmAjbWE1BbDY8FMiOMqDkP5o0An1ZKqAabQ,iv:cBqaEQ7Y0+X8wtcwO19W9AUpaNMIXjvAlFugjBcKm8M=,tag:sdNWwe9g62pc+qFIlBV2mA==,type:str]
+    value: ENC[AES256_GCM,data:zhRzwroE19XsnG2FMQZp2lsEyrG0uAy0ywADmSFKO0KsR499Xo+linShEHduQskRfnbwNJiqwAjBY1RIpvNfIHey4HMnZwHFA2pdnke5nOGkWtQCfjltzhzM+Mf14484spmVaVm/ujQeGjFryekas5n8JQI3plbF+mkdqA5jzT4ucwmi4CDzyVkIADhoJpfGILwPnthIt2TdcTXb6QIL4rGv7qB9S/EkAb9VH5NboZRCPFxTlGS8VRnlglYN,iv:AeSe6W+3CZjkZtdvwxkMhWhIJJdu0TydSKl4sv+cil0=,tag:YgNwhc4m4nqLC1w8Z9a5PQ==,type:str]
     variable_type: file
 # active: The activation of pipeline schedule. If false is set, the pipeline
 # schedule is initially deactivated. Type: boolean
@@ -377,14 +377,14 @@ sops:
     - recipient: age1az6ujwr5u5h89esnp7hvx9nx6rmdlm67ghukrmcc7xd6s58c7auqtd9xwg
       enc: |
         -----BEGIN AGE ENCRYPTED FILE-----
-        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBreFdHVFJVT21NdDRGbEpn
-        cU8zLzhIV0hxWWxhdy9kdElFNFJVYUQxcDBVClh4RStEajU4Mzl4VkhUbEVUZW00
-        ODQvb1FwcENYWmVzcmdqNnZwNmJ6aGMKLS0tIEVoczAwMFcxNGFrVXJQOS9vV0t3
-        L3NwbWEvaVN2N0s5dVlTVldtOXNHNG8KgvgQWtI1adSE2XZzZGt6+3/nVU2vzlFA
-        26cEm8JBNROo43FY+OSt7gOOhgT/1a/PRl1Bv0IMTCj6Q0Ih8UEoyQ==
+        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBPS1VTeEJBTUhEK3BnTmJw
+        d0xnZHhsQ1FHWjM1NUUwNkNiSVJOODVFZ0JJCnVBVXU3eTVYQmNGeHdWN1I1dGRQ
+        NytHSDl2QWxJc0dUQzg0a0RPaThubTgKLS0tIHpEK0swbmluRFBHNHV2Tnl6SEJK
+        YmIwZXkvTmJWWWs0VTdUVmpNSHFubjQKOang6o1M6dyoOegNIHixbk1IqSBT4XNt
+        EscKSLe1XlxETZQ8gwFadzeXdLDPQOF50QX/jcWonIo4yBto3Lk3LQ==
         -----END AGE ENCRYPTED FILE-----
-  lastmodified: "2023-10-04T23:10:08Z"
-  mac: ENC[AES256_GCM,data:Vq5GiqolX9nmGrXz9uHQm7/STkw50yt7XQkwqJe0gM1mG2EvUBGlTMe5j0OWwFNFVjC90fF88f6wtZ1O+hsAyN15OzP1/TNkbiy4wgPW/qTJ/md+FxIF9fGwESyv4HIxXMNERBn8SZFBNXz9DxiMMET8bxhfjJfmPaWRN/f7428=,iv:KuaswiEQuik7TijP5mjMXMft5K+vEr3aUoGvQ6mGS/A=,tag:fbxjz1+eJw7BNCJHniH3sA==,type:str]
+  lastmodified: "2024-12-08T09:13:51Z"
+  mac: ENC[AES256_GCM,data:FAFDWTmtY5BICwZ2Mwp7O2LPJSbK/Poa/x7g/LvN9KTANJtqWAdNogZNCOr7u9A+7bHShyPPJZ65rEsHko6oB/uBQqQnx4J5hbG0dx0WylTAGqi/0KFg1AD/XdztvhONA9ut5/kuMNIFrMU4Keo2WCE0gbpTig0jzjO5eYfbgSk=,iv:la0ZeNW47cBvy+VwGqhgHloKAhJYpmf2mhVk5dTPkEM=,tag:06AdHhxi1vN4RILtspGn1g==,type:str]
   pgp: []
   encrypted_comment_regex: sops:enc
   mac_only_encrypted: true
