@@ -1,8 +1,8 @@
 module gitlab.com/tozd/gitlab/config
 
-go 1.23
+go 1.24
 
-toolchain go1.23.1
+toolchain go1.24.0
 
 require (
 	github.com/alecthomas/kong v1.8.1
