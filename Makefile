@@ -54,7 +54,6 @@ release:
 
 lint-docs:
 	npx --yes --package 'markdownlint-cli@~0.41.0' -- markdownlint --ignore-path .gitignore --ignore testdata/ --fix '**/*.md'
-	npx --yes --package 'markdownlint-cli@~0.41.0' -- markdownlint --ignore-path .gitignore --ignore testdata/ --fix '**/*.md'
 
 lint-docs-ci: lint-docs
 	git diff --exit-code --color=always
