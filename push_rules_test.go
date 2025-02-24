@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParsePushRulesDocumentation(t *testing.T) {
 	t.Parallel()
 
 	data, errE := parsePushRulesDocumentation(testProjects)
-	assert.NoError(t, errE, "% -+#.1v", errE)
+	require.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"author_email_regex":            "All commit author emails must match this, for example @my-company.com$. Type: string",
 		"branch_name_regex":             "All branch names must match this, for example `(feature. Type: string",

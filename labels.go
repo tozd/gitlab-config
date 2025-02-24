@@ -97,7 +97,7 @@ func (c *GetCommand) getLabels(client *gitlab.Client, configuration *Configurati
 	// We sort by label ID so that we have deterministic order.
 	sort.Slice(configuration.Labels, func(i, j int) bool {
 		// We checked that id is int above.
-		return configuration.Labels[i]["id"].(int) < configuration.Labels[j]["id"].(int) //nolint:forcetypeassert
+		return configuration.Labels[i]["id"].(int) < configuration.Labels[j]["id"].(int) //nolint:forcetypeassert,errcheck
 	})
 
 	return false, nil
@@ -224,7 +224,7 @@ func (c *SetCommand) updateLabels(client *gitlab.Client, configuration *Configur
 		id, ok := label["id"]
 		if ok {
 			// We checked that id is int above.
-			wantedLabelsSet.Add(id.(int)) //nolint:forcetypeassert
+			wantedLabelsSet.Add(id.(int)) //nolint:forcetypeassert,errcheck
 		}
 	}
 

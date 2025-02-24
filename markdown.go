@@ -161,7 +161,7 @@ func parseTable(input []byte, heading string, keyMapper func(string) string) (ma
 		parser.WithInlineParsers(parser.DefaultInlineParsers()...),
 		parser.WithParagraphTransformers(parser.DefaultParagraphTransformers()...),
 		parser.WithParagraphTransformers(
-			util.Prioritized(extension.NewTableParagraphTransformer(), 200), //nolint:gomnd
+			util.Prioritized(extension.NewTableParagraphTransformer(), 200), //nolint:mnd
 		),
 		parser.WithASTTransformers(
 			util.Prioritized(extension.NewTableASTTransformer(), 0),

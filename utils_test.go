@@ -97,8 +97,6 @@ func TestRenameMapField(t *testing.T) {
 	}
 
 	for k, tt := range tests {
-		tt := tt
-
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
@@ -188,8 +186,6 @@ func TestRemoveFieldSuffix(t *testing.T) {
 	}
 
 	for k, tt := range tests {
-		tt := tt
-
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
@@ -239,8 +235,6 @@ func TestRemoveField(t *testing.T) {
 	}
 
 	for k, tt := range tests {
-		tt := tt
-
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 

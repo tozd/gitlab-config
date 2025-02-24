@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Protected tags file is from: https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/pipeline_schedules.md
@@ -16,7 +17,7 @@ func TestParsePipelineSchedulesDocumentation(t *testing.T) {
 	t.Parallel()
 
 	data, errE := parsePipelineSchedulesDocumentation(testPipelineSchedules)
-	assert.NoError(t, errE, "% -+#.1v", errE)
+	require.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"active":        "The activation of pipeline schedule. If false is set, the pipeline schedule is initially deactivated. Type: boolean",
 		"cron":          "The cron schedule, for example: 0 1 * * *. Type: string",

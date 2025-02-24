@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -22,9 +21,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, errE, "% -+#.1v", errE)
 
 	for _, cmd := range []string{"get", "set"} {
-		cmd := cmd
-
-		t.Run(fmt.Sprintf("case=%s", cmd), func(t *testing.T) {
+		t.Run("case="+cmd, func(t *testing.T) {
 			t.Parallel()
 
 			var commands Commands

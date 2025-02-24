@@ -51,7 +51,7 @@ func setYAMLComments(node *yaml.Node) {
 		// We first extract all comments.
 		comments := map[int]string{}
 		contentsToDelete := []int{}
-		for i := 0; i < len(node.Content); i++ {
+		for i := range len(node.Content) {
 			key := node.Content[i].Value
 			if strings.HasPrefix(key, "comment:") {
 				contentsToDelete = append(contentsToDelete, i)
@@ -70,7 +70,7 @@ func setYAMLComments(node *yaml.Node) {
 		}
 
 		// Finally set comments.
-		for i := 0; i < len(node.Content); i++ {
+		for i := range len(node.Content) {
 			comment, ok := comments[i]
 			// Only if there is a comment and another comment is not already set.
 			if ok && comment != "" && node.Content[i].HeadComment == "" {

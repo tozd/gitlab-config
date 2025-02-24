@@ -77,7 +77,7 @@ func (c *SetCommand) Run(_ *Globals) errors.E {
 	// We use reflect to go over all struct's fields so we do not have to
 	// change this code as Configuration struct evolves.
 	v := reflect.ValueOf(configuration)
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		removeFieldSuffix(v.Field(i), c.EncSuffix)
 	}
 

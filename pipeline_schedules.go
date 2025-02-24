@@ -121,7 +121,7 @@ func (c *GetCommand) getPipelineSchedules(client *gitlab.Client, configuration *
 	// We sort by pipeline schedule's id so that we have deterministic order.
 	sort.Slice(configuration.PipelineSchedules, func(i, j int) bool {
 		// We checked that id is int above.
-		return configuration.PipelineSchedules[i]["id"].(int) < configuration.PipelineSchedules[j]["id"].(int) //nolint:forcetypeassert
+		return configuration.PipelineSchedules[i]["id"].(int) < configuration.PipelineSchedules[j]["id"].(int) //nolint:forcetypeassert,errcheck
 	})
 
 	// For now pipeline schedule variables cannot contain secrets as they cannot be masked,

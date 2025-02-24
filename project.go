@@ -19,7 +19,7 @@ func (c *GetCommand) getProject(client *gitlab.Client, configuration *Configurat
 		return false, errE
 	}
 
-	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(c.Project))
+	u := "projects/" + gitlab.PathEscape(c.Project)
 
 	req, err := client.NewRequest(http.MethodGet, u, nil, nil)
 	if err != nil {
@@ -151,7 +151,7 @@ func (c *SetCommand) updateProject(client *gitlab.Client, configuration *Configu
 
 	fmt.Fprintf(os.Stderr, "Updating project...\n")
 
-	u := fmt.Sprintf("projects/%s", gitlab.PathEscape(c.Project))
+	u := "projects/" + gitlab.PathEscape(c.Project)
 
 	// For now we provide both keys, the new and the deprecated.
 	containerExpirationPolicy, ok := configuration.Project["container_expiration_policy"]

@@ -166,10 +166,10 @@ func describeKeys(obj map[string]interface{}, descriptions map[string]string) {
 	}
 }
 
-// convertNestedObjectsToIds converts a slice of objects to a slice of
+// convertNestedObjectsToIDs converts a slice of objects to a slice of
 // IDs from their "id" fields. If objects have "name" field, the value
 // is set as a comment before the ID.
-func convertNestedObjectsToIds(input interface{}) ([]interface{}, error) {
+func convertNestedObjectsToIDs(input interface{}) ([]interface{}, error) {
 	ids := []interface{}{}
 
 	if input == nil {

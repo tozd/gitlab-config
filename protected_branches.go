@@ -104,7 +104,7 @@ func (c *GetCommand) getProtectedBranches(client *gitlab.Client, configuration *
 	// We sort by protected branch's name so that we have deterministic order.
 	sort.Slice(configuration.ProtectedBranches, func(i, j int) bool {
 		// We checked that name is string above.
-		return configuration.ProtectedBranches[i]["name"].(string) < configuration.ProtectedBranches[j]["name"].(string) //nolint:forcetypeassert
+		return configuration.ProtectedBranches[i]["name"].(string) < configuration.ProtectedBranches[j]["name"].(string) //nolint:forcetypeassert,errcheck
 	})
 
 	return false, nil
@@ -324,10 +324,10 @@ func (c *SetCommand) updateProtectedBranches(client *gitlab.Client, configuratio
 				wantedAccessLevelsSet := mapset.NewThreadUnsafeSet[int]()
 				for _, level := range levels {
 					// We know it has to be a map.
-					id, ok := level.(map[string]interface{})["id"]
+					id, ok := level.(map[string]interface{})["id"] //nolint:errcheck
 					if ok {
 						// We checked that id is int above.
-						wantedAccessLevelsSet.Add(id.(int)) //nolint:forcetypeassert
+						wantedAccessLevelsSet.Add(id.(int)) //nolint:forcetypeassert,errcheck
 					}
 				}
 

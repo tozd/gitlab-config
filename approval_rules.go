@@ -68,7 +68,7 @@ func (c *GetCommand) getApprovalRules(client *gitlab.Client, configuration *Conf
 				{"groups", "group_ids"},
 				{"protected_branches", "protected_branch_ids"},
 			} {
-				approvalRule[ii.To], err = convertNestedObjectsToIds(approvalRule[ii.From])
+				approvalRule[ii.To], err = convertNestedObjectsToIDs(approvalRule[ii.From])
 				if err != nil {
 					errE := errors.WithMessagef(err, `unable to convert "%s" to "%s" for approval rule`, ii.From, ii.To)
 					errors.Details(errE)["approvalRule"] = approvalRule["id"]
@@ -120,7 +120,7 @@ func (c *GetCommand) getApprovalRules(client *gitlab.Client, configuration *Conf
 	// We sort by protected branch's id so that we have deterministic order.
 	sort.Slice(configuration.ApprovalRules, func(i, j int) bool {
 		// We checked that id is int above.
-		return configuration.ApprovalRules[i]["id"].(int) < configuration.ApprovalRules[j]["id"].(int) //nolint:forcetypeassert
+		return configuration.ApprovalRules[i]["id"].(int) < configuration.ApprovalRules[j]["id"].(int) //nolint:forcetypeassert,errcheck
 	})
 
 	return false, nil
@@ -254,7 +254,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 		id, ok := approvalRule["id"]
 		if ok {
 			// We checked that id is int above.
-			wantedApprovalRulesSet.Add(id.(int)) //nolint:forcetypeassert
+			wantedApprovalRulesSet.Add(id.(int)) //nolint:forcetypeassert,errcheck
 		}
 	}
 

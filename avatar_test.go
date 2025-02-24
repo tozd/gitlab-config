@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,9 +24,7 @@ func TestCheckAvatarExtension(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
-
-		t.Run(fmt.Sprintf("case=%s", tt.ext), func(t *testing.T) {
+		t.Run("case="+tt.ext, func(t *testing.T) {
 			t.Parallel()
 
 			errE := checkAvatarExtension(tt.ext)

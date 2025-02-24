@@ -113,7 +113,7 @@ func (c *GetCommand) getVariables(client *gitlab.Client, configuration *Configur
 	// We sort by variable key so that we have deterministic order.
 	sort.Slice(configuration.Variables, func(i, j int) bool {
 		// We checked that key is string above.
-		return configuration.Variables[i]["key"].(string) < configuration.Variables[j]["key"].(string) //nolint:forcetypeassert
+		return configuration.Variables[i]["key"].(string) < configuration.Variables[j]["key"].(string) //nolint:forcetypeassert,errcheck
 	})
 
 	return len(configuration.Variables) > 0, nil

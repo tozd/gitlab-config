@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Project level variables file is from: https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/project_level_variables.md
@@ -16,7 +17,7 @@ func TestParseVariablesDocumentation(t *testing.T) {
 	t.Parallel()
 
 	data, errE := parseVariablesDocumentation(testVariables)
-	assert.NoError(t, errE, "% -+#.1v", errE)
+	require.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"environment_scope": "The environment_scope of the variable. Default: *. Type: string",
 		"description":       "The description of the variable. Default: null. Introduced in GitLab 16.2. Type: string",

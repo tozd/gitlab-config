@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseApprovalRulesDocumentation(t *testing.T) {
 	t.Parallel()
 
 	data, errE := parseApprovalRulesDocumentation(testMergeRequestApprovals)
-	assert.NoError(t, errE, "% -+#.1v", errE)
+	require.NoError(t, errE, "% -+#.1v", errE)
 	assert.Equal(t, map[string]string{
 		"approvals_required":                "The number of required approvals for this rule. Type: integer",
 		"name":                              "The name of the approval rule. Type: string",

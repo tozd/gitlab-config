@@ -93,7 +93,7 @@ func (c *SetCommand) updateAvatar(client *gitlab.Client, configuration *Configur
 	fmt.Fprintf(os.Stderr, "Updating avatar...\n")
 
 	if *configuration.Avatar == "" {
-		u := fmt.Sprintf("projects/%s", gitlab.PathEscape(c.Project))
+		u := "projects/" + gitlab.PathEscape(c.Project)
 
 		// TODO: Make it really remove the avatar.
 		//       See: https://gitlab.com/gitlab-org/gitlab/-/issues/348498

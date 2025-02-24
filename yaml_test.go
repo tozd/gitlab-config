@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -128,13 +129,11 @@ func TestToConfigurationYAML(t *testing.T) {
 	}
 
 	for k, tt := range tests {
-		tt := tt
-
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
 			data, errE := toConfigurationYAML(tt.config)
-			assert.NoError(t, errE, "% -+#.1v", errE)
+			require.NoError(t, errE, "% -+#.1v", errE)
 			assert.Equal(t, tt.output, string(data))
 		})
 	}
