@@ -70,7 +70,9 @@ func (c *GetCommand) getApprovalRules(client *gitlab.Client, configuration *Conf
 			} {
 				approvalRule[ii.To], err = convertNestedObjectsToIDs(approvalRule[ii.From])
 				if err != nil {
-					errE := errors.WithMessagef(err, `unable to convert "%s" to "%s" for approval rule`, ii.From, ii.To)
+					errE := errors.WithMessage(err, "unable to convert approval rule")
+					errors.Details(errE)["from"] = ii.From
+					errors.Details(errE)["to"] = ii.To
 					errors.Details(errE)["approvalRule"] = approvalRule["id"]
 					return false, errE
 				}
@@ -231,7 +233,7 @@ func (c *SetCommand) updateApprovalRules(client *gitlab.Client, configuration *C
 
 		name, ok := approvalRule["name"]
 		if !ok {
-			errE := errors.Errorf(`approval rule is missing field "name"`)
+			errE := errors.New(`approval rule is missing field "name"`)
 			errors.Details(errE)["index"] = i
 			return errE
 		}
